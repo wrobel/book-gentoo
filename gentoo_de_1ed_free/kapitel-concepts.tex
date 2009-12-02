@@ -1,0 +1,2076 @@
+\chapter{\label{chapterconcepts}Hinter den Kulissen von emerge}
+
+Bislang ging es um einen Überblick darüber, wie man \cmd{emerge}
+\index{emerge (Programm)}%
+über die Kommandozeile steuert und Pakete installiert bzw.  wieder
+entfernt.
+Wir können das Paketmanagementsystem darüber hinaus aber auch
+unabhängig davon grundlegend konfigurieren, wobei die Datei
+\cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+eine zentrale Rolle spielt. Weitere Konfigurationsmöglichkeiten finden sich im
+Verzeichnis \cmd{/etc/portage}.% %
+\index{portage (Verzeichnis)}%
+
+Hier soll es zunächst um die Variablen \cmd{USE} 
+\index{USE (Variable)}%
+und \cmd{ACCEPT\_KEYWORDS}  
+\index{ACCEPT\_KEYWORDS (Variable)}%
+aus der Datei \cmd{/etc/make.conf}
+\index{make.conf (Datei)}%
+bzw.\ aus den Dateien ähnlicher Funktion in \cmd{/etc/portage} 
+\index{portage (Verzeichnis)}%
+(\cmd{/etc/portage/package.*}) gehen. Beide Variablen berühren
+fundamentale Konzepte von Portage, weshalb wir hier die
+Hintergründe genauer ausführen und uns dann im
+nächsten Kapitel mit den übrigen Konfigurationsmöglichkeiten
+in \cmd{/etc/make.conf} beschäftigen.
+
+Obwohl dieses Kapitel eher theoretisch ist, empfiehlt es sich nicht,
+es zu überspringen.  Wer noch keine Erfahrung mit Gentoo
+hat, wird hier die grundlegenden
+Unterschiede zu anderen Distributionen und die komfortable Arbeit mit
+der Paketverwaltung Portage kennen lernen.% %
+\index{Portage!Konzepte}%
+
+\section{\label{USE-Flags}USE-Flags}
+
+\index{Gentoo!Vergleich zu anderen Distributionen|(}%
+Portage installiert Software auf Basis des Quellcodes. Verglichen mit
+vorkompilierten Distributionen sind die Einflussmöglichkeiten damit
+zahlreicher und flexibler. Beim Bauen etwa von RPM- oder
+Debian-Paketen %
+\index{Paket!RPM}%
+verfolgt man üblicherweise die Strategie, alle möglichen Features
+\index{Paket!Eigenschaften}%
+der entsprechenden Software zu aktivieren, so dass der User bei Bedarf
+darauf zurückgreifen kann.
+
+\index{Paket!Eigenschaften wählen|(}%
+In den meisten Fällen benötigt aber nicht jeder Nutzer jede dieser oft
+umfassenden Funktionalitäten einer Software oder Bibliothek. Steht
+beispielsweise fest, dass wir LDAP nicht einsetzen wollen, %
+\index{LDAP}%
+dann ist es wenig sinnvoll, dies zu aktivieren und die entstehenden
+Binaries dadurch zu vergrößern. In anderen Fällen reduziert der
+Verzicht auf bestimmte Funktionalität z.\,B.\ die Zahl der
+Konfigurationsdateien, so dass der Nutzer leichteren Zugang zur
+Software findet.% %
+\index{Gentoo!Vergleich zu anderen Distributionen|)}%
+
+Wie sich bestimmte Eigenschaften an- oder abschalten lassen,
+unterscheidet sich von Software zu Software. In vielen Fällen gibt es
+einen passenden Switch für den \cmd{configure}-Aufruf, 
+\index{configure (Programm)}%
+der dem Kompilieren der Software 
+\index{Software kompilieren}%
+vorausgeht, in anderen Fällen muss der Quellcode entsprechend gepatcht 
+\index{Quellcode!patchen}%
+werden oder man steht vor der Herausforderung, Dateien hinzuzufügen
+bzw.\ zu löschen.  Gentoo kapselt diese Vorgänge so, dass der Nutzer
+sie unabhängig von der Software einheitlich handhaben kann.
+
+\index{USE-Flag|(}%
+Entsprechend kann jedes Gentoo-Paket so genannte \emph{USE-Flags}
+definieren und damit signalisieren, dass es bestimmte optionale
+Eigenschaften %
+\index{USE-Flag!optional}%
+%\index{Paket!Eigenschaften|see{USE-Flag}}%
+bietet, die der Nutzer zur Compile-Zeit aktivieren kann. Wie
+\cmd{emerge} diese Flags in Paket-Installationsanweisungen umsetzt,
+spielt aus User-Sicht keine Rolle -- um die nötigen Schritte beim
+Kompilieren oder Installieren kümmern sich die Gentoo-Paketbauer, im
+Distributionsslang (wie bei Debian) "`Entwickler"' genannt.
+
+Möchte man ein neues Paket installieren, stellt sich also meist die
+Frage, welche besonderen Features die Software unterstützt und welche
+von diesen man aktivieren möchte. Diese Auskunft gibt
+\cmd{emerge}:\footnote{Den Zusatz \cmd{USE="{}hardened"{}} erklären wir
+  etwas später, in Kapitel \ref{useoncli} ab Seite
+  \pageref{useoncli}}: 
+\index{emerge (Programm)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{USE="hardened" emerge -pv sys-libs/glibc}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] sys-libs/glibc-2.5  USE="hardened* nls nptl nptlonly -bu
+ild -glibc-compat20 -glibc-omitfp (-multilib) -profile (-selinux)" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+\end{ospcode}
+\index{glibc (Paket)}
+%\index{sys-libs (Kategorie)!glibc (Paket)|see{glibc (Paket)}}
+\index{USE-Flag!auswählen|)}
+
+\label{usecolorcode}
+Mit einer Reihe Sonderzeichen und einem Farbcode liefert \cmd{emerge} 
+\index{emerge (Programm)!Farbcode}%
+Informationen zu den (de)aktivierbaren Eigenschaften des Pakets; 
+\index{USE-Flag!anzeigen}%
+denen, die aufgrund der aktuellen Systemkonfiguration bei der
+Installation des Pakets nicht aktiviert sind, ist ein Minuszeichen
+vorangestellt und 
+\index{USE-Flag!inaktiv}%
+\cmd{emerge} stellt sie in blauer Schrift dar (im obigen Beispiel
+\cmd{-build}, \cmd{-glibc-omitfp}, \cmd{-hardened}, \cmd{-multilib},
+\cmd{-profile}, \cmd{-selinux}). Aktive USE-Flags sind rot
+eingefärbt 
+\index{USE-Flag!aktiv}%
+(\cmd{nls}, \cmd{nptl}, \cmd{nptlonly}) und tragen keine weitere
+Markierung. 
+
+Bei Paketen, die wir schon einmal installiert haben und
+die wir nun erneut einspielen, oder bei Software, die wir auf die
+neueste Version bringen, stehen grüne USE-Flags für solche, die sich
+im Vergleich zur letzten Installation geändert haben,  
+\index{USE-Flag!verändert}%
+also von uns entweder aktiviert oder deaktiviert wurden
+(\cmd{hardened*}). Sie sind am Ende mit einem Sternchen markiert.  
+Bei
+installierten Paketen, für die es ein Update gibt, markiert
+\cmd{emerge} USE-Flags mit einem Prozentzeichen, sofern sie in der
+neuen Paketversion neu hinzugekommen sind. Außerdem sind sie gelb
+ausgezeichnet. 
+\index{USE-Flag!neu}%
+Im obigen Beispiel handelt sich nicht um ein Update, und entsprechend
+finden sich hier auch keine neuen Eigenschaften. Über den Farbcode
+sieht der User sofort, welche neuen USE-Flags für ihn möglicherweise
+interessant sind.
+
+
+\cmd{emerge} sortiert die USE-Flags in der Anzeige entsprechend ihrem
+Status (aktiviert/deaktiviert). 
+\index{USE-Flag!Sortierung}%
+Die aktivierten Flags stehen vorn. Wer die Flags alphabetisch
+sortiert haben möchte, verwendet die Option
+\cmd{-{}-alphabetical}: 
+\index{emerge (Programm)!alphabetical (Option)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{USE="hardened" emerge -pv sys-libs/glibc --alphabetical}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] sys-libs/glibc-2.5  USE="-build -glibc-compat20 -glibc-o
+mitfp hardened* (-multilib) nls nptl nptlonly -profile (-selinux)" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+\end{ospcode}
+
+Generell unterscheidet man zwischen globalen 
+\index{USE-Flag!global}%
+und lokalen USE-Flags. 
+\index{USE-Flag!lokal}%
+Die globalen schalten Features an oder aus, die sich auf mehrere
+Pakete identisch auswirken, während lokale USE-Flags sich nur auf
+einzelne Pakete beziehen. Eine Beschreibung der globalen USE-Flags 
+\index{USE-Flag!Beschreibung}%
+findet sich in der Datei \cmd{/usr/portage/profiles/use.desc}, 
+\index{USE-Flag!lokal}%
+\index{use.desc (Datei)}%
+\index{usr@/usr!portage!profiles!use.desc}%
+während  Beschreibungen der lokalen Varianten in
+\cmd{/usr/portage/profiles/use.local.desc} 
+\index{USE-Flag!lokal}%
+\index{use.local.desc (Datei)}%
+\index{usr@/usr!portage!profiles!use.desc}%
+stehen.
+\label{usedesc}
+Die Beschreibung des \cmd{ldap}-USE-Flags 
+\index{ldap (USE-Flag)}%
+liefert  also z.\,B.\ der Befehl:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{grep "^ldap" /usr/portage/profiles/use.*}
+/usr/portage/profiles/use.desc:ldap - Adds LDAP support (Lightweight Dir
+ectory Access Protocol)
+\end{ospcode}
+\index{grep (Programm)}
+
+\label{euses}
+Ähnliche Auskunft erteilt das Tool \cmd{euses}. 
+\index{euses (Programm)}%
+Um nicht auf \cmd{grep} 
+\index{grep (Programm)}%
+zurückgreifen zu müssen, installieren wir es hier mit
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/euses}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-portage/euses-2.5.4  16 kB 
+
+Total: 1 package (1 new), Size of downloads: 16 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{euses (Paket)}%
+%\index{app-portage (Kategorie)!euses (Paket)|see{euses (Paket)}}
+
+\begin{netnote}
+  Wir benötigen wieder eine funktionierende Netzwerkverbindung, um das
+  Werkzeug herunterzuladen.
+\end{netnote}
+
+
+So verkürzt sich der obige Aufruf auf \cmd{euses ldap}, 
+\index{euses (Programm)}%
+wobei das Programm nun allerdings alle USE-Flags anzeigt, in denen
+die Zeichenkette \cmd{ldap} 
+\index{ldap (USE-Flag)}%
+enthalten ist:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{euses ldap}
+ldap - Adds LDAP support (Lightweight Directory Access Protocol)
+dev-lang/php:ldap-sasl - Add SASL support for the PHP LDAP extension
+net-fs/samba:ldapsam - Enables samba 2.2 ldap support (default passwd ba
+ckend: ldapsam_compat)
+\end{ospcode}
+\index{euses (Programm)}
+
+\cmd{euses} zeigt hier das globale USE-Flag \cmd{ldap} %
+\index{ldap (USE-Flag)}%
+und seine Beschreibung, %
+\index{USE-Flag!Beschreibung}%
+listet aber darüber hinaus auch zwei lokale USE-Flags, die die
+Zeichenkette \cmd{ldap} enthalten. Dass die beiden letzten lokale %
+\index{USE-Flag!lokal}%
+USE-Flags sind, lässt sich daran erkennen, dass \cmd{euses} sie
+inklusive des Pakets nennt, für das sie existieren. Das USE-Flag
+\cmd{ldap} %
+\index{ldap (USE-Flag)}%
+ist als globales USE-Flag eben nicht auf einzelne Pakete beschränkt,
+darum fehlt hier eine entsprechende Angabe.
+
+Noch einfacher lässt sich die Erklärung der USE-Flags eigentlich durch
+das \cmd{equery}-Skript erhalten. Allerdings schauen wir uns dieses
+Werkzeug erst in Kapitel \ref{equery} an. Wie sich \cmd{equery} zur
+Anzeige der USE-Flags nutzen lässt, findet sich dann auf Seite
+\pageref{equeryuse}.
+
+Die für die Installation zu benutzenden USE-Flags kann man durch die
+Variable \cmd{USE} %
+\index{USE (Variable)}%
+festlegen, die sich auf vier verschiedene Arten modifizieren lässt.
+\index{USE (Variable)!beeinflussen}%
+Auf der untersten Ebene definiert das anfänglich gewählte Profil %
+\index{Profil}%
+(siehe Kapitel \ref{selectprofile} ab Seite \pageref{selectprofile})
+ein Basis-Set an Eigenschaften, %
+\index{USE (Variable)!Standardwerte}%
+das global für alle Pakete gilt.  Wir wollen hier nicht detailliert
+auf die Profile eingehen; einen Teil der
+Grundkonfiguration für die \cmd{USE}-Variable findet man z.\,B.\ in
+der Datei
+\cmd{/usr/portage/profiles/default-linux/x86/2007.0/make.defaults}:% %
+\index{make.defaults (Datei)}%
+\index{usr@/usr!portage!profiles!default-linux!x86!2007.0!make.defaults}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /usr/portage/profiles/default-linux/x86/2007.0/make.defa\textbackslash}
+> \textbf{ults}
+# Copyright 1999-2007 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/profiles/default-linux/x86/dev/2007.0
+/make.defaults,v 1.4 2007/02/12 16:18:07 wolf31o2 Exp $
+
+# We build stage1 against this
+STAGE1_USE="nptl nptlonly unicode"
+
+# These USE flags are what is common between the various sub-profiles. S
+tages 2
+# and 3 are built against these, so be careful what you add.
+USE="acl cups gdbm gpm libg++ nptl nptlonly unicode"
+\end{ospcode}
+\index{USE (Variable)!make.defaults (Datei)}
+
+Wir sehen hier nur einen Teil der durch das Profil %
+\index{Profil}%
+aktivierten USE-Flags, da Profile hierarchisch organisiert sind und so
+auch die darüber liegende Ebene
+\cmd{/usr/portage/profiles/default-linux/x86/make.defaults} %
+\index{make.defaults (Datei)}%
+\index{usr@/usr!portage!profiles!default-linux!x86!make.defaults}%
+ins\osplinebreak% %
+Profil einbezogen wird. %
+\index{USE (Variable)!Profil}%
+Genauer beschreiben wir Profile weiter im Kapitel \ref{profiles}
+ab Seite \pageref{profiles}.
+
+\subsection{euse}
+
+\label{euse}%
+\index{euse (Programm)|(}%
+Die im Profil vordefinierten Flags lassen sich über das Tool
+\cmd{euse} (nicht zu verwechseln mit \cmd{euses}!) auslesen. Das
+Programm gehört zu einer wichtigen Sammlung spezieller Gentoo-Tools,
+die auf keinem Gentoo-System fehlen sollte. Sie ist im Paket
+\cmd{app-portage/gentoolkit} enthalten, das wir an dieser Stelle
+folgendermaßen installieren: %
+\index{gentoolkit (Paket)}%
+%\index{app-portage (Kategorie)!gentoolkit (Paket)|see{gentoolkit    (Paket)}}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/gentoolkit}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-portage/gentoolkit-0.2.3  0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+
+Unter Angabe der Optionen \cmd{-{}-info} 
+\index{euse (Programm)!info (Option)}%
+(bzw.\ \cmd{-i}; Informationen 
+\index{USE-Flag!Beschreibung}%
+zu allen USE-Flags ausgeben), \cmd{-{}-global} 
+\index{euse (Programm)!global (Option)}%
+(bzw.\ \cmd{-g}; Informationen auf globale 
+\index{USE-Flag!global}%
+USE-Flags beschränken) und \cmd{-{}-active} 
+\index{euse (Programm)!active (Option)}%
+(bzw.\ \cmd{-a}; nur aktivierte Flags zeigen) zeigt \cmd{euse} an,
+welche USE-Flags derzeit aktiv 
+\index{USE-Flag!aktiv}%
+sind:
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{euse -i -g -a}
+acl                 [+  D ] 
+apache2             [+ C  ] 
+berkdb              [+  D ] 
+cracklib            [+  D ] 
+crypt               [+  D ] 
+cups                [+  D ] 
+dri                 [+  D ] 
+fortran             [+  D ] 
+gdbm                [+  D ] 
+gpm                 [+  D ] 
+iconv               [+  D ] 
+ipv6                [+  D ] 
+ladspa              [+    ] 
+ldap                [+ C  ] 
+libg++              [+  D ] 
+mysql               [+ C  ] 
+ncurses             [+  D ] 
+nls                 [+  D ] 
+nptl                [+  D ] 
+pam                 [+  D ] 
+pcre                [+  D ] 
+perl                [+  D ] 
+python              [+  D ] 
+readline            [+  D ] 
+session             [+  D ] 
+spl                 [+  D ] 
+ssl                 [+  D ] 
+tcpd                [+  D ] 
+unicode             [+  D ] 
+v4l                 [+    ] 
+xml                 [+ C  ] 
+zlib                [+  D ] 
+\end{ospcode}
+
+Das Pluszeichen verrät, dass das entsprechende Flag aktiv ist, das
+große \cmd{D} besagt, dass diese Einstellung aus dem gewählten
+Gentoo-Profil stammt.  Darauf aufbauend gibt es drei weitere
+Möglichkeiten, USE-Flags für das gesamte System oder auch
+spezifisch für einzelne Pakete zu (de)aktivieren.
+\index{USE (Variable)!beeinflussen}
+
+Systemweite USE-Flags %
+\index{USE-Flag!systemweit}%
+legt man in der Datei \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+in der Variablen \cmd{USE} %
+\index{USE (Variable)}%
+fest. Wenn man einen Desktop-Rechner installiert, wird man hier
+z.\,B.\ das Flag \cmd{X} %
+\index{X (USE-Flag)}%
+hinzufügen und damit für viele Pakete die Unterstützung der grafischen
+Oberfläche aktivieren. Auf Server-Systemen hingegen empfiehlt es sich
+meistens, dem gleichen Flag ein Minus voranzustellen, um es global zu
+deaktivieren. %
+\index{USE-Flag!deaktivieren}%
+\index{USE-Flag!make.conf|(}%
+Sinnvolle globale USE-Flags für ein LAMP-Server-System haben wir schon
+während der Installation auf Seite \pageref{firstuseflags} gesetzt,
+indem wir die folgende Zeile in \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+eingetragen haben:
+
+\begin{ospcode}
+USE="-X apache2 ldap mysql xml"
+\end{ospcode}
+\index{USE (Variable)}
+
+Das ist auch der Grund dafür, dass wir im Listing weiter oben einige
+USE-Flags mit der Markierung \cmd{C} sehen. \cmd{euse} zeigt  an,
+dass wir das entsprechende USE-Flag in der Datei \cmd{/etc/make.conf}
+aktiviert haben.
+\index{USE-Flag!Konfiguration}
+
+In dieser Zeile haben wir das USE-Flag \cmd{X} %
+\index{X (USE-Flag)}%
+explizit deaktiviert. Diese explizite Angabe ist notwendig, da \cmd{X}
+im übergeordneten Profil als aktiv gesetzt ist. %
+\index{Profil}%
+\index{USE-Flag!Profil}%
+In den meisten Fällen ist diese Art, das Grundprofil zu modifizieren,
+die sinnvollste. Sollte man jedoch eine Maschine installieren wollen,
+die bei den USE-Flags sehr stark von den Standardeinstellungen
+abweicht, können sich einige explizit deaktivierte USE-Flags
+ansammeln.% %
+\index{USE-Flag!deaktivieren}
+
+In diesen Fällen kann es einfacher sein, der Variable \cmd{USE} das
+spezielle USE-Flag \cmd{-*} %
+\index{-* (USE-Flag)}%
+%\index{USE-Flag!-*|see{-* (USE-Flag)}}%
+voranzustellen (\cmd{USE="{}-* \ldots"{}}). Nun ignoriert \cmd{emerge} alle USE-Flag-Einstellungen
+aus dem Profil. %
+\index{Profil}%
+\index{USE-Flag!alle deaktivieren}%
+\index{USE-Flag!Profil ignorieren}%
+Von dieser Option sollte man jedoch nur Gebrauch machen, wenn man
+genau weiß, was man tut. Die Einstellungen im Profil wurden
+schließlich nicht grundlos erstellt. Im schlimmsten Fall kann  \cmd{-*} %
+\index{-* (USE-Flag)}%
+dazu führen, dass System-Paketen wichtige Eigenschaften für den
+Betrieb fehlen und man seine Maschine somit lahm legt.
+
+Anstatt den Wert der oben angegebenen USE-Variable manuell in die Datei 
+\cmd{/etc/make.conf} 
+\index{make.conf (Datei)}%
+zu schreiben, lässt sich diese Aufgabe auch dem vorher installierten
+\cmd{euse}-Tool übertragen. Aktivieren wir probehalber einmal das
+USE-Flag \cmd{X} mit der Option \cmd{-{}-enable} (bzw.\ \cmd{-E})
+\index{X (USE-Flag)}%
+für ein Desktop-System
+\index{Desktop}%
+und betrachten das Ergebnis in \cmd{/etc/make.conf}: 
+\index{euse (Programm)!enable (Option)}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{euse -E X}
+/etc/make.conf was modified, a backup copy has been placed at /etc/make.
+conf.euse_backup
+\rprompt{\textasciitilde}\textbf{grep USE /etc/make.conf}
+USE="apache2 ldap mysql xml X"
+\end{ospcode}
+
+Die neu aktivierten USE-Flags markiert \cmd{euse} jetzt
+mit dem Buchstaben \cmd{C} und informiert darüber, dass
+wir sie in der Datei \cmd{/etc/make.conf} 
+\index{make.conf (Datei)}%
+gesetzt haben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{euse -i -g -a}
+...
+unicode             [+  D ] 
+v4l                 [+    ] 
+X                   [+ C  ] 
+xml                 [+ C  ] 
+zlib                [+  D ] 
+\end{ospcode}
+
+Um die Einstellung wieder zurück zu nehmen, benutzen wir \cmd{euse}
+mit der -Option \cmd{-D} (bzw.\ \cmd{-{}-disable}):
+\index{euse (Programm)!disable (Option)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{euse -D X}
+/etc/make.conf was modified, a backup copy has been placed at /etc/make.
+conf.euse_backup
+\rprompt{\textasciitilde}\textbf{grep USE /etc/make.conf}
+USE="apache2 ldap mysql xml -X"
+\end{ospcode}
+
+Wie wir sehen, verbleibt das USE-Flag mit vorangestelltem
+Minuszeichen in der Datei \cmd{/etc/make.conf}.
+\index{make.conf (Datei)}%
+Damit deaktivieren wir das USE-Flag explizit für alle Pakete. 
+\index{USE-Flag!deaktivieren}%
+Wenn wir keine Aussage zu dem USE-Flag treffen möchten, es also in der
+Variable \cmd{USE} nicht auftauchen soll, können wir \cmd{euse} mit
+der Option \cmd{-P} (bzw.\ \cmd{-{}-prune})
+\index{euse (Programm)!prune (Option)}%
+verwenden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{euse -P X}
+/etc/make.conf was modified, a backup copy has been placed at /etc/make.
+conf.euse_backup
+\rprompt{\textasciitilde}\textbf{grep USE /etc/make.conf}
+USE="apache2 ldap mysql xml"
+\end{ospcode}
+
+Man sollte nur die allgemein gehaltenen Eigenschaften auf diese Weise
+global in \cmd{/etc/make.conf} 
+\index{make.conf (Datei)}%
+konfigurieren.
+\index{USE-Flag!make.conf|)}
+
+Die USE-Flags legen grundsätzlich \emph{nicht} fest, dass ein
+entsprechend benanntes Paket im System installiert
+wird. \cmd{apache2} 
+\index{apache2 (USE-Flag)}%
+in  \cmd{/etc/make.conf}
+\index{make.conf (Datei)}%
+festzulegen führt also nicht automatisch dazu, dass der Apache-Server
+\index{Apache}%
+installiert wird. Lediglich bei der Installation von Paketen, die
+irgendeine Unterstützung für den Apache-Server, für
+MySQL 
+\index{MySQL}%
+oder PHP 
+\index{PHP}%
+mitbringen, sorgen die so gesetzten USE-Flags dafür, dass \cmd{emerge}
+diese Unterstützung im Paket aktiviert.
+
+Vielfach muss das entsprechende Paket (also z.\,B.\
+\cmd{net-nds/openldap} 
+\index{openldap (Paket)}%
+%\index{net-nds (Kategorie)!openldap (Paket)|see{openldap (Paket)}}%
+für das USE-Flag \cmd{ldap}) 
+\index{ldap (USE-Flag)}%
+installiert sein, damit diese Art Interaktion zwischen den Paketen
+auch tatsächlich möglich ist. So können die USE-Flags also auch die
+Abhängigkeiten einzelner Pakete beeinflussen.
+\index{USE-Flag!Abhängigkeiten}%
+\index{Abhängigkeiten!beeinflussen}%
+\index{Paket!-abhängigkeiten beeinflussen}%
+Das haben wir im vorigen Kapitel auf Seite \pageref{deponldap} schon
+kurz angerissen, als die Installation des Apache-Servers auch die
+Installation von OpenLDAP
+\index{OpenLDAP}%
+verlangte.
+
+USE-Flags wirken sich auf die Installation der Pakete aus,
+\index{USE-Flag!Einfluss}%
+d.\,h.\ dass Änderungen an USE-Flags erst dann wirksam werden, wenn
+wir ein Paket mit veränderten USE-Flags neu installieren. Für
+diesen Fall bietet \cmd{emerge}
+\index{emerge (Programm)}%
+die  Option \cmd{-{}-newuse}
+\index{emerge (Programm)!newuse (Option)}%
+(bzw.\ \cmd{-N}), über die sich Pakete ansprechen lassen, deren
+USE-Flags sich im Vergleich zur letzten Installation geändert haben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{euse -D ldap}
+/etc/make.conf was modified, a backup copy has been placed at /etc/make.
+conf.euse_backup
+\rprompt{\textasciitilde}\textbf{emerge --newuse -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] net-www/apache-2.0.58-r2  USE="apache2 ssl -debug -doc -
+ldap* -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mp
+m-worker (-selinux) -static-modules -threads" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+\rprompt{\textasciitilde}\textbf{euse -E ldap}
+/etc/make.conf was modified, a backup copy has been placed at /etc/make.
+conf.euse_backup
+\rprompt{\textasciitilde}\textbf{emerge --newuse -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+
+Total: 0 packages, Size of downloads: 0 kB
+\end{ospcode}
+
+Im ersten Fall, wenn wir das USE-Flag \cmd{ldap}
+\index{ldap (USE-Flag)}%
+entfernt haben, merkt Portage, dass sich die Bedingungen für die
+Apache-Installation geändert haben, und bietet die erneute
+Installation von Apache mit veränderten USE-Flags an.
+Sobald wir das USE-Flag wieder aktiviert haben, ist alles beim Alten
+und \cmd{emerge} zeigt an, dass es nichts zu tun gibt.
+\index{euse (Programm)|)}%
+
+\subsection{Paketspezifische USE-Flags}
+
+\index{USE-Flag!Paket-spezifisch|(}%
+%\index{Paket!USE-Flags|see{USE-Flag, Paketspezifisch}}%
+Schauen wir uns noch einmal die paketspezifischen USE-Flags
+des Apache-Servers an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] net-www/apache-2.0.58-r2  USE="apache2 ldap ssl -debug -
+doc -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mpm-
+worker (-selinux) -static-modules -threads" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+\end{ospcode}
+\index{apache (Paket)}
+
+Wir sehen hier einige USE-Flags mit der Bezeichnung \cmd{mpm-*}.
+\index{mpm-* (USE-Flag)}%
+Um herauszufinden, wofür diese zuständig sind, verwenden wir wieder
+\cmd{euses}:
+\index{euses (Programm)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{euses mpm-}
+net-www/apache:mpm-event - (experimental) Event MPM - a varient of the w
+orker MPM that tries to solve the keep alive problem - requires epoll su
+pport and kernel 2.6
+net-www/apache:mpm-itk - (experimental) Itk MPM - child processes have s
+eperate user/group ids
+net-www/apache:mpm-leader - (experimental) Leader MPM - leaders/follower
+s varient of worker MPM
+net-www/apache:mpm-peruser - (experimental) Peruser MPM - child processe
+s have seperate user/group ids
+net-www/apache:mpm-prefork - Prefork MPM - non-threaded, forking MPM - s
+imiliar manner to Apache 1.3
+net-www/apache:mpm-threadpool - (experimental) Threadpool MPM - keeps po
+ol of idle threads to handle requests
+net-www/apache:mpm-worker - Worker MPM - hybrid multi-process multi-thre
+ad MPM
+\end{ospcode}
+\index{euses (Programm)}
+
+Wie am Paketnamen ersichtlich, haben wir es hier mit paketspezifischen
+bzw.\ \emph{lokalen} USE-Flags zu tun, die nur für das Paket
+\cmd{net-www/apache} 
+\index{apache (Paket)}%
+gültig sind. Die \cmd{mpm-*}-Flags 
+\index{mpm-* (USE-Flag)}%
+%\index{USE-Flag!mpm-*|see{mpm-* (USE-Flag)}}%
+dienen beim Apache-Server dazu, die verschiedenen
+Multi-Processing-Module (MPM) 
+\index{Apache!Multi-Processing-Modul}%
+\label{apachempm}%
+zu (de)aktivieren. Jedes der Module bestimmt das Verhalten des
+Webservers bei den zahlreichen gleichzeitigen Anfragen.
+
+\index{Apache!Multi-Processing-Modul|(}%
+Wir haben zwar an dieser Stelle gar kein MPM-Modul ausgewählt, aber das
+Apache-Paket ist so definiert, dass es eigenständig \cmd{mpm-prefork}
+selektiert, wenn der Benutzer keine Wahl trifft. Nehmen wir an, wir
+wollten den Apache über den Prefork-Modus hinaus mit dem
+MPM-Worker-Modul betreiben und dabei auch Threads (ein Verfahren, ein
+Programm in verschiedene Aktivitätsabläufe zu splitten) verwenden.
+Dann wollen wir speziell für das Apache-Paket die USE-Flags
+\cmd{mpm-prefork}
+\index{mpm-prefork (USE-Flag)}%
+%\index{USE-Flag!mpm-prefork|see{mpm-prefork (USE-Flag)}}%
+(Modul MPM-Prefork kompilieren), \cmd{mpm-worker}
+\index{mpm-worker (USE-Flag)}%
+%\index{USE-Flag!mpm-worker|see{mpm-worker (USE-Flag)}}%
+(Modul MPM-Worker kompilieren) und \cmd{threads}
+\index{threads (USE-Flag)}%
+%\index{USE-Flag!threads|see{threads (USE-Flag)}}%
+\index{Apache!Threads}%
+("`threaded"'-Modus unterstützen) aktivieren.
+\index{Apache!Multi-Processing-Modul|)}%
+
+\index{USE-Flag!package.use|(}%
+Paketspezifische Flags (de)aktiviert man in
+\cmd{/etc/portage/package.use},
+\index{package.use (Datei oder Verzeichnis)!Format}%
+\index{etc@/etc!portage!package.use}%
+indem man pro Zeile ein Paket und die zugehörigen USE-Flags
+angibt. Als Trennzeichen zwischen den einzelnen Flags dient je ein
+Leerzeichen:
+
+\begin{ospcode}
+net-www/apache mpm-prefork mpm-worker threads
+\end{ospcode}
+\index{apache (Paket)}%
+\index{mpm-prefork (USE-Flag)}%
+\index{mpm-worker (USE-Flag)}%
+\index{threads (USE-Flag)}
+
+Die angegebenen USE-Flags lassen sich auch auf bestimmte
+Versionen beschränken, indem man dem Paketnamen ein Präfix
+\index{Paket!-präfix}%
+(siehe Kapitel \ref{paketpraefix}) voranstellt und die gewünschte
+Version anhängt (etwa \cmd{<net-www/apache-2*}). Dies sollte
+jedoch nur selten notwendig sein.
+
+Bei einem Eintrag ist dieses Verfahren noch recht übersichtlich. Wer
+aber nach längerem Betrieb des Systems zweihundert Einträge gesammelt
+hat wünscht sich möglicherweise etwas mehr Übersicht. Statt  eine
+einzelne Datei \cmd{/etc/portage/package.use}
+\index{package.use (Datei oder Verzeichnis)}%
+zu verwenden, lässt sich dieser Pfad auch als Verzeichnis
+anlegen. 
+
+Alle darin vorhandenen Dateien fügt Portage intern
+automatisch zusammen. So lassen sich die Einstellungen thematisch
+besser gruppieren
+\index{USE-Flag!Paket-spezifisch, gruppieren}%
+und verwalten, indem man z.\,B.\
+\cmd{/etc/portage/package.use/web-server}
+\index{web-server (Datei)}%
+\index{etc@/etc!portage!package.use!web-server}%
+dafür nutzt, USE-Flags spezifisch für den Webserver festzulegen,
+während man in \cmd{/etc/portage/package.use/desktop}
+\index{desktop (Datei)}%
+\index{etc@/etc!portage!package.use!desktop}%
+die USE-Flags für Desktop-relevante Pakete sammelt.
+\index{USE-Flag!package.use|)}%
+\index{USE-Flag!Paket-spezifisch|)}
+
+
+\subsection{flagedit}
+
+\index{flagedit (Programm)|(}%
+Auch die Datei \cmd{/etc/portage/package.use}
+\index{package.use (Datei oder Verzeichnis)}%
+lässt sich statt mit dem Text\-editor mit einem spezialisierten Tool
+bearbeiten. Dafür installieren wir das Paket \cmd{app-portage/flagedit}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/flagedit}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-perl/Array-RefElem-1.00  2 kB 
+[ebuild  N    ] virtual/perl-MIME-Base64-3.07  0 kB 
+[ebuild  N    ] dev-perl/XML-Parser-2.34  0 kB 
+[ebuild  N    ] dev-perl/DelimMatch-1.06  9 kB 
+[ebuild  N    ] dev-perl/Data-DumpXML-1.06  8 kB 
+[ebuild  N    ] dev-util/libconf-0.40.00  USE="xml" 314 kB 
+[ebuild  N    ] app-portage/flagedit-0.0.5  5 kB 
+
+Total: 7 packages (7 new), Size of downloads: 337 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{flagedit (Paket)}%
+%\index{app-portage (Kategorie)!flagedit (Paket)|see{flagedit (Paket)}}
+
+\begin{netnote}
+  Auch hier sind wieder nicht alle Quellpakete auf der DVD verfügbar
+  und wir benötigen die Verbindung ins Netz, um das Paket installieren
+  zu können.
+\end{netnote}
+
+Ähnlich wie \cmd{euse}
+\index{euse (Programm)}%
+erlaubt es uns, systemweite USE-Flags
+\index{USE-Flag!global}%
+zu aktivieren (mit vorangestelltem Pluszeichen),
+\index{USE-Flag!aktivieren}%
+\index{flagedit (Programm)!+ (Option)}%
+zu deaktivieren (mit vorangestelltem Minuszeichen)
+\index{USE-Flag!deaktivieren}%
+\index{flagedit (Programm)!- (Option)}%
+oder sie vollständig zu entfernen (mit vorangestelltem
+Prozentzeichen):
+\index{USE-Flag!entfernen}%
+\index{flagedit (Programm)!\% (Option)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit +X}
+\rprompt{\textasciitilde}\textbf{grep USE /etc/make.conf}
+USE="apache2 ldap mysql xml X"
+\rprompt{\textasciitilde}\textbf{flagedit \%X}
+\rprompt{\textasciitilde}\textbf{grep USE /etc/make.conf}
+USE="apache2 ldap mysql xml"
+\rprompt{\textasciitilde}\textbf{flagedit -X}
+\rprompt{\textasciitilde}\textbf{grep USE /etc/make.conf}
+USE="apache2 ldap mysql xml -X"
+\end{ospcode}
+
+Als Pfad nimmt \cmd{flagedit} per Default \cmd{/etc/make.conf}
+\index{make.conf (Datei)}%
+an, aber diese Standardeinstellung lässt sich mit der Option
+\cmd{-{}-make-conf-file}
+\index{flagedit (Programm)!make-conf-file (Option)}%
+beeinflussen.
+
+Um paketspezifische statt systemweite USE-Flags über \cmd{flagedit}
+zu definieren,
+\index{USE-Flag!Paket-spezifisch, verändern}%
+stellt man den Paketnamen vor die zu (de)aktivierenden USE-Flags (Mit dem Switch \cmd{-{}-show}
+\index{flagedit (Programm)!show (Option)}%
+\index{USE-Flag!Paket-spezifisch, anzeigen}%
+listet \cmd{flagedit} die aktuell aktiven USE-Flags für das angegebene
+Paket.):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit net-www/apache +mpm-prefork +mpm-worker +threads}
+\rprompt{\textasciitilde}\textbf{flagedit net-www/apache --show}
+mpm-prefork mpm-worker threads
+\end{ospcode}
+\index{mpm-prefork (USE-Flag)}%
+\index{mpm-worker (USE-Flag)}%
+\index{threads (USE-Flag)}
+
+
+
+\cmd{flagedit} modifiziert standardmäßig
+\cmd{/etc/portage/package.use},
+\index{package.use (Datei oder Verzeichnis)}%
+was sich aber über die Option \cmd{-{}-package-file}
+\index{flagedit (Programm)!package-file (Option)}%
+ändern lässt. Das ist besonders dann notwendig, wenn man
+\cmd{/etc/portage/package.use} als Verzeichnis
+\index{package.use (Datei oder Verzeichnis)}%
+verwendet.
+
+Wenn wir die paketspezifischen Einstellungen
+verwenden, sollte sich das auch auf unsere Installation
+auswirken:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] net-www/apache-2.0.58-r2  USE="apache2 ldap mpm-prefork*
+ mpm-worker* ssl threads* -debug -doc -mpm-itk -mpm-leader -mpm-peruser 
+-mpm-threadpool (-selinux) -static-modules" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+\end{ospcode}
+\index{apache (Paket)}
+
+Bei diesem Aufruf sind die drei neu aktivierten USE-Flags
+(\cmd{mpm-worker}, \cmd{mpm-prefork} und \cmd{threads})
+\index{mpm-prefork (USE-Flag)}%
+\index{mpm-worker (USE-Flag)}%
+\index{threads (USE-Flag)}%
+grün markiert und mit einem Sternchen versehen:
+\index{emerge (Programm)!Farbcode}%
+Sie sind also in unserer Installation nicht aktiviert und
+würden sich erst bei einer erneuten Installation auswirken.
+
+Drei Varianten, über die sich USE-Flags setzen lassen (Profil,
+\index{USE-Flag!Profil}%
+\cmd{make.conf},
+\index{USE-Flag!make.conf}%
+\cmd{package.use})
+\index{USE-Flag!package.use}%
+haben wir jetzt kennen gelernt. Zuletzt lassen sich
+USE-Flags aber auch über die Umgebungsvariable \cmd{USE}
+\index{USE-Flag!USE (Variable)}%
+\index{USE (Variable)}%
+setzen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{USE="-mpm-prefork mpm-peruser" emerge -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] net-www/apache-2.0.58-r2  USE="apache2 ldap mpm-peruser*
+ mpm-worker* ssl threads* -debug -doc -mpm-itk -mpm-leader -mpm-prefork 
+-mpm-threadpool (-selinux) -static-modules" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+\end{ospcode}
+\index{apache (Paket)}%
+\index{mpm-prefork (USE-Flag)}%
+\index{mpm-worker (USE-Flag)}%
+\index{threads (USE-Flag)}
+
+\label{useoncli}
+Diese Methode hat einen gravierenden Nachteil: Installiert man das
+Paket in dieser Form, indem man das der Variablendefinition
+nachgestellte \cmd{emerge}-Kommando
+\index{emerge (Programm)}%
+ohne \cmd{-pv} aufruft, so gelten die angegebenen USE-Flags nur für
+diese Installation. Beim nächsten Update vergisst man meist, die
+Variable mit anzugeben und spielt somit eine neue Version auf, der die
+benötigte Funktionalität fehlt. Für Testzwecke eignet sich die
+Spezifikation von USE-Flags per Umgebung gut,
+\index{USE-Flag!testen}%
+bei positivem Ergebnis überträgt man sie besser in die Datei
+\cmd{/etc/portage/package.use}.
+\index{package.use (Datei oder Verzeichnis)}%
+\index{flagedit (Programm)|)}%
+\index{Paket!Eigenschaften wählen|)}%
+
+\subsection{Spezielle USE-Flags}
+
+Es gibt einige Situationen, in denen das USE-Flag-Konzept
+etwas einengend wirkt.
+\index{USE-Flag!erweitert|(}%
+Schauen wir uns zur Demonstration einmal an, was \cmd{emerge} %
+\index{emerge (Programm)}%
+liefert, wenn wir den Firefox-Browser %
+\index{Firefox (Programm)}%
+installieren möchten (wir verwenden hier die \cmd{-{}-nodeps}-Option %
+\index{emerge (Programm)!nodeps (Option)}%
+(bzw.\ \cmd{-O}; siehe Seite \pageref{emergenodeps}), da wir nicht
+gleich ein ganzes Desktop-System installieren wollen):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pvO www-client/mozilla-firefox}
+
+These are the packages that would be merged, in order:
+
+[ebuild  N    ] www-client/mozilla-firefox-2.0.0.3  USE="ipv6 -bindist -
+debug -filepicker -gnome -java -mozdevelop -moznopango -restrict-javascr
+ipt -xforms -xinerama -xprint" LINGUAS="-af -ar -be -bg -ca -cs -da -de 
+-el -en_GB -es -es_AR -es_ES -eu -fi -fr -fy -fy_NL -ga -ga_IE -gu -gu_I
+N -he -hu -it -ja -ka -ko -ku -lt -mk -mn -nb -nb_NO -nl -nn -nn_NO -pa 
+-pa_IN -pl -pt -pt_BR -pt_PT -ru -sk -sl -sv -sv_SE -tr -zh -zh_CN -zh_T
+W" 0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+\end{ospcode}
+
+\cmd{emerge} zeigt hier plötzlich nicht nur die Variable \cmd{USE}
+\index{USE (Variable)}%
+an, sondern gleich dahinter, in ähnlichem Format, die Variable
+\cmd{LINGUAS}.
+\index{LINGUAS (Variable)}%
+Die darin gelisteten Einträge lassen schon erahnen, worum es sich hier
+handelt: Die Unterstützung verschiedener Sprachen durch dieses
+Pakets.
+\index{USE-Flag!Sprachunterstützung}%
+\index{Sprach!-unterstützung}
+Gerade populäre Software liegt oftmals in
+verschiedenen Sprachen vor. Nun ist es im deutschsprachigen Raum aber
+selten sinnvoll, die Unterstützung zum Beispiel für das Japanische mit
+zu installieren.
+\index{Sprach!-unterstützung installieren}
+
+Es geht also um eine bei der Installation relevante Entscheidung und
+entsprechend sollte es USE-Flags geben, die dem Benutzer die Auswahl
+erlauben, welche Sprachen er installiert haben möchte.
+\index{USE-Flag!Sprachunterstützung}
+Es wäre möglich gewesen, die verschiedenen Sprachen durch
+globale USE-Flags
+\index{USE-Flag!global}%
+zu repräsentieren, aber die Übersichtlichkeit bei den bestehenden
+globalen USE-Flags hätte stark gelitten.
+
+Das gleiche Problem besteht auch bei Paketen, die eine Vielzahl
+unterschiedlicher Hardware unterstützen
+\index{Paket!Hardwareunterstützung}%
+und die entsprechenden Treiber installieren. Warum sollte man den
+Grafikkarten-Treiber
+\index{Grafik!-karten Treiber}%
+für Radeon-Karten installieren, wenn man eine Nvidia-Karte verwendet?
+Die Vielzahl verschiedener Grafikkarten-Treiber des X-Servers gaben
+den eigentlichen Ausschlag für das Konzept der \emph{erweiterten
+  USE-Flags}.
+\label{useexpand}%
+\index{USE-Flag!erweitert}
+
+Anfänglich waren nur \cmd{LINGUAS}
+\index{LINGUAS (Variable)}%
+(für Sprachen),
+\index{Sprach!-unterstützung}%
+\cmd{VIDEO\_DEVICES}
+\index{VIDEO\_DEVICES (Variable)}%
+(für Grafikkarten)
+\index{Grafikkarten}%
+und \cmd{INPUT\_DEVICES}
+\index{INPUT\_DEVICES (Variable)}%
+(für Eingabegeräte)
+\index{Eingabegerät}%
+definiert. Mittlerweile hat das Konzept aber stärkere Verbreitung
+gefunden; in
+\cmd{/usr/portage/local/""gentoo/gentoo-portage/profiles/base/make.defaults}
+\index{make.defaults (Datei)}%
+\index{usr@/usr!portage!profiles!base!make.defaults}%
+stehen unter \cmd{USE\_EXPAND}
+\index{USE\_EXPAND (Variable)}%
+alle derzeit gültigen erweiterten USE-Flags.
+
+Die erweiterten USE-Flags funktionieren eigentlich genau wie
+\cmd{USE} %
+\index{USE (Variable)}%
+selbst auch. Wir können sie in \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+festlegen oder auch auf der Kommandozeile angeben.
+Die Einträge in \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+können beispielsweise folgendermaßen aussehen:
+
+\begin{ospcode}
+LINGUAS="de en"
+INPUT_DEVICES="keyboard mouse"
+VIDEO_CARDS="nvidia"
+\end{ospcode}
+\index{LINGUAS (Variable)}%
+\index{VIDEO\_DEVICES (Variable)}%
+\index{INPUT\_DEVICES (Variable)}
+
+Unter \cmd{LINGUAS} %
+\index{LINGUAS (Variable)}%
+sollte man im deutschen Sprachraum wenigstens \cmd{de} %
+\index{de (Sprache)}%
+%\index{Sprache!de|see{de (Sprache)}}%
+und \cmd{en} %
+\index{en (Sprache)}%
+%\index{Sprache!en|see{en (Sprache)}}%
+angeben. Als grundlegende \cmd{INPUT\_DEVICES} %
+\index{INPUT\_DEVICES (Variable)}%
+bieten die meisten Systeme eine Tastatur (\cmd{keyboard}) %
+\index{keyboard (Eingabegerät)}%
+%\index{Eingabegerät!keyboard|see{keyboard (Eingabegerät)}}%
+und eine Maus (\cmd{mouse}). %
+\index{mouse (Eingabegerät)}%
+%\index{Eingabegerät!mouse|see{mouse (Eingabegerät)}}%
+Bleibt noch die Grafikkarte unter \cmd{VIDEO\_DEVICES} %
+\index{VIDEO\_DEVICES (Variable)}%
+aufzuführen. Die meisten werden sich hier zwischen \cmd{nvidia} %
+\index{nvidia (Grafikkarte)}%
+%\index{Grafik!-karte nvidia|see{nvidia (Grafikkarte)}}%
+und \cmd{radeon} %
+\index{radeon (Grafikkarte)}%
+%\index{Grafikkarte!radeon|see{radeon (Grafikkarte)}}%
+entscheiden müssen.
+
+Für eine Server-Maschine, wie wir sie hier installieren, spielen diese
+Einstellungen jedoch eine geringere Rolle, da bisher vor allem die
+Desktop-orientierten Pakete (und primär der X-Server
+\cmd{x11-base/xorg-server}) diese Mechanismen unterstützen.% %
+\index{xorg-server (Paket)}%
+%\index{x11-base (Kategorie)!xorg-server (Paket)|see{xorg-server    (Paket)}}%
+\index{USE-Flag!erweitert|)}%
+
+\index{USE-Flag!besondere|(} Abschließend seien noch zwei besondere
+USE-Flags erwähnt, die man als Benutzer jedoch nicht setzen kann bzw.\
+darf. Zum einen das USE-Flag \cmd{test}, %
+\index{test (USE-Flag)}%
+%\index{USE-Flag!test|see{test (USE-Flag)}}%
+zum anderen die \emph{architekturspezifischen USE-Flag}.
+\index{USE-Flag!Architektur-spezifische}
+
+Bringt ein Paket automatisierte Testroutinen mit, %
+\index{Testroutinen}%
+dann lassen sich diese während der Installation durchlaufen, indem man
+der Variablen \cmd{FEATURES} %
+\index{FEATURES (Variable)}%
+(mehr dazu im nächsten Kapitel ab Seite
+\pageref{features}) in \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+die Option \cmd{test} %
+\index{test (Option)}%
+hinzufügt. In diesem Fall aktiviert Portage intern automatisch das
+USE-Flag \cmd{test}. %
+\index{test (USE-Flag)}%
+Diesen automatischen Ablauf dürfen wir nicht stören, indem wir es in
+\cmd{/etc/make.conf} eintragen.% %
+\index{make.conf (Datei)}
+
+Gleiches gilt für die \emph{architekturspezifischen USE-Flags}. %
+\index{USE-Flag!Architektur-spezifische}%
+Portage aktiviert automatisch ein USE-Flag entsprechend dem gewählten
+Profil (z.\,B.\ \cmd{x86} %
+\index{x86 (USE-Flag)}%
+für das \cmd{x86}-Profil). %
+\index{x86 (Profil)}%
+Auch diese USE-Flags dürfen Benutzer nicht zur \cmd{USE}"=Variablen
+hinzufügen.% %
+\index{USE-Flag|)}%
+\index{USE-Flag!besondere|)}%
+
+\ospnewpage
+
+\section{\label{profiles}Profile}
+
+\index{profiles (Verzeichnis)|(}%
+\index{Profil|(}%
+Wir haben uns schon während der Installation in Kapitel
+\ref{selectprofile} kurz mit den Grundlagen der \emph{Profile} in
+\cmd{/usr/portage/profiles} %
+\index{profiles (Verzeichnis)}%
+\index{usr@/usr!portage!profiles}%
+beschäftigt. Während es bei der Installation erst einmal nur um die
+verschiedenen Verzeichnisse und die dadurch repräsentierten Profile
+ging, haben wir uns in den vorangegangenen Abschnitten gelegentlich auf
+den Inhalt dieser Verzeichnisse (z.\,B.\ \cmd{make.defaults} oder %
+\index{make.defaults (Datei)}%
+die Datei \cmd{use.desc}) %
+\index{use.desc (Datei)}%
+bezogen.
+
+Wir wollen an dieser Stelle einen kurzen Überblick über die
+wichtigsten Funktionen von \cmd{/usr/portage/profiles} geben.
+Direkt im Verzeichnis \cmd{/usr/portage/profiles} liegen einige
+Dateien, die globale Informationen für Portage liefern.% %
+\index{Portage!Steuerdateien}
+
+\begin{ospdescription}
+  \ospitem{\cmd{use.desc}, \cmd{use.local.desc}} %
+  Diese Dateien liefern eine kurze Beschreibung %
+  \index{use.desc (Datei)}%
+  der USE-Flags. %
+  \index{USE-Flag!Beschreibung}%
+  Beide haben wir schon auf Seite \pageref{usedesc} kennen gelernt.
+
+  \ospitem{\cmd{arch.list}} %
+  Eine Liste der von Gentoo unterstützten Architekturen.% %
+  \index{arch.list (Datei)}%
+  \index{usr@/usr!portage!profiles!arch.list}%
+  \index{Architektur}%
+
+  \ospitem{\cmd{categories}} %
+  Die Liste der gültigen Kategorien des Portage-Baumes.% %
+  \index{categories (Datei)}%
+  \index{usr@/usr!portage!profiles!categories}%
+  \index{Kategorie}%
+
+  \ospitem{\cmd{ChangeLog}} %
+  Die von den Entwicklern in diesem Verzeichnis vorgenommenen
+  Änderungen.% %
+  \index{ChangeLog (Datei)}%
+  \index{usr@/usr!portage!profiles!ChangeLog}%
+
+  \ospitem{\cmd{info\_*}} %
+  \label{emergeinfolist}%
+  Definiert, welche Informationen \cmd{emerge -{}-info} %
+  \index{emerge (Programm)!info (Option)}%
+  \index{info\_* (Datei)}%
+  \index{usr@/usr!portage!profiles!info\_*}%
+  ausgibt. Siehe auch Seite \pageref{emergeinfo}.
+
+  \ospitem{\cmd{package.mask}} %
+  Die Liste maskierter Pakete. %
+  \index{Paket!maskiert}%
+  \index{package.mask (Datei)}%
+  \index{usr@/usr!portage!profiles!package.mask}%
+  Siehe weiter unten Kapitel \ref{MaskiertePakete}.
+
+  \ospitem{\cmd{profiles.desc}} %
+  Eine Übersicht über die verfügbaren Profile und deren
+  Stabilitätsgrad. %
+  \index{profiles.desc (Datei)}%
+  \index{usr@/usr!portage!profiles!profiles.desc}%
+  \index{Profil!Beschreibung}%
+
+  \ospitem{\cmd{repo\_name}} %
+  Der Name des Repositories, das unter \cmd{/usr/portage} liegt. Das
+  ist eigentlich immer der Portage-Baum und der trägt den Namen
+  \cmd{gentoo}. Diese Datei im Verzeichnis \cmd{profiles} spielt erst
+  eine Rolle, wenn wir uns im Kapitel \ref{overlays} mit Overlays
+  beschäftigen.% %
+  \index{repo\_name (Datei)}%
+  \index{usr@/usr!portage!profiles!repo\_name}
+
+  \ospitem{\cmd{thirdpartymirrors}} %
+  Enthält eine Liste von häufig verwendeten Servern für das
+  Herunterladen von Quellpaketen.% %
+  \index{thirdpartymirrors (Datei)}%
+  \index{usr@/usr!portage!profiles!thirdpartymirrors}%
+  \index{Mirror!Liste}%
+\end{ospdescription}
+
+Das Verzeichnis \cmd{desc} %
+\index{desc (Verzeichnis)}%
+\index{usr@/usr!portage!profiles!desc}%
+enthält die Beschreibung der erweiterten USE-Flags, %
+\index{USE-Flag!erweitert, Beschreibung}%
+die wir weiter oben auf Seite \pageref{useexpand} angesprochen haben.
+Das Verzeichnis \cmd{updates} %
+\index{updates (Verzeichnis)}%
+\index{usr@/usr!portage!profiles!updates}%
+definiert spezielle Operationen, die Portage durchführen muss, wenn
+Pakete z.\,B.\ die Kategorie %
+\index{Kategorie!-wechsel}%
+wechseln. Die darin enthaltenen Dateien sind nach Quartalen sortiert.
+
+Die übrigen Verzeichnisse definieren -- abgesehen von
+\cmd{obsolete},
+\index{obsolete (Verzeichnis)}%
+\index{usr@/usr!portage!profiles!obsolete}%
+das aber tatsächlich obsolet ist -- Gentoo-Profile.
+Ein Profil-Verzeichnis enthält im Normalfall eine Sammlung von
+Sub-Profilen %
+\index{Profil!Kind}%
+%\index{Sub-Profil|see{Profil, Kind}}%
+und Dateien, die Grundeigenschaften des Profils definieren.
+
+Wir wollen hier nur auf die wichtigsten Dateien eingehen:
+
+\begin{ospdescription}
+  \ospitem{\cmd{parent}} %
+  Ist dieser Eintrag vorhanden, handelt es sich um ein Sub-Profil und %
+  \index{Profil!Kind}%
+  \index{parent (Datei)}%
+  \cmd{parent} verweist dann auf das Eltern-Profil. %
+  \index{Profil!übergeordnet}%
+  Dieser Mechanismus erlaubt hierarchische Profile %
+  \index{Profil!hierarchisch}%
+  und macht die Definition derselben effizient. Ein Sub-Profil erbt %
+  \index{Profil!erben}%
+  alle Einstellungen des Eltern-Profils und kann diese abwandeln.
+
+  \ospitem{\cmd{make.defaults}} %
+  Definiert die Standardeinstellungen für Variablen, %
+  \index{make.defaults (Datei)}%
+  \index{Profil!Standardeinstellungen}%
+  die der Benutzer mit Hilfe von \cmd{/etc/make.conf} %
+  \index{make.conf (Datei)}%
+  verändern kann.
+
+  \ospitem{\cmd{packages}} %
+  Die Pakete, %
+  \index{packages (Datei)}%
+  \index{Profil!Pakete}%
+  die für dieses Profil zwingend installiert sein müssen.
+
+  \ospitem{\cmd{package.use}} %
+  USE-Flags, %
+  \index{package.use (Datei)}%
+  \index{Profil!USE-Flags}%
+  die in diesem Profil für die entsprechenden Pakete dringend
+  empfohlen werden oder schlicht notwendig sind.
+
+  \ospitem{\cmd{package.use.mask}} %
+  USE-Flags, die in diesem Profil für die entsprechenden Pakete nicht
+  \index{package.use.mask (Datei)}%
+  verwendet werden können %
+  \index{Profil!maskierte USE-Flags}%
+  oder möglicherweise zu Fehlfunktionen führen.
+
+  \ospitem{\cmd{use.force}} %
+  USE-Flags, %
+  \index{use.force (Datei)}%
+  \index{Profil!USE-Flags}%
+  die in diesem Profil zwingend notwendig sind.
+
+  \ospitem{\cmd{use.mask}} %
+  USE-Flags, die in diesem Profil nicht verwendet werden %
+  \index{use.mask (Datei)}%
+  \index{Profil!maskierte USE-Flags}%
+  können oder möglicherweise zu Fehlfunktionen führen.
+
+  \ospitem{\cmd{virtuals}} %
+  Definiert für virtuelle Pakete (siehe Kapitel \ref{virtuals}) %
+  \index{virtuals (Datei)}%
+  \index{Paket!virtuell}%
+  die Standardauswahl für dieses Profil.
+\end{ospdescription}
+\index{profiles (Verzeichnis)|)}
+
+\subsection{\label{eselectprofile}Das Profil mit eselect auswählen}
+
+\index{eselect (Programm)|(}%
+Das zu  verwendende Profil %
+\index{Profil!auswählen}%
+lässt sich auch mit dem Werkzeug \cmd{eselect} auswählen. Genaueres zu dem
+Programm findet sich in Kapitel \ref{eselect} ab Seite
+\pageref{eselect}. Wir wollen uns hier nur mit dem
+\cmd{profile}-Modul %
+\index{eselect (Programm)!profile (Modul)}%
+beschäftigen, installieren aber erst einmal
+\cmd{eselect}:
+
+\label{eselectinstall}
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-admin/eselect}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-admin/eselect-1.0.7  USE="-bash-completion -doc" 0 k
+B 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{eselect (Paket)}%
+%\index{app-admin (Kategorie)!eselect (Paket)|see{eselect (Paket)}}%
+
+Einen Überblick über die Funktionen des \cmd{profile}-Moduls 
+liefert \cmd{eselect profile}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect profile}
+Usage: eselect profile <action> <options>
+
+Standard actions:
+  help                      Display help text
+  usage                     Display usage information
+  version                   Display version information
+
+Extra actions:
+  list                      List available profile symlink targets
+  set <target>              Set a new profile symlink target
+    target                    Target name or number (from 'list' action)
+    --force                   Forcibly set the symlink
+  show                      Show the current make.profile symlink
+\end{ospcode}
+\index{eselect (Programm)!profile (Modul)}%
+
+\cmd{show} %
+\index{eselect (Programm)!profile - show (Option)}%
+zeigt also das derzeit ausgewählte Profil:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect profile show}
+Current make.profile symlink:
+  /usr/portage/profiles/default-linux/x86/2007.0 
+\end{ospcode}
+
+Die für unsere Architektur gültigen Profile liefert der Befehl
+\cmd{list}: %
+\index{eselect (Programm)!profile - list (Option)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect profile list}
+Available profile symlink targets:
+  [1]   default-linux/x86/2006.1
+  [2]   default-linux/x86/no-nptl
+  [3]   default-linux/x86/no-nptl/2.4
+  [4]   default-linux/x86/2006.1/desktop
+  [5]   hardened/x86/2.6
+  [6]   selinux/x86/2006.1
+\end{ospcode}
+
+Verwunderlich ist hier, das unser derzeit aktiviertes Profil
+\cmd{2007.0} %
+\index{2007.0}%
+sich nicht wiederfindet. Denn das \cmd{profile}-Module %
+\index{eselect (Programm)!profile (Modul)}%
+ist in Version 1.0.7 von \cmd{eselect} noch fehlerhaft, wir können
+es hier also nicht wie geplant verwenden. Wenn Sie ihr System später
+aktualisiert haben, wird die neuere Version korrekt funktionieren.
+
+Sollten wir das Profil wechseln wollen, bedienen wir uns der Option
+\cmd{set}: %
+\index{eselect (Programm)!profile - set (Option)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect profile set 2}
+\end{ospcode}
+
+\cmd{eselect} verändert hier lediglich den
+\cmd{/etc/make.profile}-Symlink.
+\index{make.profile (Link)}%
+Allerdings wird das Tool zunehmend für verschiedene
+Gentoo"=Konfigurationsaufgaben genutzt und bietet ein einheitliches
+Interface. Deshalb ist seine Verwendung durchaus zu empfehlen.
+\index{Profil|)}%
+\index{eselect (Programm)|)}%
+
+\section{\label{portagekeywords}Keywords}
+
+\index{Keywords|(}%
+Die gleichen Mechanismen, die für die Variable \cmd{USE}
+\index{USE (Variable)}%
+gelten, kommen auch bei \cmd{ACCEPT\_KEYWORDS}
+\index{ACCEPT\_KEYWORDS (Variable)}%
+zum Tragen. Auch hinter den
+so genannten \emph{Keywords}, steckt ein recht komplexes Konzept, das wir uns nun genauer ansehen wollen.
+
+Keywords liefern die Grundlage, um die Stabilität %
+\index{Paket!Stabilität}%
+einzelner Paketversionen zu markieren. Es gibt hier nur zwei Stufen:
+instabil %
+\index{Paket!instabil}%
+\index{Keyword!instabil}%
+und stabil. %
+\index{Paket!stabil}%
+\index{Keyword!stabil}%
+Jede (Prozessor-)Architektur, unter der Gentoo läuft, bietet ein
+eigenes Keyword, %
+\index{Keyword!Architektur}%
+so z.\,B.\ \cmd{x86} %
+\index{x86 (Keyword)}%
+%\index{Architektur!x86|see{x86 (Keyword)}}%
+%\index{Keyword!x86|see{x86 (Keyword)}}%
+für i*86-basierte Maschinen, \cmd{ppc} %
+\index{ppc (Keyword)}%
+%\index{Architektur!ppc|see{ppc (Keyword)}}%
+%\index{Keyword!ppc|see{ppc (Keyword)}}%
+für die PowerPC-Architektur oder \cmd{amd64} %
+\index{amd64 (Keyword)}%
+%\index{Architektur!amd64|see{amd64 (Keyword)}}%
+%\index{Keyword!amd64|see{amd64 (Keyword)}}%
+für 64-Bit-Maschinen.
+
+\subsection{\label{unstable}\label{stability}Stabil/Instabil}
+
+Um anzuzeigen, dass ein Paket für eine entsprechende Architektur als
+stabil gilt, %
+\index{Keyword!stabil}%
+\index{Paket!stabil}%
+nehmen die Entwickler das entsprechende Keyword in die Paketdefinition
+auf. Ist das Paket auf der Plattform installierbar, jedoch noch nicht
+ausreichend getestet, so fügen sie das entsprechende Keyword mit einer
+vorangestellten Tilde %
+\index{Keyword!Tilde}%
+(also {\textasciitilde}x86, {\textasciitilde}amd64 etc.)  hinzu.
+
+Instabil markierte Pakete sind allerdings nicht nur weniger
+getestet, sondern %
+\index{Keyword!instabil}%
+\index{Paket!instabil}%
+Gentoo gibt darüber hinaus für diese Pakete auch keine
+Sicherheitswarnungen heraus (siehe Seite \pageref{instablesec}).
+
+Fehlt die Keyword-Angabe in der Paketdefinition, %
+\index{Keyword!fehlt}%
+\index{Paket!ungetestet}%
+dann hat entweder noch kein Gentoo-Entwickler das Paket auf einer
+solchen Plattform installiert oder es ist bekannt, dass dieses Paket
+nicht konfliktfrei auf der entsprechenden Architektur
+läuft. \cmd{emerge} %
+\index{emerge (Programm)}%
+weigert sich in diesen Fällen, das entsprechende Paket zu
+installieren.
+
+Mit der Variablen \cmd{ACCEPT\_KEYWORDS} legen wir nun fest, welche
+Keywords wir für unser System akzeptieren.  Wie bei den USE-Flags gibt
+es vier Ebenen, über die wir \cmd{ACCEPT\_KEYWORDS} %
+\index{ACCEPT\_KEYWORDS (Variable)!beeinflussen}%
+modifizieren können. Die Standardeinstellung findet sich wieder im
+gewählten Profil. %
+\index{Profil} \index{Profil!ACCEPT\_KEYWORDS (Variable)}%
+Für die \cmd{x86}-Architektur %
+\index{x86 (Keyword)}%
+in
+\cmd{/usr/portage/profiles/default-linux/x86/make.defaults}:
+\index{make.defaults (Datei)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{grep KEYWORDS \textbackslash}
+> \textbf{/usr/portage/profiles/default-linux/x86/make.defaults}
+ACCEPT_KEYWORDS="x86"
+\end{ospcode}
+\index{x86 (Keyword)}
+
+Für die anderen Architekturen findet sich der Standard-Wert analog im
+zugehörigen Profil (z.\,B.\ \cmd{amd64} %
+\index{amd64 (Keyword)}%
+in \cmd{/usr/portage/profiles/default-linux""/amd64/make.defaults}).% %
+\index{make.defaults (Datei)}%
+
+Auf der zweiten Ebene lässt sich \cmd{ACCEPT\_KEYWORDS}
+\index{ACCEPT\_KEYWORDS (Variable)}%
+wieder über die Datei \cmd{/etc/make.conf}
+\index{make.conf (Datei)}%
+\index{Keyword!festlegen}%
+beeinflussen. Im Normalfall ist kein Wert vorgegeben, dann zählt
+die Einstellung des Profils.
+
+Um das eigene System nur mit instabilen Paketen zu fahren, ist es
+möglich, das Keyword mit einer Tilde zu versehen
+(\cmd{ACCEPT\_KEYWORDS="{}{\textasciitilde}x86}"{}). %
+\index{ACCEPT\_KEYWORDS (Variable)}%
+Von diesem Vorgehen raten wir jedoch dringend ab. Die instabilen
+Pakete tragen ihren Namen nicht zu Unrecht %
+\index{Paket!instabil}%
+und sind vielfach mit Vorsicht zu genießen (siehe auch Seite
+\pageref{instablesec}). Ein vollständig mit instabilen Paketen
+bestücktes System %
+\index{System!instabil}%
+erfreut im Normalfall höchstens die Gentoo-Entwickler, da sie mehr
+Fehlerberichte erhalten. Für den Nutzer resultieren die möglichen
+Probleme jedoch sehr leicht in einer hohen Menge Frustration. Auch das
+erhöhte Sicherheitsrisiko %
+\index{Sicherheit}%
+einer solchen Maschine im Netz sollte man bedenken.
+
+Bietet eine neue, noch instabil markierte Version %
+\index{Paket!instabile Version}%
+jedoch Eigenschaften, die man dringend benötigt, möchte man diese
+natürlich auch installieren. %
+\index{Paket!instabil installieren}%
+Hier wirkt sich die Tatsache, dass Gentoo Pakete auf Basis des
+Quellcodes installiert, extrem günstig aus: Es ist überhaupt kein
+Problem, eine im wesentlichen aus stabilen Paketen bestehende Installation
+mit ein paar instabilen Paketen zu "`würzen"'. Selbst die zentralen
+Pakete einer Distribution lassen sich problemlos in der instabilen
+Variante nutzen, ohne dass man gleich die gesamte Installation in ein
+instabiles System verwandelt.
+
+Auf einem System, auf dem \cmd{ACCEPT\_KEYWORDS} %
+\index{ACCEPT\_KEYWORDS (Variable)}%
+in \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+wie oben geschildert nur stabile Pakete zulässt, verweigert \cmd{emerge} %
+\index{emerge (Programm)}%
+die Installation einer derzeit instabil markierten Apache-Version:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv ">=net-www/apache-2.2.0"}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies /
+!!! All ebuilds that could satisfy ``>=net-www/apache-2.2.0'' have been 
+masked.
+!!! One of the following masked packages is required to complete your 
+request:
+- net-www/apache-2.2.4 (masked by: package.mask, ~x86 keyword)
+# Michael Stewart <vericgar@gentoo.org> (03 Feb 2006)
+# Mask for testing of new Apache 2.2 version
+
+For more information, see MASKED PACKAGES section in the emerge man page 
+or refer to the Gentoo Handbook.
+
+\end{ospcode}
+\index{apache (Paket)}
+
+Um einzelne Pakete in der instabilen Version zu akzeptieren, bietet Portage
+den gleichen Mechanismus wie für die USE-Flags. Wir können in der Datei
+\cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei oder Verzeichnis)}%
+\index{etc@/etc!portage!package.keywords}%
+\index{Paket!instabil installieren}%
+paketspezifisch Keywords angegeben. %
+\index{Keyword!Paket-spezifisch}%
+Es gilt, was schon für \cmd{/etc/portage/package.use} galt: die Datei
+können wir alternativ auch als Verzeichnis anlegen. In diesem Fall
+fasst \cmd{emerge} alle Dateien innerhalb von
+\cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei oder Verzeichnis)}%
+\index{etc@/etc!portage!package.use}%
+zusammen.
+
+Das Format für \cmd{package.keywords}
+\index{package.keywords (Datei oder Verzeichnis)!Format}%
+ist dasselbe wie für \cmd{package.use}. Einer Zeile mit der
+Paketbezeichnung folgen die akzeptierten Keywords für dieses Paket:
+
+\begin{ospcode}
+net-www/apache ~x86
+\end{ospcode}
+
+Obiges Beispiel würde auf der Maschine die instabile Apache-Version
+\index{Apache!instabil}%
+akzeptieren. Bevor man instabile Pakete auf der eigenen Maschine
+akzeptiert, sollte man sich auch Gedanken um die Möglichen
+Auswirkungen auf die Sicherheit des eigenen Systems machen. Wir gehen
+darauf in Kapitel \ref{instablesec} ab Seite \pageref{instablesec}
+genauer ein.
+
+In vielen Fällen zieht das Akzeptieren eines Paketes in der instabilen
+Version einen Rattenschwanz instabiler Pakete hinter sich her, da die
+neuen Paketversionen vielfach auch von Paketen abhängig sind, die noch
+nicht stabil markiert sind. %
+\index{Paket!instabil installieren}%
+\index{Paket!-abhängigkeiten, instabil}%
+Die entsprechenden Pakete muss man ebenfalls in die Datei
+\cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei oder Verzeichnis)}%
+aufnehmen, damit \cmd{emerge} das eigentliche Paket bereitwillig
+installiert. Diese Aufgabe kann man sich mit dem Werkzeug
+\cmd{autounmask} %
+\index{autounmask (Programm)}%
+erleichtern. Wir beschreiben es weiter unten in Abschnitt
+\ref{autounmask}.% %
+\label{maskdeps}
+
+Wieder können wir uns des Werkzeugs \cmd{flagedit} %
+\index{flagedit (Programm)}%
+bedienen, um die paket\-spezifischen Keywords zu editieren. Ein
+doppeltes Minus (\cmd{-{}-}) %
+\index{flagedit (Programm)!-{}- (Option)}%
+teilt dem Tool mit, dass wir Keywords statt USE-Flags editieren
+möchten:% %
+\index{Keyword!Paket-spezifisch}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit net-www/apache -- +{\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{flagedit net-www/apache -- --show}
+{\textasciitilde}x86
+\end{ospcode}
+
+Keywords lassen sich mit dem Prozentzeichen wieder entfernen:
+\index{Keyword!Paket-spezifisch}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit net-www/apache -- \%}
+\rprompt{\textasciitilde}\textbf{flagedit net-www/apache -- --show}
+
+\rprompt{\textasciitilde}\textbf{flagedit net-www/apache -- +{\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{flagedit net-www/apache -- --show}
+{\textasciitilde}x86
+\end{ospcode}
+
+Testen wir einmal, wie sich das auf den \cmd{emerge}-Aufruf auswirkt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild     U ] net-www/apache-2.0.59-r2 [2.0.58-r2] USE="apache2 ldap m
+pm-prefork* mpm-worker* ssl threads* -debug -doc -mpm-itk -mpm-leader -m
+pm-peruser -mpm-threadpool (-selinux) -static-modules" 4,690 kB 
+
+Total: 1 package (1 upgrade), Size of downloads: 4,690 kB
+\end{ospcode}
+\index{emerge (Programm)}%
+\index{apache (Paket)}
+
+Es würde hier also zu einem Upgrade kommen, was \cmd{emerge} durch das
+vorne stehende \cmd{U} anzeigt. Während \cmd{2.0.58-r2} also die
+derzeit stabile Version darstellt,
+\index{apache (Paket)!stabil}%
+ist \cmd{net-www/apache-2.0.59-r2}
+\index{apache (Paket)!instabil}%
+noch in der Testphase, und die Entwickler betrachten sie als ungeeignet
+für Produktivsysteme.
+
+Ähnlich wie \cmd{USE} lässt sich auch die Variable
+\cmd{ACCEPT\_KEYWORDS}
+\index{ACCEPT\_KEYWORDS (Variable)!beeinflussen}%
+als Umgebungsvariable beim \cmd{emerge}-Aufruf
+\index{emerge (Programm)}%
+verwenden, um instabile Pakete temporär zu akzeptieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ACCEPT_KEYWORDS="~x86" emerge -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild     U ] net-www/apache-2.0.59-r2 [2.0.58-r2] USE="apache2 ldap m
+pm-prefork* mpm-worker* ssl threads* -debug -doc -mpm-itk -mpm-leader -m
+pm-peruser -mpm-threadpool (-selinux) -static-modules" 4,690 kB 
+
+Total: 1 package (1 upgrade), Size of downloads: 4,690 kB
+\end{ospcode}
+
+Auch hier raten wir allerdings davon ab, diesen Mechanismus zu
+verwenden. Da die Einstellung nur temporär gesetzt wird, kann man die
+Tatsache, dass man ein instabiles Paket installiert hat, beim nächsten
+Update leicht vergessen, und \cmd{emerge} wählt dann wieder die
+stabile Version.
+
+\section{\label{unstablepkg}Ein instabiles Paket auswählen}
+
+\index{Paket!instabil|(}%
+Wir haben schon davon abgeraten, systemweit instabile Pakete zu
+installieren. Wann sollte man denn überhaupt ein instabiles Paket
+wählen?
+
+Es gibt eigentlich nur zwei Gründe, die für ein instabiles Paket
+sprechen:
+
+\begin{osplist}
+\item Das instabil markierte Paket hat Eigenschaften, die in der
+  stabilen Version nicht vorhanden sind, die man aber dringend benötigt.
+
+\item Das stabil markierte Paket hat einen Fehler, der in der
+  instabilen Version behoben wurde.
+\end{osplist}
+
+In beiden Fällen ist es sinnvoll, sich über die Entscheidung der
+Gentoo-Entwickler hinwegzusetzen und das instabile Paket zu
+installieren. Beide oben beschriebenen Situationen setzen voraus, dass
+man sich schon etwas intensiver mit dem Paket beschäftigt hat. Dann
+ist es  auch deutlich einfacher, im Problemfall eine Lösung
+zu finden.
+
+Im Idealfall aktiviert man das instabile Keyword auch nur für
+\index{Paket!instabil auswählen}%
+eine spezifische Version:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit =net-www/apache-2.0.59-r2 -- +{\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{flagedit =net-www/apache-2.0.59-r2 -- --show}
+{\textasciitilde}x86
+\end{ospcode}
+
+Damit ist sichergestellt, dass wir nicht grundsätzlich das instabile
+Paket installieren, sondern wirklich nur das Paket, an dem wir
+interessiert sind. Irgendwann markieren die Entwickler diese
+Paketversion vermutlich als stabil, während eine neue instabile
+Version zur Verfügung gestellt wird. Haben wir das Keyword
+versionsspezifisch festgelegt, wechseln wir in diesem Fall nicht
+automatisch auf das ganz frische, instabile Paket, das uns
+möglicherweise neue Probleme bringen würde.
+
+\index{Spieltrieb|(}%
+Auf keinen Fall sollte man aus dem Wunsch heraus, immer die neueste
+Version verwenden zu wollen, zu den instabilen Varianten greifen. Das
+ist zwar eine durchaus menschliche Regung, aber die Vorteile, die
+einem dann meist ohnehin unbekannt sind, wiegen selten die
+Nachteile auf. Man muss sich vor Augen führen, dass deutlich mehr
+Personen die stabilen Pakete verwenden und damit auch testen, als
+dies bei den instabilen der Fall ist.
+\index{Spieltrieb|)}%
+
+\index{Paket!Sicherheit|(}%
+\index{Sicherheit|(}%
+Zudem ist man für die Absicherung der instabilen Pakete selbst
+zuständig. Nur für die stabil markierten Pakete gibt Gentoo
+Sicherheitswarnungen\footnote{\cmd{http://www.gentoo.org/rdf/en/glsa-index.rdf}} %
+\index{GLSA}%
+heraus. Wer also eine instabile Webapplikation installiert, ohne die
+einschlägigen Sicherheitslisten wie
+CVE\footnote{\cmd{http://cve.mitre.org/}} %
+\index{CVE}%
+oder auch Secunia\footnote{\cmd{http://secunia.com}} %
+\index{Secunia}%
+regelmäßig auf Sicherheitsprobleme mit der verwendeten Version
+abzusuchen, der darf sich nicht wundern, wenn Hacker den Server
+plötzlich zum Versand von Spam-Mails missbrauchen.% %
+\index{Sicherheit|)}%
+\index{Paket!Sicherheit|)}
+
+Generell lautet also auch hier die Devise, den Spieltrieb %
+\index{Spieltrieb}%
+zu unterdrücken, wenn man sich nicht die Finger verbrennen will.
+Solange man sich aber Gedanken um die Auswahl von instabilen Paketen
+macht, kann man sein Gentoo-System in ausgewählten Bereichen sehr nah
+an den neuesten Stand der Entwicklung bringen.
+\index{Paket!instabil auswählen}
+
+Es bleibt vielleicht die Frage, wie Pakete überhaupt die Markierung
+"`stabil"' erhalten und ob man diesen Prozess als Benutzer
+beeinflussen kann.
+\index{Paket!stabilisieren|(}%
+Grundsätzlich wandert jedes neue Paket und auch jede neue Paketversion
+schon stabil markierter Pakete erst einmal als instabil markiert in
+den Portage-Baum. Erst nach einer Testphase, die mindestens 30 Tage
+\index{Paket!Testphase}%
+betragen muss, können die Entwickler das Paket als stabil
+markieren. Diese Markierung dürfen allerdings nur so genannte
+Architektur-Teams
+\index{Architektur-Team}%
+vornehmen. 
+
+Für jedes Keyword gibt es ein entsprechendes Team an
+Entwicklern, die auf ihren Systemen ausschließlich stabile Pakete
+verwenden. Die Team-Mitglieder sind beim \emph{Stabilisieren} eines
+Paketes (also z.\,B.\ dem Verändern des Keywords von
+\cmd{{\textasciitilde}x86} auf \cmd{x86})
+\index{x86 (Keyword)}%
+verpflichtet, das Paket innerhalb ihrer stabilen Systemumgebung zu
+testen und zu überprüfen, ob es problemlos funktioniert. So garantiert
+Gentoo eine hohe Qualität der stabilen Pakete.
+\index{Paket!Qualität}
+
+Das Stabilisieren der Pakete lässt sich in begrenztem Umfang auch von
+Gentoo-Benutzern beeinflussen. Man kann eine entsprechende
+Stabilisierungsanfrage
+\index{Stabilisierungsanfrage}%
+%\index{Paket!Stabilisierungsanfrage|see{Stabilisierungsanfrage}}%
+im Gentoo-Bug-Tracker\footnote{\cmd{http://bugs.gentoo.org}}
+\index{Bug!Datenbank}%
+stellen.
+Bevor man eine solche Anfrage stellt, sollte man allerdings auf drei
+Dinge achten:
+
+\begin{osplist}
+\item Das Paket muss sich schon seit mindestens 30 Tagen im instabilen
+  Zustand im Portage-Baum befinden.
+
+\item Kein stabiles Paket darf von instabilen Paketen
+  abhängen. D.\,h.\ alle Pakete, von denen das zu stabilisierende
+  abhängt, müssen ebenfalls stabil verfügbar sein.
+  \index{Paket!-abhängigkeiten, instabil}%
+
+\item Es darf im Gentoo-Bug-Tracker keine offenen Bugs in Bezug auf
+  dieses Paket geben.
+\end{osplist}
+
+Missachtet man diese Grundregeln, kann die Antwort der Entwickler etwas
+harscher ausfallen.
+
+Sobald ein Paket als stabil markiert ist, ist auch das Sicherheitsteam
+in der Pflicht, eventuelle Sicherheitslücken möglichst schnell zu
+stopfen und die Nutzer zu informieren. %
+\index{Paket!Sicherheit}%
+\index{Paket!instabil|)}%
+\index{Paket!stabilisieren|)}
+
+\section{Maskierte Pakete\label{MaskiertePakete}}
+
+\index{Paket!maskiert|(}%
+Abgesehen von den vorher besprochenen Keywords gibt es noch einen
+weiteren Mechanismus, mit dem die Gentoo-Entwickler die Verwendung
+einzelner Pakete einschränken können. Vor allem in Fällen, in denen
+Pakete die Stabilität
+\index{Paket!Stabilität}%
+des Gesamtsystems beeinträchtigen könnten oder neuere Versionen sehr
+starke Veränderungen aufweisen, übernehmen die Entwickler sie häufig
+in maskierter Form in den Portage-Baum. Hierfür wird das Paket normal
+verfügbar gemacht, aber in der Datei
+\cmd{/usr/portage/profiles/\osplinebreak% %
+package.mask}
+\index{package.mask (Datei)}%
+ein Eintrag hinzugefügt, dass die Benutzer die entsprechende Version
+noch nicht installieren sollen. Dieser Eintrag listet einfach einen
+entsprechenden Paketnamen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{grep -B 3 =net-www/apache /usr/portage/profiles/package.mask}
+
+# Michael Stewart <vericgar@gentoo.org> (03 Feb 2006)
+# Mask for testing of new Apache 2.2 version
+>=net-www/apache-2.2.0
+\end{ospcode}
+\index{grep (Programm)}%
+\index{apache (Paket)}
+
+Mit \cmd{-B 3} %
+\index{grep (Programm)!B (Option)}%
+erhalten wir die drei Kommentarzeilen vor dem eigentlichen
+Eintrag. Sie liefern eine kurze Begründung, warum das entsprechende
+Paket maskiert ist.
+
+\cmd{emerge} %
+\index{emerge (Programm)}%
+weigert sich aufgrund dieses Eintrag, eine Apache-Version
+\cmd{>=2.2.0} zu installieren. Natürlich lässt sich diese Sperre von
+Nutzerseite umgehen, andernfalls ergäbe es keinen Sinn, die neue
+Version überhaupt im Baum verfügbar zu machen. Damit können Nutzer mit
+dem nötigen Know-how die Software testen und somit beim Beseitigen von
+Fehlern helfen, bevor die Entwickler die neue Version einer breiteren
+Masse an Nutzern als instabiles Paket zur Verfügung stellen.
+
+\index{Paket!demaskieren|(}%
+Um die Sperre aufzuheben, kann der Benutzer den gleiche Mechanismus
+verwenden wie auch schon für die paketspezifischen USE-Flags und
+Keywords. Innerhalb des Verzeichnisses \cmd{/etc/portage} kann man die
+Datei \cmd{package.unmask} %
+\index{package.unmask (Datei oder Verzeichnis)}%
+\index{etc@/etc!portage!package.unmask}%
+angelegen, einzelne Pakete eintragen und somit deren Maskierung
+aufheben. Auch diese Datei kann man wieder als Verzeichnis
+anlegen. Jedoch sind nicht viele Pakete maskiert, so dass
+\cmd{package.unmask} nie wirklich viele Einträge enthalten wird und
+damit selten Gefahr läuft unübersichtlich zu werden.
+
+Da die Entscheidung, ein Paket zu demaskieren, eine
+Ja/Nein-Entscheidung ist, ist das Format der Datei
+\cmd{package.unmask} nochmal etwas einfacher als das der bisher
+besprochenen \cmd{package.*}-Dateien.
+\index{package.unmask (Datei oder Verzeichnis)!Format}%
+Es reicht, den Paketnamen ohne weitere Zusätze anzugeben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo ">=net-www/apache-2.2.0" >> /etc/portage/package.unmask}
+\rprompt{\textasciitilde}\textbf{cat /etc/portage/package.unmask}
+>=net-www/apache-2.2.0
+\end{ospcode}
+\index{apache (Paket)}
+
+Wie zu sehen, können wir auch hier wieder komplexe Paketnamen verwenden
+und die Version mit angeben. Aufgrund des einfachen Formats gibt es
+keinen speziellen Editor für die Datei \cmd{package.unmask}.
+\index{Paket!demaskieren|)}%
+\index{Paket!maskiert|)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv ">=net-www/apache-2.2.0"}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies /
+!!! All ebuilds that could satisfy "=dev-libs/apr-util-1*" have been mas
+ked.
+!!! One of the following masked packages is required to complete your re
+quest:
+- dev-libs/apr-util-1.2.8 (masked by: ~x86 keyword)
+
+For more information, see MASKED PACKAGES section in the emerge man page
+or refer to the Gentoo Handbook.
+(dependency required by "net-www/apache-2.2.4" [ebuild])
+\end{ospcode}
+
+Offensichtlich können wir hier die neuere Apache-Version trotzdem noch
+nicht installieren. Es macht sich bemerkbar, was wir auch schon oben
+auf Seite \pageref{maskdeps} angesprochen haben: Meist ist ein
+maskiertes oder instabiles Paket auch abhängig von anderen Paketen,
+die nur in instabiler Version vorliegen. In diesem Fall zieht die neue
+Apache-Version glücklicherweise keinen Rattenschwanz an instabilen
+Paketen nach sich. Es reicht, \cmd{=dev-libs/apr-}\osplinebreak% %
+\cmd{util-1.2.8} in der
+instabilen Version zu akzeptieren und schon lässt sich
+\cmd{net-www/apache-2.2.4} installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit =dev-libs/apr-util-1.2.8 -- +{\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{emerge -pv ">=net-www/apache-2.2.0"}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  NS   ] dev-libs/apr-1.2.8  USE="ipv6 -debug -urandom" 1,082 kB 
+[ebuild  N    ] dev-util/pkgconfig-0.20  USE="-hardened" 0 kB 
+[ebuild  N    ] dev-libs/libpcre-6.6  USE="-doc" 0 kB 
+[ebuild  NS   ] dev-libs/apr-util-1.2.8  USE="berkdb gdbm ldap -postgres
+ -sqlite -sqlite3" 632 kB 
+[ebuild     U ] net-www/apache-2.2.4 [2.0.58-r2] USE="ldap mpm-prefork* 
+mpm-worker* ssl threads* -debug -doc -mpm-event% -mpm-peruser -no-suexec
+\% (-selinux) -static-modules (-apache2%*) (-mpm-itk%) (-mpm-leader%) (-m
+pm-threadpool%)" 4,867 kB 
+
+Total: 5 packages (1 upgrade, 2 new, 2 in new slots), Size of downloads:
+ 6,580 kB
+\end{ospcode}
+
+Wie schon erwähnt, kommen wir gleich noch auf \cmd{autounmask} zu
+sprechen. Es erlaubt, die Kette an benötigten instabilen Paketen
+automatisiert zu demaskieren.
+
+\index{Paket!maskieren|(}%
+In manchen Fällen tritt der umgekehrte Fall ein: Man möchte eine
+neuere Version nicht installieren. Dies kann vor allem bei
+Produktivsystemen passieren, bei denen ein Software-Update
+\index{Aktualisierung!Paket}%
+\index{Paket!aktualisieren}%
+viel Planung voraussetzt oder man größere Datenbestände auf die neue
+Version migrieren muss. %
+\index{Daten!migrieren}%
+Wie wir auf Seite \pageref{emergespecific} gesehen haben, kann man
+\cmd{emerge} dazu verwenden, ganz spezifische Paketversionen zu
+installieren und somit das unerwünschte neue Paket zu umgehen. Aber
+vielfach aktualisiert man das System global, %
+\index{Aktualisierung!global}%
+und in diesen Situationen würde \cmd{emerge} vollautomatisch alle
+neuen Versionen installieren.
+
+Um in solchen Fällen weiterhin die Möglichkeit zu einem komfortablen globalen Update zu
+haben, lassen sich
+spezifische Pakete vom Nutzer über die Datei
+\cmd{/etc/portage/package.mask} %
+\index{package.mask (Datei oder Verzeichnis)}%
+\index{etc@/etc!portage!package.mask}%
+von der Aktualisierung ausklammern. Damit hat jene Datei also die
+gleiche Funktion wie \cmd{/usr/portage/\osplinebreak{}profiles/package.mask}, nur
+dass sie im Gegensatz zu dieser direkt vom Nutzer editierbar ist. Das Format stimmt mit dem von
+\cmd{/etc/portage/pack""age.unmask} %
+\index{package.mask (Datei oder Verzeichnis)!Format}%
+überein.% %
+\index{Paket!maskieren|)}%
+
+\section{\label{autounmask}Pakete mit autounmask demaskieren}
+
+\index{autounmask (Programm)|(}%
+Nachdem wir weiter oben ausgiebig vor instabilen und
+maskierten Paketen gewarnt haben, liefern wir gegen Ende des Kapitels
+noch ein Werkzeug, mit dem sich diese einfacher verwenden lassen:
+\cmd{autounmask}. 
+
+\begin{netnote}
+  Das Werkzeug ist noch sehr neu und auf der LiveDVD ist nicht einmal die
+  Paketdefinition vorhanden. Um es zu installieren, müssen Sie also
+  über eine Netzwerkverbindung verfügen \emph{und} ihr System bereits
+  aktualisiert haben.
+
+  Da wir im Folgenden von einem aktualisierten System ausgehen,
+  verwenden wir auch nicht mehr \cmd{net-www/apache-2.2.0}, sondern
+  \cmd{www-servers/apache-2.2.8}, da zum jetzigen Zeitpunkt (Januar
+  2008) die Version 2.2.8 als instabil maskiert ist.
+\end{netnote}
+
+Wie schon auf Seite \pageref{maskdeps} erwähnt, hängt ein instabiles
+bzw. maskiertes Paket häufig von Paketen ab, die ebenfalls nur
+instabil verfügbar sind. %
+\index{Paket!-abhängigkeiten, instabil}%
+Man kann diese einzeln in \cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei oder Verzeichnis)}%
+eintragen oder sie automatisch mit \cmd{autounmask} hinzufügen. Für
+Letzteres müssen wir das Programm aber erst einmal installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/autounmask}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] perl-core/Scalar-List-Utils-1.19  43 kB 
+[ebuild  N    ] dev-perl/Term-ANSIColor-1.12  USE="-test" 14 kB 
+[ebuild  N    ] dev-perl/Compress-Raw-Zlib-2.005  203 kB 
+[ebuild  N    ] dev-perl/Net-SSLeay-1.30  77 kB 
+[ebuild  N    ] dev-perl/IO-String-1.08  8 kB 
+[ebuild  N    ] virtual/perl-Test-Harness-2.64  0 kB 
+[ebuild  N    ] dev-perl/yaml-0.65  92 kB 
+[ebuild  N    ] virtual/perl-Scalar-List-Utils-1.19  0 kB 
+[ebuild  N    ] dev-perl/IO-Socket-SSL-1.12  51 kB 
+[ebuild  N    ] dev-perl/IO-Compress-Base-2.005  89 kB 
+[ebuild  N    ] dev-perl/PortageXS-0.02.07  USE="-minimal" 28 kB 
+[ebuild  N    ] dev-perl/IO-Compress-Zlib-2.005  132 kB 
+[ebuild  N    ] dev-perl/Compress-Zlib-2.005  62 kB 
+[ebuild  N    ] dev-perl/IO-Zlib-1.07  10 kB 
+[ebuild  N    ] dev-perl/Archive-Tar-1.32  39 kB 
+[ebuild  N    ] dev-perl/module-build-0.28.08  USE="-test" 192 kB 
+[ebuild  N    ] dev-perl/ExtUtils-CBuilder-0.19  19 kB 
+[ebuild  N    ] dev-perl/extutils-parsexs-2.18  25 kB 
+[ebuild  N    ] dev-perl/Class-MethodMaker-2.10  88 kB 
+[ebuild  N    ] dev-perl/Shell-EnvImporter-1.04  15 kB 
+[ebuild  N    ] app-portage/autounmask-0.21  4 kB 
+
+Total: 21 packages (21 new), Size of downloads: 1,185 kB
+
+Would you like to merge these packages? [Yes/No]
+\ldots
+\end{ospcode}
+
+Im zweiten Schritt demaskieren wir einmal die neueste Apache-Version:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{autounmask --pretend >=www-servers/apache-2.2.8}
+
+ autounmask version 0.21 (using PortageXS-0.02.07 and portage-2.1.3.19)
+
+ * Using repository: /usr/portage
+
+ * Using package.keywords file: /etc/portage/package.keywords
+ * Using package.unmask file: /etc/portage/package.unmask
+
+ * Unmasking www-servers/apache-2.2.8 and its dependencies.. this might 
+take a while..
+
+ * Added '=www-servers/apache-2.2.8 ~x86' to /etc/portage/package.keywor
+ds
+ * Added '=app-admin/apache-tools-2.2.8 ~x86' to /etc/portage/package.ke
+ywords
+ * Restoring files because autounmask was called with the --pretend opti
+on.
+ * done!
+\end{ospcode}
+\index{apache (Paket)}%
+
+Mit der Option \cmd{-{}-pretend} %
+\index{autounmask (Programm)!pretend (Option)}%
+zeigt das Tool zunächst, was es verändern würde. Dieser erste
+Schritt ist dringend zu empfehlen.
+
+Der eigentliche Lauf, also ohne die \cmd{-{}-pretend}-Option, trägt anschließend
+die Pakete inklusive Versionen in
+\cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei oder Verzeichnis)}%
+bzw.\ \cmd{/etc/portage/package.unmask} %
+\index{package.unmask (Datei oder Verzeichnis)}%
+ein. Wer die Pakete generell freischalten möchte und nicht nur eine
+spezifische Paketversion, der kann die Option \cmd{-{}-noversions} %
+\index{autounmask (Programm)!noversions (Option)}%
+verwenden.% %
+\index{Keywords|)}%
+\index{autounmask (Programm)|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 
+
+% LocalWords:  paketspezifischen

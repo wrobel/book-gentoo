@@ -1,0 +1,2062 @@
+\chapter{Einen Webserver einrichten}
+
+\index{Web-Server|(}%
+Nun steht das notwendige Rüstzeug bereit, um unser frisches
+Gentoo"=System zu administrieren, und es ist an der Zeit,
+Anwendungssoftware %
+\index{Anwendungssoftware}%
+zu installieren und die Maschine ihrem eigentlichen Zweck zuzuführen.
+Die Möglichkeiten sind hier nahezu unbegrenzt, und jeder Nutzer wird
+wohl sein eigenes, auf seine speziellen Anforderungen angepasstes Set
+an Programmen zusammenstellen. Wie man die dazu notwendige Software
+bzw. die entsprechenden Pakete identifiziert, erklären wir im nächsten
+Kapitel.
+
+Hier greifen wir zunächst -- als ein mögliches Beispiel unter vielen
+-- die Einrichtung eines Webservers heraus. Gentoo bietet eine recht
+fortschrittliche Webserver-Umgebung und liefert mit
+\cmd{webapp-config} %
+\index{webapp-config (Programm)}%
+ein Gentoo-spezifisches Werkzeug zur Installation von
+Web-Applikationen.
+
+Wir wollen uns also an dieser Stelle ein wenig mit der Konfiguration
+des Apache-Servers %
+\index{Apache}%
+auseinander setzen und dabei vor allem auf die spezielle
+Konfigurationsstruktur des Webservers %
+\index{Web-Server!konfigurieren}%
+unter Gentoo eingehen. Die Konfiguration von PHP %
+\index{PHP}%
+\index{PHP!konfigurieren}%
+beleuchten wir dann nur kurz, bevor wir zuletzt detailliert auf
+\cmd{webapp-config} %
+\index{webapp-config (Programm)}%
+eingehen.
+
+\section{Die Apache-Konfiguration}
+
+\index{Apache!Konfiguration|(}%
+Die Apache-Konfiguration befindet sich unter \cmd{/etc/apache2}, %
+\index{apache2 (Verzeichnis)}%
+\index{etc@/etc!apache2}%
+zumindest wenn wir den Apache in der Version 2 installiert haben. Gentoo
+unterstützt auch die älteren 1.3.*-Varianten, aber wir wollen uns hier
+auf die neuere Version %
+\index{Apache!Version}%
+konzentrieren.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /etc/apache2/}
+insgesamt 80
+drwxr-xr-x  5 root root  4096 29. Jan 14:00 .
+drwxr-xr-x 45 root root  4096 31. Jan 08:52 ..
+-rw-r--r--  1 root root  2068 29. Jan 16:03 apache2-builtin-mods
+-rw-r--r--  1 root root 37741 29. Jan 16:03 httpd.conf
+-rw-r--r--  1 root root 12958 29. Jan 16:03 magic
+drwxr-xr-x  2 root root  4096 29. Jan 16:03 modules.d
+drwxr-xr-x  2 root root  4096 29. Jan 14:00 ssl
+drwxr-xr-x  2 root root  4096 29. Jan 14:00 vhosts.d
+\end{ospcode}
+\index{apache2 (Verzeichnis)}%
+\index{etc@/etc!apache2}%
+
+In dem Verzeichnis %
+\index{Apache!Konfiguration}%
+befindet sich die zentrale Apache-Konfigurationsdatei
+\cmd{httpd.conf}. %
+\index{httpd.conf (Datei)}%
+\index{etc@/etc!apache2!httpd.conf}%
+Sie entspricht im Wesentlichen der Standardkonfiguration, wurde aber
+an einigen Stellen für Gentoo angepasst.
+
+Eine Modifikation ist für die Struktur der Apache-Konfiguration unter
+Gentoo sehr wichtig: Alle Dateien, die auf \cmd{.conf} enden und
+entweder in \cmd{/etc/\osplinebreak{}apache2/modules.d} %
+\index{modules.d (Verzeichnis)}%
+\index{etc@/etc!apache2!modules.d}%
+\index{Apache!Konfiguration}%
+oder in
+\label{vhostsd}%
+\cmd{/etc/apache2/vhosts.d} %
+\index{vhosts.d (Verzeichnis)}%
+\index{etc@/etc!apache2!vhosts.d}%
+\index{Apache!Konfiguration}%
+liegen, bezieht der Apache-Server in seine Hauptkonfiguration ein.
+
+Diese beiden Verzeichnisse haben eine jeweils spezifische Funktion: So
+dient \cmd{/etc/apache2/modules.d} %
+\index{modules.d (Verzeichnis)}%
+\index{etc@/etc!apache2!modules.d}%
+z.\,B.\ der erweiterten Konfiguration einzelner Module.% %
+\index{Apache!Modul konfigurieren}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /etc/apache2/modules.d/}
+insgesamt 28
+drwxr-xr-x 2 root root 4096 29. Jan 16:03 .
+drwxr-xr-x 5 root root 4096 29. Jan 14:00 ..
+-rw-r--r-- 1 root root 2980 29. Jan 16:03 40_mod_ssl.conf
+-rw-r--r-- 1 root root 8151 29. Jan 16:03 41_mod_ssl.default-vhost.conf
+-rw-r--r-- 1 root root  583 29. Jan 16:03 45_mod_dav.conf
+-rw-r--r-- 1 root root  892 29. Jan 16:03 46_mod_ldap.conf
+-rw-r--r-- 1 root root    0 29. Jan 16:03 .keep_net-www_apache-2
+\end{ospcode}
+\index{modules.d (Verzeichnis)}%
+\index{etc@/etc!apache2!modules.d}%
+
+In der Standardkonfiguration finden sich hier nur
+Konfigurationsdateien für das SSL- (wenn wir Apache mit dem
+\cmd{ssl}-USE-Flag %
+\index{ssl (USE-Flag)}%
+%\index{USE-Flag!ssl|see{ssl (USE-Flag)}}%
+installiert haben) und das DAV-Modul.% %
+\index{DAV (Modul)}%
+%\index{Apache!Modul!DAV|see{DAV (Modul)}}%
+
+Der Vorteil eines solchen Verzeichnisses liegt darin, dass weitere
+Apache-Pakete %
+\index{Apache!Modul installieren}%
+hier Konfigurationsdateien %
+\index{Apache!Modul konfigurieren}%
+ablegen können, die der Apache-Server automatisch in die zentrale
+Konfiguration einbezieht, ohne dass der Nutzer über einen Editor eingreifen
+und sich selber mit der Grundkonfiguration auseinander setzen müsste.
+
+Installieren wir z.\,B.\ ein zusätzliches, optionales Modul %
+\index{Apache!Modul}%
+für den beschleunigten Ablauf von Perl-Web-Applikationen, %
+\index{Perl}%
+\cmd{net-www/mod\_perl}:% %
+\index{mod\_perl (Paket)}%
+%\index{net-www Kategorie)!mod\_perl (Paket)|see{mod\_perl (Paket)}}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av www-apache/mod_perl}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] perl-core/CGI-3.25  230 kB 
+[ebuild  N    ] dev-perl/Compress-Raw-Zlib-2.001  0 kB 
+[ebuild  N    ] virtual/perl-Scalar-List-Utils-1.18  0 kB 
+[ebuild  N    ] dev-perl/Apache-Test-1.29  148 kB 
+[ebuild  N    ] app-admin/sudo-1.6.8_p12-r1  USE="ldap pam -offensive (-
+selinux) -skey" 0 kB 
+[ebuild  N    ] dev-perl/IO-Compress-Base-2.001  0 kB 
+[ebuild  N    ] virtual/perl-CGI-3.25  0 kB 
+[ebuild  N    ] dev-perl/IO-Compress-Zlib-2.001  0 kB 
+[ebuild  N    ] dev-perl/Compress-Zlib-2.001  0 kB 
+[ebuild  N    ] www-apache/mod_perl-2.0.3-r1  3,628 kB 
+
+Total: 10 packages (10 new), Size of downloads: 4,006 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+
+\vspace*{-3pt}
+
+\begin{netnote}
+  Sie benötigen eine funktionieren Netzwerkverbindung, um das Paket
+  hier zu installieren.
+\end{netnote}
+
+und schauen wir uns nun mit \cmd{qlist} %
+\index{qlist (Programm)}%
+und \cmd{grep} %
+\index{grep (Programm)}%
+eine Auswahl der installierten Dateien an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlist www-apache/mod_perl | grep modules}
+/etc/apache2/modules.d/apache2-mod_perl-startup.pl
+/etc/apache2/modules.d/75_mod_perl.conf
+/usr/lib/apache2/modules/mod_perl.so
+\end{ospcode}
+\index{qlist (Programm)}%
+\index{grep (Programm)}%
+
+Das eigentliche Modul %
+\index{Apache!Modul}%
+findet sich unter \cmd{/usr/lib/apache2/modules}, %
+\index{modules (Verzeichnis)}%
+\index{usr@/usr!lib!apache2!modules}%
+die Dokumentation %
+\index{Dokumentation}%
+unter \cmd{/usr/share/doc} %
+\index{doc (Verzeichnis)}%
+\index{usr@/usr!share!doc}%
+und die Modul-eigene Konfiguration wandert in
+\cmd{/etc/apache2/modules.d}. %
+\index{modules.d (Verzeichnis)}%
+\index{etc@/etc!apache2!modules.d}%
+Die dort abgelegte Konfigurationsdatei ist dafür zuständig, das Modul
+selbst zu laden und die Grundkonfiguration festzulegen.
+
+Das zweite Verzeichnis \cmd{/etc/apache2/vhosts.d} %
+\index{vhosts.d (Verzeichnis)}%
+\index{etc@/etc!apache2!vhosts.d}%
+dient der Definition virtueller %
+\index{Host!virtuell}%
+%\index{Apache!virtueller Host|see{Host, virtuell}}%
+Hosts. Prinzipiell sollte hier eine Datei pro virtuellen Host angelegt
+und entsprechend benannt werden. Letztlich ist es aber jedem selbst
+überlassen, ob er dieser Struktur folgt.
+
+Abgesehen vom Verzeichnis \cmd{/etc/apache2} %
+\index{apache2 (Verzeichnis)}%
+\index{etc@/etc!apache2}%
+findet sich noch eine weitere wichtige Konfigurationsdatei für den
+Apache unter \cmd{/etc/conf.d/apache2}. %
+\index{apache2 (Datei)}%
+\index{etc@/etc!conf.d!apache2}%
+Die zentrale Variable ist hier \cmd{APACHE2\_OPTS}. %
+\index{APACHE2\_OPTS (Variable)}%
+%\index{apache2 (Datei)!APACHE2\_OPTS|see{APACHE2\_OPTS (Variable)}}%
+Dort lassen sich komfortabel bestimmte Eigenschaften der
+Apache-Konfiguration aktivieren bzw. deaktivieren.  Dafür sind
+innerhalb der Konfigurationsdaten Blöcke mit einem
+\cmd{<IfDefine OPTION>} %
+\index{IfDefine}%
+umgeben. Solch einen Block können wir dann über den Eintrag \cmd{-D
+  OPTION} in der Variable \cmd{APACHE2\_OPTS} %
+\index{APACHE2\_OPTS (Variable)}%
+%\index{apache2 (Datei)!APACHE2\_OPTS|see{APACHE2\_OPTS (Variable)}}%
+aktivieren bzw.\ deaktivieren.
+
+In \cmd{httpd.conf} %
+\index{httpd.conf (Datei)}%
+gibt es beispielsweise die Option \cmd{USERDIR}, %
+\index{apache (Programm)!USERDIR (Option)}%
+die das Mapping der Verzeichnisse %
+\index{Apache!User-Verzeichnis}%
+\cmd{/home/\cmdvar{username}/public\_html} %
+\index{public\_html (Verzeichnis)}%
+%\index{home@/home!username!public\_html|see{public\_html    (Verzeichnis)}}%
+auf \cmd{http://www.exam\-ple.""com/{\textasciitilde}\cmdvar{username}}
+aktiviert.
+
+Eine andere Option, \cmd{INFO}, %
+\index{apache (Programm)!INFO (Option)}%
+aktiviert dagegen die zwei Pfade
+\cmd{http://www.""example.com/server-status} und
+\cmd{http://www.example.com/server"=info}, die für einen Überblick
+interner Webserverdaten dienen.
+
+Als Basiskonfiguration können wir zusätzlich zu diesen beiden Optionen
+die Konfiguration für einen Standard-Host %
+\index{apache (Programm)!DEFAULT\_VHOST (Option)}%
+sowie die SSL-Unterstützung %
+\index{SSL}%
+aktivieren:
+
+\begin{ospcode}
+APACHE2_OPTS="-D DEFAULT_VHOST -D INFO -D USERDIR -D SSL \textbackslash
+-D SSL_DEFAULT_VHOST"
+\end{ospcode}
+\index{APACHE2\_OPTS (Variable)}%
+%\index{apache2 (Datei)!APACHE2\_OPTS|see{APACHE2\_OPTS (Variable)}}%
+
+\index{SSL|(}%
+Der hier aktivierte Standard-Host (\cmd{DEFAULT\_VHOST}) %
+\index{apache (Programm)!DEFAULT\_VHOST (Option)}%
+liefert die Webdateien aus dem Verzeichnis
+\cmd{/var/www/localhost/htdocs} %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs}%
+aus. Die Option \cmd{SSL} %
+\index{apache (Programm)!SSL (Option)}%
+aktiviert das SSL-Modul, während die Einstellung
+\cmd{SSL\_DEFAULT\_VHOST} %
+\index{apache (Programm)!SSL\_DEFAULT\_VHOST (Option)}%
+einen virtuellen SSL-Host auf Port 443 aktiviert und ebenfalls die
+Dateien aus dem Verzeichnis \cmd{/var/www/localhost/htdocs} anbietet.
+\index{SSL|)}%
+
+Zuletzt ist der Webserver über das \cmd{init}-Skript zu starten:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 start}
+ * Starting apache2 ...                               [ ok ]
+\end{ospcode}
+\index{apache2 (Datei)}%
+\index{etc@/etc!init.d!apache2}%
+\index{Apache!Konfiguration|)}%
+
+\section{PHP}
+
+\index{PHP|(}%
+Da die meisten Web-Applikationen %
+\index{Web-Applikation}%
+PHP als Skript-Sprache verwenden, wollen wir das Paket
+\cmd{dev-lang/php} %
+\index{php (Paket)}%
+%\index{dev-lang Kategorie)!php (Paket)|see{php (Paket)}}%
+hier installieren und auch als Modul für den Apache-Webserver %
+\index{Apache!Modul}%
+hinzufügen.
+
+PHP besitzt eine Vielzahl unterschiedlicher Module, %
+\index{PHP!Modul}%
+die den Satz an Basisfunktionen der Skriptsprache erweitern. Unter
+Gentoo können wir diese Erweiterungen über USE-Flags %
+\index{USE-Flag}%
+aktivieren bzw.\ deaktivieren. Viele Web-Applikationen %
+\index{Web-Applikation}%
+brauchen spezifische Erweiterungen %
+\index{PHP!Erweiterungen}%
+von PHP, und so sollte man bei der Installation einen guten Satz
+häufig benötigter USE-Flags aktivieren, um die Wahrscheinlichkeit zu
+reduzieren, zu einem späteren Zeitpunkt PHP erneut kompilieren zu
+\emph{müssen}, nur weil eine neue Web-Applikation %
+\index{Web-Applikation}%
+bestimmte PHP-Funktionen vermisst.
+
+Eine weitere Schwierigkeit war bei PHP %
+\index{PHP!Version}%
+der Wechsel von Version 4 auf Version 5. Da sich die Entwickler von
+PHP dazu entschlossen haben, keine vollständige Kompatibilität
+zwischen den beiden Sprachversionen zu gewährleisten, bot Gentoo die
+Möglichkeit, beide Versionen gleichzeitig zu installieren und parallel
+zu nutzen.
+
+Da die alte PHP-Version mittlerweile leider keine
+sicherheitsrelevanten Korrekturen mehr bekommt, wurde PHP~4 %
+\index{PHP!4}%
+aber vollständig aus dem Gentoo-Angebot entfernt und PHP~5 %
+\index{PHP!5}%
+ist nun die einzige unterstützte Version.
+
+Hier ein Vorschlag für USE-Flags, die man in 
+\cmd{/etc/portage/package.""use} %
+\index{package.use (Datei)}%
+\index{etc@/etc!portage!package.use}%
+für PHP %
+\index{PHP!USE-Flags}%
+festlegen kann:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo "dev-lang/php apache2 cgi force-cgi-redirect cli  \textbackslash}
+> \textbf{berkdb bzip2 calendar crypt ctype curl doc exif ftp gd gdbm iconv imap\textbackslash}
+> \textbf{json ldap mhash mysql ncurses nls pcre pdo readline session simplexml \textbackslash}
+> \textbf{soap spell sqlite ssl tokenizer truetype unicode xml xsl zlib" >> \textbackslash}
+> \textbf{/etc/portage/package.use}
+\end{ospcode}
+\index{PHP!USE-Flags}%
+
+Für die eigene Installation sollte man sich vor der Festlegung der
+USE-Flags zumindest kurz über die verfügbaren Optionen informieren,
+da sich diese auch bei kleineren Versionssprüngen ändern
+können.
+
+In den oben angegebenen USE-Flags %
+\index{USE-Flag}%
+verstecken sich drei Einstellungen, die sich nicht auf spezielle
+Erweiterungen der Sprache PHP beziehen, sondern Einfluss auf die
+Installationsweise von PHP nehmen. Und zwar aktiviert die Option
+\cmd{apache2} %
+\index{apache2 (USE-Flag)}%
+%\index{USE-Flag!apache2|see{apache2 (USE-Flag)}}%
+das entsprechende Apache-Modul, während \cmd{cgi} %
+\index{cgi (USE-Flag)}%
+%\index{USE-Flag!cgi|see{cgi (USE-Flag)}}%
+das Modul für die Behandlung von PHP-Programmen als CGI-Skript
+aktiviert. Das USE-Flag \cmd{cli} %
+\index{cli (USE-Flag)}%
+%\index{USE-Flag!cli|see{cli (USE-Flag)}}%
+erstellt gleichzeitig den PHP"=Command"=Line"=Parser.
+
+Nachdem wir die USE-Flags festgelegt haben, können wir nun das
+PHP-Modul %
+\index{PHP!Modul}%
+installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av dev-lang/php}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-libs/libxml2-2.6.27  USE="ipv6 python readline -debu
+g -doc -test" 0 kB 
+[ebuild  N    ] media-libs/t1lib-5.0.2  USE="-X -doc" 0 kB 
+[ebuild  N    ] dev-db/sqlite-2.8.16-r4  USE="nls -doc -tcl" 959 kB 
+[ebuild  N    ] dev-libs/libgpg-error-1.0-r1  USE="nls" 0 kB 
+[ebuild  N    ] dev-libs/libmcrypt-2.5.7  512 kB 
+[ebuild  N    ] app-crypt/mhash-0.9.2  834 kB 
+[ebuild  N    ] app-text/aspell-0.50.5-r4  USE="gpm" 0 kB 
+[ebuild  N    ] net-libs/c-client-2004a-r1  USE="pam ssl" 2,173 kB 
+[ebuild  N    ] app-admin/php-toolkit-1.0-r2  0 kB 
+[ebuild  N    ] dev-db/sqlite-3.3.5-r1  USE="-debug -doc -nothreadsafe -
+tcl" 0 kB 
+[ebuild  N    ] net-misc/curl-7.15.1-r1  USE="ipv6 ldap ssl -ares -gnutl
+s -idn -kerberos -krb4 -test" 0 kB 
+[ebuild  N    ] dev-libs/libgcrypt-1.2.2-r1  USE="nls" 0 kB 
+[ebuild  N    ] dev-libs/libxslt-1.1.17  USE="crypt python -debug" 0 kB 
+[ebuild  N    ] dev-lang/php-5.2.1-r3  USE="apache2 berkdb bzip2 calenda
+r cgi cli crypt ctype curl doc exif force-cgi-redirect ftp gd gdbm iconv
+ imap ipv6 json ldap mhash mysql ncurses nls pcre pdo readline reflectio
+n session simplexml soap spell spl sqlite ssl tokenizer truetype unicode
+ xml xsl zlib -adabas -apache -bcmath -birdstep -cdb -cjk -concurrentmod
+php -curlwrappers -db2 -dbase -dbmaker -debug -discard-path -empress -em
+press-bcs -esoob -fastbuild -fdftk -filter -firebird -flatfile -frontbas
+e -gd-external -gmp -hash -inifile -interbase -iodbc -java-external -ker
+beros -ldap-sasl -libedit -mcve -msql -mssql -mysqli -oci8 -oci8-instant
+-client -odbc -pcntl -pdo-external -pic -posix -postgres -qdbm -recode -
+sapdb -sharedext -sharedmem -snmp -sockets -solid -suhosin -sybase -syba
+se-ct -sysvipc -threads -tidy -wddx -xmlreader -xmlrpc -xmlwriter -xpm -
+yaz -zip -zip-external" 7,019 kB 
+[ebuild  N    ] app-doc/php-docs-20050822  2,678 kB 
+
+Total: 15 packages (15 new), Size of downloads: 14,172 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{php (Paket)}%
+%\index{dev-lang Kategorie)!php (Paket)|see{php (Paket)}}%
+
+\vspace*{-6pt}
+
+\begin{netnote}
+  Sie benötigen eine funktionieren Netzwerkverbindung, um das Paket
+  hier zu installieren.
+\end{netnote}
+
+Zur Modul-Konfiguration %
+\index{PHP!Modul konfigurieren}%
+installiert Portage dann die Datei
+\cmd{/etc/apache2/""modules.d/70\_mod\_php.conf}. %
+\index{70\_mod\_php.conf (Datei)}%
+\index{etc@/etc!apache2!modules.d!70\_mod\_php.conf}%
+Die darin enthaltene Standardkonfiguration müssen wir
+nicht bearbeiten, aber wir sollten das PHP-Modul für den Apache-Server
+mit \cmd{-D PHP} %
+\index{apache (Programm)!PHP (Option)}%
+in \cmd{/etc/conf.d/apache2} %
+\index{apache2 (Datei)}%
+\index{etc@/etc!conf.d!apache2}%
+aktivieren:%
+
+\begin{ospcode}
+APACHE2_OPTS="-D DEFAULT_VHOST -D INFO -D USERDIR -D SSL \textbackslash
+-D SSL_DEFAULT_VHOST -D PHP"
+\end{ospcode}
+\index{APACHE2\_OPTS (Variable)}%
+%\index{apache2 (Datei)!APACHE2\_OPTS|see{APACHE2\_OPTS (Variable)}}%
+
+Wenn der Server bereits lief, müssen wir ihn nach Veränderungen der
+Konfiguration in \cmd{/etc/conf.d/apache} %
+\index{apache (Datei)}%
+\index{etc@/etc!conf.d!apache}%
+neu starten:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 restart}
+ * Stopping apache2 ...                               [ ok ]
+ * Starting apache2 ...                               [ ok ]
+\end{ospcode}
+
+Nun wird der Apache automatisch alle Dateien, die auf \cmd{.php}
+enden, auch wirklich als PHP-Skripte ausführen.% %
+\index{apache2 (Datei)}%
+\index{etc@/etc!init.d!apache2}%
+\index{PHP|)}%
+
+\section{Dateien ausliefern}
+
+\index{Web-Applikation|(}%
+Sobald der Webserver %
+\index{Web-Server}%
+läuft, können wir Applikationen in den Verzeichnissen platzieren, die
+Apache der Außenwelt präsentiert.
+
+Machen wir es uns zunächst einmal einfach und testen den
+virtuellen Host, den wir oben mit \cmd{-D DEFAULT\_VHOST} %
+\index{apache (Programm)!D (Option)}%
+\index{apache (Programm)!DEFAULT\_VHOST (Option)}%
+aktiviert haben. Wie bereits erwähnt,
+liegen die auszuliefernden Dateien für diesen virtuellen Host
+in \cmd{/var/www/""localhost/htdocs} %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs}%
+(d.\,h.\ \cmd{DocumentRoot} %
+\index{Apache!DocumentRoot}%
+wurde auf den entsprechenden Pfad festgelegt). \cmd{net-www/apache} %
+\index{apache (Paket)}%
+%\index{net-www Kategorie)!apache (Paket)|see{apache (Paket)}}%
+hat das Verzeichnis schon rudimentär für uns vorbereitet.
+
+Unter \cmd{/var/www/localhost} %
+\index{localhost (Verzeichnis)}%
+\index{var@/var!www!localhost}%
+finden sich die Verzeichnisse \cmd{htdocs}, %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs}%
+\cmd{cgi"=bin} %
+\index{cgi-bin (Verzeichnis)}%
+\index{var@/var!www!localhost!cgi-bin}%
+und \cmd{icons}. %
+\index{icons (Verzeichnis)}%
+\index{var@/var!www!localhost!icons}%
+Innerhalb der \cmd{icons} %
+\index{icons (Verzeichnis)}%
+installiert \cmd{net-www/apache} einige Apache-Standardgrafiken, %
+\index{Apache!Icons}%
+\cmd{cgi-bin} %
+\index{cgi-bin (Verzeichnis)}%
+erhält einige Test-CGI-Skripte, %
+\index{CGI-Skript}%
+während \cmd{htdocs} %
+\index{htdocs (Verzeichnis)}%
+eine simple \cmd{index.html}-Datei %
+\index{index.html (Datei)}%
+\index{var@/var!www!localhost!htdocs!index.html}%
+enthält, die anzeigt, dass hier ein Apa\-che-Server sein Werk verrichtet.
+
+Wenn wir den Server weiter oben ohne Probleme starten konnten, sollte
+er sich jetzt mit einem Browser %
+\index{Browser}%
+ansprechen lassen und darüber informieren, dass der Apache-Server
+läuft, jedoch noch kein Inhalt vorhanden ist. Wir testen dies kurz mit
+dem textbasierten Browser \cmd{www-client/links}.% %
+\index{links (Paket)}%
+%\index{www-client Kategorie)!links (Paket)|see{links (Paket)}}%
+
+\cmd{links} %
+\index{links (Programm)}%
+ist zwar auf der LiveDVD %
+\index{LiveDVD}%
+verfügbar, aber in unserem neu aufgesetzten System ist das Paket noch
+nicht installiert. Das holen wir an dieser Stelle nach. Wer als
+Kommandozeilen-Browser %
+\index{Browser!Kommandozeile}%
+\cmd{lynx} %
+\index{lynx (Programm)}%
+bevorzugt, kann hier natürlich auch das Paket \cmd{www-client/lynx} %
+\index{lynx (Paket)}%
+%\index{www-client Kategorie)!lynx (Paket)|see{lynx (Paket)}}%
+installieren.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av www-client/links}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] www-client/links-2.1_pre26  USE="gpm ssl unicode -X -dir
+ectfb -fbcon -javascript -jpeg -livecd -png -sdl -svga -tiff" 0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\rprompt{\textasciitilde}\textbf{links http://localhost/}
+\end{ospcode}
+\index{links (Paket)}%
+%\index{www-client Kategorie)!links (Paket)|see{links (Paket)}}%
+
+Sie sollten jetzt von \cmd{links} %
+\index{links (Programm)}%
+eine Nachricht gezeigt bekommen, dass die Installation des
+Apache-Servers erfolgreich war.
+
+Damit können wir in \cmd{/var/www/localhost/htdocs} %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs}%
+manuell weitere Dateien oder ganze PHP-Applikationen %
+\index{PHP!Applikation}%
+installieren. Gentoo bietet hier ein weiteres Werkzeug, um die
+Installation von Web-Applikationen zu vereinfachen. Mit diesem wollen
+wir uns im Folgenden beschäftigen.
+
+\section{webapp-config}
+
+\index{Web-Applikation!installieren|(}%
+\index{webapp-config (Programm)|(}%
+Für die Installation von Web-Anwendungen ist oft eine Vielzahl
+verschiedener Schritte notwendig. Zentral ist natürlich das Ablegen
+der Programmdateien im Web-Verzeichnis %
+\index{Web!Verzeichnis}%
+(in unserem Fall also in \cmd{/var/www/localhost/""htdocs}). %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs}%
+Doch bei vielen Web-Applikation kommt das Einrichten einer Datenbank, %
+\index{Datenbank}%
+das Konfigurieren des Servers und auch das Konfigurieren %
+\index{Web-Applikation!konfigurieren}%
+der Applikation selbst hinzu.
+
+Für die sehr verbreitete Kombination aus \emph{L}inux,
+\emph{A}pache-Server, \emph{M}ySQL-Server %
+\index{MySQL}%
+und \emph{P}HP-Applikationen (\emph{LAMP}) %
+\index{LAMP}%
+gibt es leider kein Standard"=Werkzeug, das genau diese Einrichtung
+erleichtern oder automatisieren würde. Darum nehmen viele Nutzer die
+Installation von PHP-Web-Applikationen %
+\index{Web-Applikation!installieren!manuell}%
+weiterhin manuell vor. Dies ist zwar für den erfahrenen Benutzer
+durchaus machbar, folgt aber eigentlich nicht der Philosophie einer
+Distribution, und schon gar nicht der von Gentoo, denn kaum ein Nutzer
+käme analog dazu auf die Idee, Gentoo ohne den Paketmanager Portage
+zu installieren, obwohl dies möglich ist.  Für Web"=Applikationen
+versucht das Werkzeug \cmd{webapp-config}, die Einrichtung zu
+vereinfachen und zu automatisieren.% %
+\index{Web-Applikation!installieren!automatisch}%
+
+\index{Web-Applikation!Paketmanagement|(}%
+Eines vorweg: \cmd{webapp-config} ist mit Sicherheit kein
+Universalwerkzeug, das die Einrichtung von Web-Applikation plötzlich
+zum Kinderspiel machen würde. So ist \cmd{webapp-config} z.\,B.\ nicht
+in der Lage, Datenbanken %
+\index{Datenbank!einrichten}%
+automatisch zu konfigurieren oder die Konfiguration des Webservers
+bei Bedarf zu modifizieren.  Denn die vielen verschiedenen
+Applikationen unterscheiden sich schon von vornherein stark in der Verbindung mit MySQL %
+\index{MySQL}%
+oder in den Anforderungen an die
+Apache-Konfiguration. Zusätzlich werden diese oft noch individuell vom
+Anwender angepasst. Automatisierung ist hier also nahezu ein Ding der
+Unmöglichkeit.
+
+\cmd{webapp-config} ist aber sehr gut zu
+gebrauchen für das Dateimanagement bei der Installation, das
+Entfernen %
+\index{Web-Applikation!deinstallieren}%
+oder auch das Upgrade von Web"=Applikationen. %
+\index{Web-Applikation!aktualisieren}%
+Es übernimmt im
+Wesentlichen die Aufgaben von Portage im besonderen Fall von
+Web-Anwendungen.
+
+Portage würde es dem Nutzer lediglich ermöglichen, eine
+Web-Applikation einmal zu installieren, z.\,B.\ in 
+\cmd{/var/www/localhost/htdocs}. %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs}%
+Würden wir auf die Idee kommen, einen zweiten virtuellen Host unter
+\cmd{/var/www/exam\-ple.com/htdocs} %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!example.com!htdocs}%
+anzulegen und dort die gleiche PHP-Anwendung installieren wollen,
+wären wir wieder zur Handarbeit gezwungen.
+
+An dieser Stelle setzt \cmd{webapp-config} an und installiert eine
+Web"=Applikation als \emph{Master}-Kopie, %
+\index{Web-Applikation!Master}%
+um diese in die verschiedenen virtuellen Hosts %
+\index{Host!virtuell}%
+des Systems zu kopieren.
+Es wird dabei festhalten, welche Dateien wo
+installiert wurden, so dass bei einer Deinstallation ein sauberes
+System zurückbleibt. Außerdem übernimmt das Tool bei einem
+Software-Upgrade genau die gleichen Funktionen wie Portage und
+schützt %
+\index{Konfiguration!Schutz}%
+z.\,B.\ die Konfigurationsdateien vor unbeabsichtigtem
+Überschreiben.% %
+\index{Web-Applikation!Paketmanagement|)}%
+
+Soviel zur Einleitung. Installieren wir 
+\cmd{app-admin/webapp-config} %
+\index{webapp-config (Paket)}%
+%\index{app-admin Kategorie)!webapp-config (Paket)|see{webapp-config    (Paket)}}%
+erst einmal. Wir wählen hier die instabile Version, da wir andernfalls
+später auf einen Fehler des Programms treffen würden:
+
+\label{webappconfiginstall}%
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit app-admin/webapp-config -- +{\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{emerge -av app-admin/webapp-config}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-admin/webapp-config-1.50.16  95 kB 
+
+Total: 1 package (1 new), Size of downloads: 95 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{webapp-config (Paket)}%
+%\index{app-admin Kategorie)!webapp-config (Paket)|see{webapp-config    (Paket)}}%
+
+
+
+\begin{netnote}
+  Sie benötigen eine funktionieren Netzwerkverbindung, um das Paket
+  hier zu installieren.
+\end{netnote}
+
+Die meisten Applikationen hängen übrigens von \cmd{webapp-config} ab,
+so dass die Applikation im Normalfall auch mit der ersten
+installierten Web-Anwendung installiert wird.
+
+
+\subsection{webapp-config konfigurieren}
+
+\index{webapp-config (Programm)!konfigurieren|(}%
+In der Regel benötigt die Konfigurationsdatei
+(\cmd{/etc/vhosts/webapp"=con\-fig}) %
+\index{webapp-config (Datei)}%
+\index{etc@/etc!vhosts!webapp-config}%
+ keine Modifikationen. Als
+Basis-Hostname %
+\index{Host!-name}%
+(\cmd{vhost\_hostname}) %
+\index{vhost\_hostname (Variable)}%
+%\index{webapp-config (Datei)!vhost\_hostname|see{vhost\_hostname    (Variable)}}%
+wählt das Programm z.\,B.\ erst einmal \cmd{localhost} aus und setzt
+auf dieser Basis das Standard-Installationsverzeichnis
+\cmd{vhost\_root} %
+\index{vhost\_root (Variable)}%
+%\index{webapp-config (Datei)!vhost\_root|see{vhost\_root (Variable)}}%
+dann auf \cmd{/var/www/""\$\{vhost\_hostname\}}. Ergänzen wir das
+Verzeichnis für Applikationen, die wir nicht in einem SSL-Host
+installieren wollen (\cmd{vhost\_htdocs\_insecure} %
+\index{vhost\_htdocs\_insecure (Variable)}%
+%\index{webapp-config  (Datei)!vhost\_htdocs\_insecure|see{vhost\_htdocs\_insecure    (Variable)}}%
+mit dem Wert \cmd{htdocs}), gelangen wir zu unserem
+Standard-Webserver"=Verzeichnis \cmd{/var/www/localhost/htdocs}.% %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs}%
+
+Da sich die wichtigsten Parameter auch über die
+\cmd{webapp-config}"=Kommandozeile festlegen lassen, müssen wir an
+diesen Einstellungen im Normalfall nichts variieren.
+\index{webapp-config (Programm)!konfigurieren|)}%
+
+\subsection{Web-Applikationen installieren}
+
+Installieren wir nun unsere erste Web-Applikation. Die meisten
+Web"=Anwendungen finden sich in der Kategorie \cmd{www-apps}, %
+\index{www-apps (Kategorie)}%
+und wir wollen an dieser Stelle das Paket \cmd{www-apps/zina} %
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+zur Verwaltung von mp3-Dateien %
+\index{mp3}%
+installieren. Es ist in Sachen Funktionalität keine
+herausragende Web"=Applikation, %
+\index{Web-Applikation!Ebuild}%
+aber der Ebuild bietet alle wichtigen Eigenschaften, die eine
+Web-Applikation unter Gentoo haben kann. Außerdem ist das Paket recht
+klein und besitzt keine aufwendige Konfiguration.
+
+\index{Web-Applikation!installieren!automatisch|(}%
+Wir installieren erst einmal das Paket und stellen dabei sicher, dass
+wir das \cmd{vhosts}-USE-Flag %
+\index{vhosts (USE-Flag)}%
+%\index{USE-Flag!vhosts|see{vhosts (USE-Flag)}}%
+deaktivieren (wir werden dieses ab Seite \pageref{vhostsuse}
+detailliert erklären). Das Paket ist als instabil markiert, deshalb
+fügen wir es noch mit \cmd{flagedit} %
+\index{flagedit (Programm)}%
+zu \cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei)}%
+\index{etc@/etc!portage!package.keywords}%
+hinzu:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit www-apps/zina -- +{\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{USE="-vhosts" emerge -av www-apps/zina}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] www-apps/zina-1.0_rc2  USE="-vhosts" 194 kB 
+
+Total: 1 package (1 new), Size of downloads: 194 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+
+\vspace*{-6pt}
+
+\begin{netnote}
+  Sie benötigen eine funktionieren Netzwerkverbindung, um das Paket
+  hier zu installieren.
+\end{netnote}
+
+Gegen Ende der Installation meldet sich der \cmd{emerge}-Prozess %
+\index{emerge (Programm)}%
+ mit:
+
+\begin{ospcode}
+ * vhosts USE flag not set - auto-installing using webapp-config
+ * Running //usr/sbin/webapp-config -I -h localhost -u root -d /zina zin
+a 1.0_rc2
+\end{ospcode}
+\index{vhosts (USE-Flag)}%
+%\index{USE-Flag!vhosts|see{vhosts (USE-Flag)}}%
+
+Was passiert an dieser Stelle?  Um eine Antwort zu finden, können wir
+mit \cmd{equery files zina} %
+\index{equery (Programm)!files (Option)}%
+anzeigen, welche Dateien das Paket überhaupt installiert hat. Dabei
+stellen wir fest, dass nahezu alle Dateien irgendwo unter
+\cmd{/usr/share/webapps} %
+\index{webapps (Verzeichnis)}%
+\index{usr@/usr!share!webapps}%
+abgelegt wurden.  Dies scheint vielleicht ein eher ungewöhnlicher Ort
+für die Installation einer Web-Applikation zu sein. Man würde eher ein
+Verzeichnis unter \cmd{/var/www} %
+\index{www (Verzeichnis)}%
+\index{var@/var!www}%
+oder \cmd{/srv/www} %
+\index{www (Verzeichnis)}%
+%\index{srv@/srv!www|see{www (Verzeichnis)}}%
+erwarten.
+
+Doch schauen wir unter \cmd{/var/www} %
+\index{www (Verzeichnis)}%
+\index{var@/var!www}%
+nach, so stellen wir fest, dass unter
+\cmd{/var/""www/localhost/htdocs/zina} %
+\index{zina (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs!zina}%
+offenbar eine komplette Zina"=Installation liegt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{la /var/www/localhost/htdocs/zina}
+insgesamt 251
+drwxr-xr-x 4 root root     4096 12. Jan 15:04 .
+drwxr-xr-x 5 root root     4096 12. Jan 15:04 ..
+-rwxr-xr-x 2 root root      805 12. Jan 15:04 .htaccess
+-rwxr-xr-x 2 root root   170993 12. Jan 15:04 index.php
+drwxr-xr-x 3 root root     4096 12. Jan 15:04 music
+-rw------- 1 root root      304 12. Jan 15:04 .webapp
+-rw------- 1 root root    27968 12. Jan 15:04 .webapp-zina-1.0_rc2
+drwxr-xr-x 6 root root     4096 12. Jan 15:04 _zina
+-rwxr-xr-x 2 root root    35398 12. Jan 15:04 zina_db.php
+-rw-rw-r-- 1 root apache      0 12. Jan 15:04 zina.ini.php
+\end{ospcode}
+\index{zina (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs!zina}%
+
+Das ist beruhigend, denn schließlich ist \cmd{/var/www} %
+\index{www (Verzeichnis)}%
+\index{var@/var!www}%
+der Standardpfad für Dateien, die der Webserver ausliefern soll.
+\index{Web-Applikation!installieren!automatisch|)}%
+
+\index{Host!virtuell|(}%
+Trotzdem erscheint es merkwürdig, dass \cmd{emerge} %
+\index{emerge (Programm)}%
+die Applikation zweimal installiert hat. Das ist in diesem Fall aber
+auch nicht ganz korrekt. Der eigentliche Installationsort liegt, wie
+auch über \cmd{equery files} %
+\index{equery (Programm)!files (Option)}%
+nachprüfbar ist, in \cmd{/usr/share/webapps/zina}. %
+\index{zina (Verzeichnis)}%
+\index{usr@/usr!share!webapps!zina}%
+In \cmd{/var/www/localhost/htdocs/""zi\-na} %
+\index{zina (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs!zina}%
+befindet sich eine sogenannte \emph{virtuelle Installation}. %
+\index{Web-Applikation!virtuelle Installation}%
+Schaut man genauer auf das oben gezeigte Datei-Listing, so sieht man
+z.\,B\ an der \cmd{2} hinter den Zugriffsrechten der \cmd{index.php} %
+\index{index.php (Datei)}%
+Datei, dass der Inhalt der Datei mit zwei Pfaden im System verknüpft
+ist.
+\index{Host!virtuell|)}%
+
+Mit anderen Worten sind
+\cmd{/var/www/localhost/htdocs/zina/index.php} %
+\index{index.php (Datei)}%
+\index{var@/var!www!localhost!htdocs!zina!index.php}%
+und \cmd{/usr/share/webapps/zina/1.0\_rc2/htdocs/index.php} %
+\index{index.php (Datei)}%
+\index{usr@/usr!share!webapps!zina!1.0\_rc2!htdocs!index.php}%
+dieselbe\osplinebreak{} Datei, aber durch eine harte Verknüpfung %
+\index{Verknüpfung!hart}%
+zweimal im Dateisystem %
+\index{Dateisystem}%
+abgebildet.
+
+\subsection{Der Ort der Installation}
+
+\index{Web-Applikation!installieren!mehrfach|(}%
+Wozu dieser Mechanismus? Diese Art, die Pakete zu installieren, soll
+vor allem Nutzer unterstützen, die ein und dieselbe Web-Applikation
+mehrfach über den Apache-Server anbieten wollen. Dies ist meist der
+Fall, wenn man mehrere virtuelle Hosts %
+\index{Host!virtuell}%
+über den Apache betreibt und mehrere Domänen gleichzeitig unterstützt.
+
+Nehmen wir einmal an, wir wollen die Domänen %
+\index{Domäne}%
+\cmd{test1.example.com} und \cmd{test2.example.com} mit 
+demselben Apache-Server bedienen und \cmd{www"=apps/zina} %
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+in beiden Domänen %
+\index{Domäne!Web-Applikation}%
+anbieten.  Dann sollten wir zuerst einmal die beiden virtuellen Hosts %
+\index{Host!virtuell}%
+innerhalb der Apache-Konfiguration definieren. Dafür benutzen wir das
+auf Seite \pageref{vhostsd} erwähnte Verzeichnis
+\cmd{/etc/apache2/""vhosts.d}.% %
+\index{vhosts.d (Verzeichnis)}%
+\index{etc@/etc!apache2!vhosts.d}%
+
+\index{Domäne!Einrichten|(}%
+%\index{Apache!Domäne!Einrichten|see{Domäne, Einrichten}}%
+Legen wir im Stil von
+\cmd{/etc/apache2/vhosts.d/00\_default\_vhost.conf} %
+\index{00\_default\_vhost.conf (Datei)}%
+\index{etc@/etc!apache2!vhosts.d!00\_default\_vhost.conf}%
+die Datei \cmd{50\_test1.example.com} %
+\index{50\_test1.example.com (Datei)}%
+mit folgendem Inhalt an:
+
+\begin{ospcode}
+<VirtualHost *:80>
+    DocumentRoot "/var/www/test1.example.com/htdocs"
+    <Directory "/var/www/test1.example.com/htdocs">
+        # Indexes: Erlaubt Apache ein Inhaltsverzeichnis 
+        #          eines Verzeichnisses anzuzeigen, wenn 
+        #          keine konkrete Datei ausgewählt wurde.
+        # FollowSymLinks: Erlaubt Apache auch symbolischen 
+        #                 Links zu folgen
+        Options Indexes FollowSymLinks
+
+        # Verbietet das Überschreiben zentraler 
+        # Konfigurationsdirektiven über .htaccess Dateien
+        AllowOverride None
+        # Zugriff auf die Dateien in diesem Verzeichnis erlauben
+        Order allow,deny
+        Allow from all
+    </Directory>
+</VirtualHost>
+\end{ospcode}
+
+Nach dem gleichen Schema legt man die zweite Datei
+\cmd{51\_test2.example.""com} %
+\index{50\_test1.example.com (Datei)}%
+an und modifiziert die \cmd{test1.example.com}-Einträge zu
+\cmd{test2.exam\-ple.com}.
+
+Um unsere Maschine vorübergehend zu überzeugen, lokal generierte
+Anfragen auf \cmd{test1.example.com} und \cmd{test2.example.com} zu
+beantworten, fügen wir in der Datei \cmd{/etc/hosts} %
+\index{hosts (Datei)}%
+\index{etc@/etc!hosts}%
+in der Zeile, die mit \cmd{127.0.0.1} beginnt, die beiden
+Test-Adressen hinzu:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/hosts}
+127.0.0.1  localhost localhost.localdomain test1.example.com test2.examp
+le.com
+\end{ospcode}
+\index{Domäne!Einrichten|)}%
+\index{hosts (Datei)}%
+
+Danach starten wir den Apache-Server neu, um die oben hinzugefügten
+Konfigurationen einzulesen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 restart}
+\end{ospcode}
+\index{apache2 (Datei)}%
+\index{etc@/etc!init.d!apache2}%
+
+Als \cmd{DocumentRoot} haben wir dabei in den oben angelegten Dateien
+also \cmd{/var/www/\cmdvar{DOMAIN-NAME}/htdocs} %
+\index{htdocs (Verzeichnis)}%
+festgelegt. Das entspricht dem Standard-Gentoo-Schema.
+
+Mit \cmd{webapp-config} können wir Zina %
+\index{Zina}%
+nun in diesen zwei virtuellen Hosts installieren. Dazu müssen wir Zina
+\emph{nicht} noch einmal mit \cmd{emerge} %
+\index{emerge (Programm)}%
+installieren! Folgender Befehl reicht für die Installation aus:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config -I -h test1.example.com -d /  zina 1.0_rc2}
+* 
+* You may be installing into the website's root directory.
+* Is this what you meant to do?
+* 
+*   Creating required directories
+*   Linking in required files
+*     This can take several minutes for larger apps
+*   Files and directories installed
+
+=================================================================
+POST-INSTALL INSTRUCTIONS
+=================================================================
+
+-----------------
+  CONFIGURATION
+-----------------
+
+There is not much to do for Zina to work "out of the box" - just
+browse to 
+
+http://test1.example.com//
+
+and follow the simple instructions. 
+
+MAKE SURE TO CHANGE YOUR ADMIN PASSWORD!
+
+-----------------
+  SECURITY NOTE
+-----------------
+
+You are highly encouraged to restrict access to your Zina (unless you
+actually WANT to have the world see your audio file collections). Zina
+has no internal user-based authentication - only a single
+administrative user and password.
+
+-----------------
+      NOTES
+-----------------
+
+This is the standalone Zina installation. For any embedded use, please
+see "http://www.pancake.org/zina/" (Section "Installation").
+
+You might also want to grab some sort of album cover fetching
+application, like "AlbumArt" (in Portage as media-sound/albumart).
+
+=================================================================
+
+* Install completed - success
+\rprompt{\textasciitilde}\textbf{webapp-config -I -h test2.example.com -d /  zina 1.0_rc2}
+\ldots
+\end{ospcode}
+
+Die zweite Installation erfolgt dann genauso, nur ersetzen wir
+\cmd{test1} wieder durch \cmd{test2}.
+
+In beiden Fällen instruieren wir \cmd{webapp-config} mit der Option
+\cmd{-{}-install} %
+\index{webapp-config (Programm)!install (Option)}%
+(bzw.\ \cmd{-I}), %
+%\index{webapp-config (Programm)!I (Option)|see{webapp-config    (Programm), install (Option)}}%
+die Applikation zu installieren. Dabei gibt dann \cmd{-{}-host} %
+\index{webapp-config (Programm)!host (Option)}%
+(bzw.\ \cmd{-h}) %
+%\index{webapp-config (Programm)!h (Option)|see{webapp-config    (Programm), host (Option)}}%
+den virtuellen Host %
+\index{Host!virtuell}%
+(bzw.\ eigentlich den Ordner unter \cmd{/var/www}) %
+\index{www (Verzeichnis)}%
+\index{var@/var!www}%
+an, in dem wir die Applikation installieren möchten.
+
+\cmd{webapp-config} hat während der Installation nun die Verzeichnisse
+\cmd{/var/""www/test1.example.com/htdocs} %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!test1.example.com!htdocs}%
+und \cmd{/var/www/test2.example.com/""htdocs} %
+\index{htdocs (Verzeichnis)}%
+\index{var@/var!www!test2.example.com!htdocs}%
+angelegt und in ihnen jeweils Zina %
+\index{Zina}%
+installiert. Schauen wir noch einmal die in der Installation
+enthaltene \cmd{index.php}-Datei %
+\index{index.php (Datei)}%
+an, sehen wir, dass diese nun viermal verlinkt ist, einmal unter
+\cmd{/usr/share/webapps}, %
+\index{webapps (Verzeichnis)}%
+\index{usr@/usr!share!webapps}%
+dann unter \cmd{/var/www} %
+\index{www (Verzeichnis)}%
+\index{var@/var!www}%
+je einmal in \cmd{localhost}, \cmd{test1.example.com} und
+\cmd{test2.example.com}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /var/www/test1.example.com/htdocs/index.php}
+-rwxr-xr-x 4 root root 170993 12. Jan 15:04 /var/www/test1.example.com/ht
+docs/index.php
+\end{ospcode}
+
+Mit diesem Vorgehen sparen wir also Speicherplatz, %
+\index{Speicherplatz}%
+da \cmd{webapp-config} die Dateien nur von einem zentralen Ort aus
+verlinkt.% %
+\index{Link}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{du -c -s -h /usr/share/webapps/zina/}
+1,5M /usr/share/webapps/zina/
+1,5M insgesamt
+\end{ospcode}
+\index{du (Programm)}%
+
+Im Falle von \cmd{zina} halten sich die Einsparungen noch in Grenzen,
+aber bei Applikationen wie Gallery2 %
+\index{Gallery2}%
+spart man pro Installation schon ca.\ 36 MB.
+\index{Web-Applikation!installieren!mehrfach|)}%
+
+\subsection{\label{vhostsuse}vhosts USE-Flag}
+
+\index{vhosts (USE-Flag)|(}%
+%\index{USE-Flag!vhosts|see{vhosts (USE-Flag)}}%
+Damit haben wir den wohl verwirrendsten Aspekt einer
+\cmd{webapp-config}-Installation geklärt. Darüber hinaus fehlt uns
+aber noch ein tieferer Einblick in die Benutzung des Skripts.  Wenden
+wir uns zunächst dem oben verwendeten \cmd{vhosts}-USE-Flag %
+zu. Wie der Name suggeriert, handelt es sich hier um \emph{virtuelle
+  Hosts}. %
+\index{Host!virtuell}%
+Dieses USE-Flag %
+\index{USE-Flag}%
+wird dazu verwendet anzuzeigen, ob \cmd{emerge} %
+\index{emerge (Programm)}%
+\cmd{webapp-config} schon bei der eigentlichen Installation einer
+Web-Applikation aufrufen soll oder nicht.
+
+Schauen wir uns einfach noch einmal die vorangegangene Installation an und
+aktivieren diesmal das \cmd{vhosts}-USE-Flag:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{USE="vhosts" emerge -av www-apps/zina}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] www-apps/zina-1.0_rc2  USE="vhosts*" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+
+Diesmal erfolgt die Installation ohne den Aufruf von
+\cmd{webapp-config}. Stattdessen informiert uns \cmd{emerge}, %
+\index{emerge (Programm)}%
+dass die \cmd{vhosts}-Option aktiviert wurde, die Web-Applikation
+\emph{nicht} automatisch installiert wird und wir die Applikation mit
+der angegebenen Kommandozeile in einen unserer virtuellen Hosts %
+\index{Host!virtuell}%
+installieren können:
+
+\begin{ospcode}
+* 
+* The 'vhosts' USE flag is switched ON
+* This means that Portage will not automatically run webapp-config to
+* complete the installation.
+* 
+* To install zina-1.0_rc2 into a virtual host, run the following command:
+* 
+*     webapp-config -I -h <host> -d zina zina 1.0_rc2
+* 
+* For more details, see the webapp-config(8) man page
+\end{ospcode}
+
+Wer also nur eine Domäne mit seinem Apache-Server %
+\index{Apache!einzelne Domäne}%
+bedient, sollte das \cmd{vhosts}-USE-Flag nicht aktivieren. Dann
+installiert \cmd{emerge} %
+\index{emerge (Programm)}%
+die Web"=Applikationen sofort unter \cmd{/var/www/localhost}, %
+\index{localhost (Verzeichnis)}%
+\index{var@/var!www!localhost}%
+und diese sind damit direkt verfügbar.  Wer mehr Kontrolle möchte
+aktiviert das entsprechende USE-Flag und kann somit frei entscheiden,
+an welchen Orten er die Web-Applikationen installieren möchte.
+\index{vhosts (USE-Flag)|)}%
+
+\subsection{webapp-config anwenden}
+
+Bisher haben wir uns nur die beiden Optionen \cmd{-{}-install} %
+\index{webapp-config (Programm)!install (Option)}%
+und \cmd{-{}-host} %
+\index{webapp-config (Programm)!host (Option)}%
+angesehen.
+
+Für den Installationsort ist darüber hinaus die Angabe des
+Zielverzeichnisses mit \cmd{-d} %
+%\index{webapp-config (Programm)!d (Option)|see{webapp-config    (Programm), dir (Option)}}%
+(bzw. \cmd{-{}-dir}) %
+\index{webapp-config (Programm)!dir (Option)}%
+wichtig. Über die Kombination des Host-Namens mit dem Zielverzeichnis %
+\index{webapp-config (Programm)!Zielverzeichnis}%
+bildet \cmd{webapp-config} den Zielpfad für die Installation.
+
+Die Basis dieses Pfades bildet die Angabe für \cmd{vhost\_root} %
+\index{vhost\_root (Variable)}%
+%\index{webapp-config (Datei)!vhost\_root|see{vhost\_root (Variable)}}%
+in der Konfigurationsdatei unter \cmd{/etc/vhosts/webapp-config}. %
+\index{webapp-config (Datei)}%
+\index{etc@/etc!vhosts!webapp-config}%
+In der Standardeinstellung hat dieser Parameter den Wert
+\cmd{/var/www/\$\{vhost\_hostnames\}} und enthält den gewählten
+virtuellen Hostnamen (\cmd{vhost\_hostnames}), wie wir ihn auf der
+Kommandozeile mit der Option \cmd{-h} %
+\index{webapp-config (Programm)!host (Option)}%
+angegeben haben.  Davon ausgehend, lautet der volle Pfad dann
+\cmd{\$\{vhost\_root\}/\$\{vhost\_htdocs\_""insecure\}/\$\{installdir\}}.
+\cmd{vhost\_htdocs\_insecure} findet sich ebenfalls in
+\cmd{/etc/vhosts/webapp-config} %
+\index{webapp-config (Datei)}%
+\index{etc@/etc!vhosts!webapp-config}%
+wieder und ist standardmäßig auf \cmd{htdocs} festgesetzt. Das
+\cmd{installdir} bezieht seinen Wert aus der \cmd{-d}-Option %
+\index{webapp-config (Programm)!dir (Option)}%
+auf der Kommandozeile.
+
+Mit diesem Schema unterstützt \cmd{webapp-config} jedoch nur das
+Standard-System der Installation von Web-Applikationen. Seltenere
+Varianten, wie die Installation von Web-Applikationen in
+Benutzerverzeichnisse (beispielsweise
+\cmd{{\textasciitilde}/public\_html}), %
+\index{public\_html (Verzeichnis)}%
+unterstützt \cmd{webapp-config} derzeit nicht.
+
+Wer zwischen einem normalen und einem SSL-gesicherten %
+\index{SSL}%
+Host %
+\index{Host!virtuell!SSL}%
+unterscheiden möchte, kann den Installationspfad %
+\index{webapp-config (Programm)!Installationspfad}%
+zusätzlich über die Option \cmd{-{}-secure} %
+\index{webapp-config (Programm)!secure (Option)}%
+beeinflussen. Aktivieren wir diese Option, wird der Parameter
+\cmd{\$\{vhost\_htdocs\_insecure\}} im oben angegebenen Pfad durch
+\cmd{\$\{vhost\_""htdocs\_secure\}} ersetzt. Der Standardwert ist hier
+im Normalfall \cmd{htdocs"=secure}.
+
+Den SSL-gesicherten %
+\index{SSL}%
+virtuellen Host, %
+\index{Host!virtuell}%
+der Dateien aus \cmd{htdocs-secure} %
+\index{htdocs-secure (Verzeichnis)}%
+anstatt \cmd{htdocs} %
+\index{htdocs (Verzeichnis)}%
+liefert, muss man allerdings selbst in der Apache-Konfiguration %
+\index{Apache!Konfiguration}%
+erstellen.
+
+Für die Installation einer Web-Anwendung sind zwingend zwei Argumente
+notwendig: der Name des Paketes %
+\index{Paket!Name}%
+und die Versionsnummer. %
+\index{Paket!-version}%
+Wir haben das weiter oben schon gesehen, als wir \cmd{zina} mit der
+Angabe \cmd{zina 1.0\_rc2} installiert haben. Beide Argumente finden
+sich im Normalfall am Ende der Befehlszeile.
+
+Damit haben wir erst einmal die wichtigsten Optionen von
+\cmd{webapp-config} behandelt. Uns fehlen aber noch die Befehle, um
+Applikationen wieder zu entfernen %
+\index{Web-Applikation!entfernen}%
+oder zu aktualisieren. %
+\index{Web-Applikation!aktualisieren}%
+Installieren wir einmal eine ältere Version des gleichen Tools:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{USE="vhosts" emerge -av =www-apps/zina-0.12.12}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  NS   ] www-apps/zina-0.12.12  USE=''vhosts'' 193 kB 
+
+Total: 1 package (1 in new slot), Size of downloads: 193 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+
+Diese Version installieren wir nun in einem zweiten Verzeichnis
+(\cmd{zina-old}) innerhalb des ersten Test-Hosts:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config -I -h test1.example.com \textbackslash}
+> \textbf{--pretend -d zina-old zina 0.12.12}
+\ldots
+\rprompt{\textasciitilde}\textbf{webapp-config -I -h test1.example.com  \textbackslash}
+> \textbf{-d zina-old zina 0.12.12}
+\ldots
+\end{ospcode}
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+
+Das erste Kommando enthält die Option \cmd{-{}-pretend}, %
+\index{webapp-config (Programm)!pretend (Option)}%
+mit der wir die Installation testen, ohne tatsächlich Veränderungen am
+System vorzunehmen. \cmd{webapp-config} %
+\index{webapp-config (Programm)!Ausgabe}%
+liefert dann etwas ausführlicheren Output und testet, ob alle Aktionen
+erfolgreich ausgeführt werden können. In diesem Beispiel sollten keine
+Probleme auftreten. Wir können dann die \cmd{-{}-pretend} %
+\index{webapp-config (Programm)!pretend (Option)}%
+Option entfernen und die Installation tatsächlich durchführen.
+
+Würden wir die Installation jetzt verwenden und konfigurieren, dann
+würde die Web-Applikation einige Einstellungen in 
+\cmd{/var/www/test1.exam\-ple.com/htdocs/zina-old/zina.ini.php} %
+\index{zina.ini.php (Datei)}%
+\index{var@/var!www!test1.example.com!htdocs!zina-old!zina.ini.php}%
+schreiben. Wir wollen das\osplinebreak{} hier der Einfachheit halber über die
+Kommandozeile erledigen und nehmen an, wir hätten den Benutzernamen
+des Administrators verändert und das Passwort neu gesetzt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo '<?php}
+> \textbf{\$adm_pwd = "\{md5\}jtM+aM68CE1F38JDDGnhOT5302s=";}
+> \textbf{\$adm_name = "wrobel";}
+> \textbf{?>' >> /var/www/test1.example.com/htdocs/zina-old/zina.ini.php}
+\end{ospcode}
+\index{zina.ini.php (Datei)}%
+
+\label{webappupdate}%
+Damit simulieren wir eine konfigurierte Applikation, die wir im
+Folgenden aktualisieren wollen. Hierfür verwenden wir die Option
+\cmd{-U} %
+%\index{webapp-config (Programm)!U (Option)|see{webapp-config    (Programm), update (Option)}}%
+\index{Web-Applikation!aktualisieren}%
+(bzw. \cmd{-{}-update}) %
+\index{webapp-config (Programm)!update (Option)}%
+anstelle des schon bekannten \cmd{-I}. %
+\index{webapp-config (Programm)!install (Option)}%
+Der Rest der Kommandozeile für \cmd{webapp"=config} bleibt unberührt,
+nur die Versionsnummer müssen wir noch aktualisieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config -U -h test1.example.com -d zina-old zina 1.0_rc2}
+* Upgrading zina-0.12.12 to zina-1.0_rc2
+*   Installed by root on 2007-01-16 15:40:27
+*   Config files owned by 0:0
+!time zina.ini.php
+--- /var/www/test1.example.com/htdocs/zina-old
+* Remove whatever is listed above by hand
+*   Creating required directories
+*   Linking in required files
+*     This can take several minutes for larger apps
+^o^ hiding /zina.ini.php
+* zina-1.0_rc2 does not install any files from /usr/share/webapps/zina/1
+.0_rc2/hostroot/; skipping
+*   Files and directories installed
+* One or more files have been config protected
+* To complete your install, you need to run the following command(s):
+* 
+* CONFIG_PROTECT="/var/www/test1.example.com/htdocs/zina-old//" etc-upda
+te
+* 
+* Install completed - success
+\end{ospcode}
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+
+Auch hier kann wer möchte den Lauf einmal vorher mit
+\cmd{-{}-pretend} %
+\index{webapp-config (Programm)!pretend (Option)}%
+überprüfen und \cmd{webapp-config} erst dann wirklich zur Tat
+schreiten lassen.
+
+Die Ausgabe zeigt, dass die von uns modifizierte Konfigurationsdatei %
+\index{Konfiguration}%
+von \cmd{webapp-config} geschützt wird. %
+\index{Konfiguration!Schutz}%
+Das Programm fordert uns auf, die Datei mit den üblichen Methoden über
+\cmd{etc-update} %
+\index{etc-update (Programm)}%
+zu aktualisieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{CONFIG_PROTECT="/var/www/test1.example.com/htdocs/zina-old//"\textbackslash}
+> \textbf{etc-update}
+Scanning Configuration files...
+The following is the list of files which need updating, each
+configuration file is followed by a list of possible replacement
+files.
+1) /var/www/test1.example.com/htdocs/zina-old///zina.ini.php (1)
+Please select a file to edit by entering the corresponding number.
+              (don't use -3, -5, -7 or -9 if you're unsure what to do)
+              (-1 to exit) (-3 to auto merge all remaining files)
+                           (-5 to auto-merge AND not use 'mv -i')
+                           (-7 to discard all updates)
+                           (-9 to discard all updates AND not use 'rm -i
+'): \cmdvar{1}
+
+Showing differences between /var/www/test1.example.com/htdocs/zina-old//
+/zina.ini.php and /var/www/test1.example.com/htdocs/z
+ina-old///._cfg0000_zina.ini.php
+--- /var/www/test1.example.com/htdocs/zina-old///zina.ini.php   2008-02-
+01 09:46:33.000000000 +0100
++++ /var/www/test1.example.com/htdocs/zina-old///._cfg0000_zina.ini.php 
+2008-02-01 09:46:41.000000000 +0100
+@@ -1,4 +0,0 @@
+-<?php
+-\$adm_pwd = "\{md5\}jtM+aM68CE1F38JDDGnhOT5302s=";
+-\$adm_name = "wrobel";
+-?>
+lines 1-8/8 (END) \cmdvar{q}
+
+File: /var/www/test1.example.com/htdocs/zina-old///._cfg0000_zina.ini.ph
+p
+1) Replace original with update
+2) Delete update, keeping original as is
+3) Interactively merge original with update
+4) Show differences again
+Please select from the menu above (-1 to ignore this update): \cmdvar{1}
+Replacing /var/www/test1.example.com/htdocs/zina-old///zina.ini.php with
+ /var/www/test1.example.com/htdocs/zina-old///._cfg0000_zina.ini.php
+mv: ?/var/www/test1.example.com/htdocs/zina-old///zina.ini.php? überschr
+eiben? \cmdvar{y}
+
+Exiting: Nothing left to do; exiting. :)
+\end{ospcode}
+
+Der Pfad zur Installation ist anzugeben, da dieser Ort normalerweise
+nicht in \cmd{CONFIG\_PROTECT} %
+\index{CONFIG\_PROTECT (Variable)}%
+%\index{make.conf (Datei)!CONFIG\_PROTECT|see{CONFIG\_PROTECT    (Variable)}}%
+(siehe Kapitel \ref{configprotect} ab Seite \pageref{configprotect})
+enthalten ist.
+
+\cmd{webapp-config} schützt ausschließlich Dateien, die explizit als
+Konfigurationsdateien %
+\index{Konfiguration!Schutz}%
+markiert wurden. Zu dem entsprechenden Mechanismus kommen wir später
+ab Seite \pageref{configowned}.  An dieser Stelle sei nur erwähnt,
+dass \cmd{webapp-""config} alle anderen veränderten Dateien bei einem
+Update überschreibt. Das Verhalten des Tools entspricht damit dem von
+\cmd{emerge} %
+\index{emerge (Programm)}%
+selbst.
+
+Da wir unsere neu installierte Applikation nicht wirklich nutzen
+wollen, können wir auch auf das Update der Konfigurationsdateien %
+\index{Konfiguration!aktualisieren}%
+verzichten und die Applikation gleich wieder deinstallieren. Dies
+geschieht über die Option \cmd{-C} %
+%\index{webapp-config (Programm)!C (Option)|see{webapp-config    (Programm), clean (Option)}}%
+(bzw.\ \cmd{-{}-clean}).% %
+\index{webapp-config (Programm)!clean (Option)}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config -C -h test1.example.com -d zina-old}
+* Removing zina-1.0_rc2 from /var/www/test1.example.com/htdocs/zina-old
+*   Installed by root on 2007-01-16 17:00:21
+*   Config files owned by 0:0
+--- /var/www/test1.example.com/htdocs/zina-old
+* Remove whatever is listed above by hand
+\end{ospcode}
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+
+\index{webapp-config (Programm)!Überbleibsel|(}%
+Die Zeile mit dem Installationspfad direkt über der Meldung
+\cmd{Remove"" what\-ever is listed above by hand} erscheint nur, wenn
+man die Konfigurationsdateien nicht aktualisiert hat. Dann befinden
+sich im Installationspfad noch versteckte Dateien, die
+\cmd{webapp-config} davon abhalten, das Verzeichnis zu entfernen, da
+es nicht leer ist und \cmd{webapp-config} weiß, dass die Dateien nicht
+zum \cmd{zina}-Paket gehören. Wieder entspricht dies dem Verhalten von
+\cmd{emerge} %
+\index{emerge (Programm)}%
+bei der Deinstallation eines Paketes.  Man kann hier aber gefahrlos
+die verbliebenen Reste der Testinstallation beseitigen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{rm -rf /var/www/test1.example.com/htdocs/zina-old}
+\end{ospcode}
+\index{webapp-config (Programm)!Überbleibsel|)}%
+
+Damit haben wir die Hauptaktionen von \cmd{webapp-config}
+(Installation, Upgrade, Deinstallation) abgedeckt. Das Tool bietet
+darüber hinaus noch ein paar Hilfsfunktionen.
+
+So kann man sich z.\,B.\ über \cmd{-{}-list-installs} %
+\index{webapp-config (Programm)!list-installs (Option)}%
+(bzw. \cmd{-{}-li}) %
+%\index{webapp-config (Programm)!list-installs  (Option)|see{webapp-config (Programm), list-installs (Option)}}%
+anzeigen lassen, welche Applikationen wo installiert sind:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config --li --verbose}
+* Installs for zina-1.0_rc2
+*   /var/www/localhost/htdocs/zina
+*   /var/www/test1.example.com/htdocs
+*   /var/www/test2.example.com/htdocs
+\end{ospcode}
+
+Wir sehen also, derzeit haben wir nur \cmd{zina} installiert -- das
+allerdings an drei verschiedenen Orten -- deren Pfade uns angegeben
+werden.  Die zusätzliche Option \cmd{-{}-verbose} %
+\index{webapp-config (Programm)!verbose (Option)}%
+(bzw. \cmd{-V}) %
+%\index{webapp-config (Programm)!V (Option)|see{webapp-config    (Programm), verbose (Option)}}%
+liefert nicht nur die Installationspfade %
+\index{webapp-config (Programm)!Installationen}%
+zurück, sondern zeigt darüber hinaus auch den Namen und die Version
+der installierten Web-Applikation an.  Wollen wir nur die
+Installationspfade für \cmd{zina} wissen, hängen wir wie gewohnt den
+Namen der Applikation und die Version als Argumente an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config --li zina 1.0_rc2}
+/var/www/localhost/htdocs/zina
+/var/www/test1.example.com/htdocs
+/var/www/test2.example.com/htdocs
+\end{ospcode}
+
+Mit der Option \cmd{-{}-list-unused-installs} %
+\index{webapp-config (Programm)!list-unused-installs (Option)}%
+(bzw.\ \cmd{-{}-lui}) %
+%\index{webapp-config (Programm)!list-unused-installs  (Option)|see{webapp-config (Programm), list-unused-installs    (Option)}}%
+erhält man die Liste unbenutzter Web-Applikationen, also solcher
+Installationen, die nur unter \cmd{/usr/share/webapps} %
+\index{webapps (Verzeichnis)}%
+\index{usr@/usr!share!webapps}%
+liegen und die wir in keinen der virtuellen Hosts unter \cmd{/var/www} %
+\index{www (Verzeichnis)}%
+\index{var@/var!www}%
+installiert haben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config --lui}
+zina-0.12.12
+\end{ospcode}
+
+\subsection{webapp-cleaner}
+
+\index{webapp-cleaner (Programm)|(}%
+Wir sehen hier, dass wir die veraltete \cmd{zina}-Version
+offensichtlich nicht mehr verwenden. Derzeit sind also zwei
+verschiedene \cmd{zina}-Versionen installiert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /usr/share/webapps/zina/}
+0.12.12  1.0_rc2
+\end{ospcode}
+\index{share (Verzeichnis)}%
+\index{usr@/usr!share!webapps!zina!}%
+
+Web-Applikationen %
+\index{Web-Applikation}%
+sind offensichtlich Pakete, die \cmd{emerge} %
+\index{emerge (Programm)}%
+in \emph{Slots} %
+\index{Slot}%
+(siehe Kapitel \ref{slots}) installiert und bei denen ein Update %
+\index{Paket!Update}%
+nicht zum Ersatz der älteren Version führt, denn es sollte ja möglich
+sein, auf verschiedenen virtuellen Hosts unterschiedliche Versionen
+der gleichen Web-Applikation zu betreiben.  Ein Systemadministrator
+kann dann erst einmal die Software selbst unter
+\cmd{/usr/share/webapps} %
+\index{webapps (Verzeichnis)}%
+\index{usr@/usr!share!webapps}%
+aktualisieren und die eigentlich installierten Web-Anwendungen Schritt
+für Schritt auf den neuesten Stand bringen.  Veraltete Versionen
+sollten wir aber aus dem System entfernen, sobald wir sie nicht mehr
+benötigen. Dabei hilft das Werkzeug \cmd{webapp-cleaner}.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-cleaner -p -C zina}
+ * Unused versions of zina detected.
+ * To clean, run the following command:
+ * emerge -Cav =zina-0.12.12
+\end{ospcode}
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+
+Die Option \cmd{-{}-clean-unused} %
+\index{webapp-cleaner (Programm)!clean-unused (Option)}%
+(bzw.\ \cmd{-C}) %
+%\index{webapp-cleaner (Programm)!C (Option)|see{webapp-cleaner    (Programm), clean-unused (Option)}}%
+veranlasst \cmd{webapp-cleaner}, alle Versionen zu entfernen, zu denen
+es keine korrespondierenden virtuellen Installationen %
+\index{Web-Applikation!Installation!virtuell}%
+mehr gibt. Alternativ kann man auch mit \cmd{-{}-prune} %
+\index{webapp-cleaner (Programm)!prune (Option)}%
+(bzw.\ \cmd{-P}) %
+%\index{webapp-cleaner (Programm)!P (Option)|see{webapp-cleaner    (Programm), prune (Option)}}%
+alle Versionen bis auf die neueste löschen.
+\cmd{-{}-pretend} %
+\index{webapp-cleaner (Programm)!pretend (Option)}%
+(bzw.\ \cmd{-p}) %
+%\index{webapp-cleaner (Programm)!p (Option)|see{webapp-cleaner    (Programm), pretend (Option)}}%
+führt dazu, dass \cmd{webapp-cleaner} die Aktion nicht wirklich
+durchführt, sondern nur den notwendigen \cmd{emerge}-Befehl %
+\index{emerge (Programm)}%
+für die Aufräumaktion %
+\index{Aufräumen}%
+ausgibt und es dem Benutzer überlässt, ihn auszuführen.
+
+An dieser Stelle können wir die alte \cmd{zina}-Installation aber
+durchaus entfernen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-cleaner -C zina}
+ * Unused versions of zina detected.
+ * Running emerge -Cav =zina-0.12.12
+
+>>> These are the packages that would be unmerged:
+
+ www-apps/zina
+    selected: 0.12.12 
+   protected: none
+     omitted: 1.0_rc2 
+
+>>> 'Selected' packages are slated for removal.
+>>> 'Protected' and 'omitted' packages will not be removed.
+
+Would you like to unmerge these packages? [Yes/No] yes
+\end{ospcode}
+\index{zina (Paket)}%
+%\index{www-apps Kategorie)!zina (Paket)|see{zina (Paket)}}%
+
+\cmd{webapp-cleaner} geht ohne die \cmd{-{}-pretend}-Option %
+\index{webapp-cleaner (Programm)!pretend (Option)}%
+direkt in die Deinstallation mit \cmd{emerge} %
+\index{emerge (Programm)}%
+über.% %
+\index{webapp-cleaner (Programm)|)}%
+
+\subsection{webapp-config und Zugriffsrechte}
+
+Bisher haben wir eigentlich nur gesehen, dass \cmd{webapp-config} eine
+Web-Anwendung von einem zentralen Ort unter \cmd{/usr/share/webapps} %
+\index{webapps (Verzeichnis)}%
+\index{usr@/usr!share!webapps}%
+in die virtuellen Hosts unter \cmd{/var/www} %
+\index{www (Verzeichnis)}%
+\index{var@/var!www}%
+kopiert und Möglichkeiten bietet, diese Installationen zu
+verwalten. Das mag zwar recht nützlich sein, rechtfertigt aber nicht
+unbedingt ein eigenes Werkzeug.
+
+Allerdings leistet \cmd{webapp-config} einiges, was nicht
+offensichtlich ist. Vergleichen wir dazu die Originalinstallation
+unter \cmd{/usr/share/webapps/""zi\-na/1.0\_rc2/htdocs} %
+\index{htdocs (Verzeichnis)}%
+\index{usr@/usr!share!webapps!zina!1.0\_rc2!htdocs}%
+mit der davon abgeleiteten unter
+\cmd{/var/www/local\-host/htdocs/zina}:% %
+\index{zina (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs!zina}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /usr/share/webapps/zina/1.0\_rc2/htdocs/}
+insgesamt 221
+drwxr-xr-x 4 root root   4096 12. Jan 15:04 .
+drwxr-xr-x 3 root root   4096 14. Jan 01:42 ..
+-rwxr-xr-x 1 root root    805 14. Jan 01:42 .htaccess
+-rwxr-xr-x 1 root root 170993 14. Jan 01:42 index.php
+drwxr-xr-x 3 root root   4096 12. Jan 15:04 music
+drwxr-xr-x 6 root root   4096 12. Jan 15:04 _zina
+-rwxr-xr-x 1 root root  35398 14. Jan 01:42 zina_db.php
+-rw-r--r-- 1 root root      0 14. Jan 01:42 zina.ini.php
+\rprompt{\textasciitilde}\textbf{ls -la /var/www/localhost/htdocs/zina/}
+insgesamt 251
+drwxr-xr-x 4 root root     4096 12. Jan 15:04 .
+drwxr-xr-x 5 root root     4096 12. Jan 15:04 ..
+-rwxr-xr-x 3 root root      805 12. Jan 15:04 .htaccess
+-rwxr-xr-x 3 root root   170993 12. Jan 15:04 index.php
+drwxr-xr-x 3 root root     4096 12. Jan 15:04 music
+-rw------- 1 root root      304 12. Jan 15:04 .webapp
+-rw------- 1 root root    27968 12. Jan 15:04 .webapp-zina-1.0_rc2
+drwxr-xr-x 6 root root     4096 12. Jan 15:04 _zina
+-rwxr-xr-x 3 root root    35398 12. Jan 15:04 zina_db.php
+-rw-rw-r-- 1 root apache      0 12. Jan 15:04 zina.ini.php
+\end{ospcode}
+
+Abgesehen davon, dass \cmd{webapp-config} das Verzeichnis mit der
+versteckten Datei \cmd{.webapp} %
+\index{.webapp (Datei)}%
+als installierte Web-Applikation markiert und einige Daten in der
+ebenfalls versteckten Datei \cmd{.webapp-zina-1.0\_rc2} %
+ablegt, fällt auf, dass der Eigentümer %
+\index{Datei!Eigentümer}%
+\index{webapp-config (Programm)!Eigentümer}%
+und die Zugriffsrechte %
+\index{webapp-config (Programm)!Zugriffsrechte}%
+der Konfigurationsdatei \cmd{zina.ini.php} %
+\index{zina.ini.php (Datei)}%
+verändert wurde. Die Datei ist für Mitglieder der Gruppe %
+\index{Gruppe}%
+\cmd{apache} %
+\index{apache (Gruppe)}%
+%\index{Gruppe!apache|see{apache (Gruppe)}}%
+und damit vor allem unserem Webserver %
+\index{Web-server}%
+schreibbar. Das liegt daran, dass \cmd{webapp-config} die Datei
+\cmd{zina.ini.php} %
+\index{zina.ini.php (Datei)}%
+gesondert behandelt, wobei es für diese Spezialbehandlung zwei
+Konzepte gibt: \cmd{config-owned} %
+%\index{config-owned|see{webapp-config (Programm), config-owned}}%
+\index{webapp-config (Programm)!config-owned}%
+und \cmd{server-owned}.% %
+%\index{server-owned|see{webapp-config (Programm), server-owned}}%
+\index{webapp-config (Programm)!server-owned}%
+
+\subsubsection{\label{configowned}config-owned}
+
+\index{webapp-config (Programm)!config-owned|(}%
+Konfigurationsdateien sind bei Web-Applikation intern als
+\cmd{config-owned} markiert. Diese Markierung erfüllt zwei Zwecke:
+
+\begin{osplist}
+\item Die Dateien schützt \cmd{webapp-config} vergleichbar dem
+  \cmd{CONFIG\_PROTECT}-Mechanismus %
+  \index{CONFIG\_PROTECT (Variable)}%
+%  \index{make.conf (Datei)!CONFIG\_PROTECT|see{CONFIG\_PROTECT      (Variable)}}%
+  von \cmd{emerge} %
+  \index{emerge (Programm)}%
+  (siehe Kapitel \ref{configprotect}).
+\item Die Dateien %
+  \index{Datei!Eigentümer}%
+  gehören dem Benutzer, für den die Applikation installiert wurde.
+\end{osplist}
+
+Den ersten Mechanismus haben wir im Zusammenhang mit der
+\cmd{zina}"=Aktualisierung von Version \cmd{0.12.12} auf
+\cmd{1.0\_rc2} kennen gelernt (siehe Seite \pageref{webappupdate}).
+Dabei hat \cmd{webapp-config} die Konfigurationsdatei
+\cmd{zina.ini.php} %
+\index{zina.ini.php (Datei)}%
+nicht überschrieben und uns die Möglichkeit gegeben, sie mit
+\cmd{etc-update} %
+\index{etc-update (Programm)}%
+zu bearbeiten.
+
+Für den zweiten Mechanismus müssen wir nochmals eine Testinstallation
+vornehmen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{useradd -m wrobel}
+\rprompt{\textasciitilde}\textbf{webapp-config -I -h test1.example.com -u wrobel \textbackslash}
+\textbf{-d zina-user zina 1.0_rc2}
+\ldots
+\end{ospcode}
+\index{useradd (Programm)}%
+
+Die Option \cmd{-{}-user} %
+\index{webapp-config (Programm)!user (Option)}%
+(bzw.\ \cmd{-u}) %
+%\index{webapp-config (Programm)!u (Option)|see{webapp-config    (Programm), user (Option)}}%
+gibt den Benutzer an, für den wir die Installation
+durchführen. Schauen wir uns die virtuelle Installation %
+\index{Web-Applikation!Installation!virtuell}%
+an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /var/www/test1.example.com/htdocs/zina-user}
+insgesamt 251
+drwxr-xr-x 4 root   root     4096 17. Jan 08:23 .
+drwxr-xr-x 6 root   root     4096 17. Jan 08:23 ..
+-rwxr-xr-x 2 root   root      805 14. Jan 01:42 .htaccess
+-rwxr-xr-x 2 root   root   170993 14. Jan 01:42 index.php
+drwxr-xr-x 3 root   root     4096 17. Jan 08:23 music
+-rw------- 1 root   root      314 17. Jan 08:23 .webapp
+-rw------- 1 root   root    27675 17. Jan 08:23 .webapp-zina-1.0_rc2
+drwxr-xr-x 6 root   root     4096 17. Jan 08:23 _zina
+-rwxr-xr-x 2 root   root    35398 14. Jan 01:42 zina_db.php
+-rw-rw-r-- 1 wrobel apache      0 17. Jan 08:23 zina.ini.php
+\end{ospcode}
+
+Die Konfigurationsdatei %
+\index{Datei!Konfiguration}%
+\cmd{zina.ini.php} %
+\index{zina.ini.php (Datei)}%
+gehört nun dem angegebenen Nutzer und kann damit von ihm editiert
+werden. Alle anderen Dateien gehören aber weiterhin \cmd{root} und
+sind somit unzugänglich für den Nutzer. Der Benutzer darf also die für
+ihn installierte Applikation %
+\index{Web-Applikation!Eigentümer}%
+konfigurieren, nicht aber den eigentlichen Code modifizieren.
+
+Mit der Option \cmd{-{}-group} %
+\index{webapp-config (Programm)!group (Option)}%
+(bzw.\ \cmd{-g}) %
+%\index{webapp-config (Programm)!g (Option)|see{webapp-config    (Programm), group (Option)}}%
+lässt sich die Gruppe der Konfigurationsdateien modifizieren. Im Falle
+von \cmd{zina.ini.php} %
+\index{zina.ini.php (Datei)}%
+bringt dies wenig, da die Datei gleichzeitig \cmd{server-owned}
+ist.% %
+\index{webapp-config (Programm)!config-owned|)}%
+
+\subsubsection{server-owned}
+
+\index{webapp-config (Programm)!server-owned|(}%
+Abgesehen von Konfigurationsdateien, die ein Benutzer editieren können
+sollte, gibt es noch Dateien oder auch Verzeichnisse, in denen der
+Webserver Schreibrechte %
+\index{Web-Server!Schreibrechte}%
+haben sollte.
+
+\cmd{zina} hat z.\,B.\ ein Cache-Verzeichnis, %
+\index{Cache}%
+in dem die Applikation häufiger benötigte Daten ablegt, um wiederholte
+Prozesse zu beschleunigen. Schauen wir uns dieses Verzeichnis wieder
+im Vergleich zwischen der Originalinstallation unter
+\cmd{/usr/share/webapps/zina/1.0\_rc2/htdocs} %
+\index{htdocs (Verzeichnis)}%
+\index{usr@/usr!share!webapps!zina!1.0\_rc2!htdocs}%
+und der virtuellen Installation unter
+\cmd{/var/www/localhost/htdocs/zina} %
+\index{zina (Verzeichnis)}%
+\index{var@/var!www!localhost!htdocs!zina}%
+an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /usr/share/webapps/zina/1.0_rc2/htdocs/_zina}
+insgesamt 28
+drwxr-xr-x 6 root root 4096 12. Jan 15:04 .
+drwxr-xr-x 4 root root 4096 12. Jan 15:04 ..
+drwxr-xr-x 2 root root 4096 14. Jan 01:42 cache
+drwxr-xr-x 2 root root 4096 12. Jan 15:04 lang
+drwxr-xr-x 2 root root 4096 12. Jan 15:04 lang-cfg
+-rwxr-xr-x 2 root root 1015 14. Jan 01:42 podcast.xml
+drwxr-xr-x 5 root root 4096 12. Jan 15:04 themes
+-rwxr-xr-x 2 root root 2583 14. Jan 01:42 zina.js
+\rprompt{\textasciitilde}\textbf{ls -la /var/www/localhost/htdocs/zina/_zina}
+insgesamt 28
+drwxr-xr-x 6 root   root   4096 12. Jan 15:04 .
+drwxr-xr-x 4 root   root   4096 12. Jan 15:04 ..
+drwxr-xr-x 4 apache apache 4096 12. Jan 15:04 cache
+drwxr-xr-x 2 root   root   4096 12. Jan 15:04 lang
+drwxr-xr-x 2 root   root   4096 12. Jan 15:04 lang-cfg
+-rwxr-xr-x 3 root   root   1015 12. Jan 15:04 podcast.xml
+drwxr-xr-x 5 root   root   4096 12. Jan 15:04 themes
+-rwxr-xr-x 3 root   root   2583 12. Jan 15:04 zina.js
+\end{ospcode}
+
+Das entsprechende \cmd{cache}-Verzeichnis %
+\index{cache (Verzeichnis)}%
+gehört in der virtuellen Installation dem Nutzer \cmd{apache}.% %
+\index{apache (Benutzer)}%
+%\index{Benutzer!apache|see{apache (Benutzer)}}%
+
+\cmd{webapp-config} kennt aber nicht nur den Apache.  Die Option
+\cmd{-{}-list"=servers} %
+\index{webapp-config (Programm)!list-servers (Option)}%
+(bzw.\ \cmd{-{}-ls}) %
+%\index{webapp-config (Programm)!ls (Option)|see{webapp-config    (Programm), list-servers (Option)}}%
+\index{webapp-config (Programm)!Server|(}%
+listet die unterstützten Server:% %
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config --ls}
+apache
+aolserver
+lighttpd
+cherokee
+\end{ospcode}
+
+Über \cmd{-{}-server} %
+\index{webapp-config (Programm)!server (Option)}%
+(bzw. \cmd{-s}) %
+%\index{webapp-config (Programm)!s (Option)|see{webapp-config    (Programm), server (Option)}}%
+können wir für die Installation den passenden Servertyp
+auswählen. Alternativ verändert man die Standard-Einstellung
+\cmd{vhost\_server} %
+\index{vhost\_server (Variable)}%
+%\index{webapp-config (Datei)!vhost\_server|see{vhost\_server    (Variable)}}%
+in \cmd{/etc/vhosts/webapp-config} %
+\index{webapp-config (Datei)}%
+\index{etc@/etc!vhosts!webapp-config}%
+auf einen anderen Wert als \cmd{apache}.
+
+Abgesehen davon, dass \cmd{webapp-config} den korrekten
+Server-Benutzer auswählt, überprüft das Tool, ob das entsprechende
+Paket überhaupt installiert ist. Fehlt es, liefert \cmd{webapp-config}
+die notwendigen Anweisungen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config -I -s lighttpd -h test1.example.com -u wrobel \textbackslash}
+\textbf{-d zina-server zina 1.0_rc2}
+* Fatal error: Your configuration file sets the server type "Lighttpd"
+* Fatal error: but the corresponding package does not seem to be install
+ed!
+* Fatal error: Please "emerge www-servers/lighttpd" or correct your sett
+ings.
+* Fatal error(s) - aborting
+\end{ospcode}
+\index{lighttpd (Paket)}%
+%\index{www-servers Kategorie)!lighttpd (Paket)|see{lighttpd (Paket)}}%
+\index{webapp-config (Programm)!Server|)}%
+
+\subsubsection{config-owned + sever-owned = config-server-owned}
+
+\index{webapp-config (Programm)!config-owned|(}%
+Schließlich gibt es Dateien, die sowohl Konfigurationsdatei sind, also
+dem Nutzer gehören, zugleich aber dem Server Schreibrechte %
+\index{Apache!Schreibrechte}%
+bieten sollen. Das ist vor allem dann sinnvoll, wenn die
+Web-Applikation %
+\index{Web-Applikation!Konfiguration}%
+eine Konfiguration über das Web ermöglicht, was z.\,B.\ bei \cmd{zina}
+der Fall ist. In diesem Fall muss der Web-Server in der Lage sein, die
+über die Webseite gewählten Einstellungen in der Konfigurationsdatei zu 
+verewigen.
+
+Dateien, die gleichzeitig als \cmd{config-owned} und
+\cmd{server-owned} markiert sind, haben den Nutzer als Eigentümer %
+\index{Datei!Eigentümer}%
+und werden der Server-Gruppe %
+\index{Web-Server!Gruppe}%
+zugeordnet. Sowohl Eigentümer als auch Gruppenmitglieder erhalten dann
+Lese- und Schreibberechtigung %
+\index{Schreibberechtigung}%
+auf die Datei.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls\,\,-la\,\,/var/www/test1.example.com/htdocs/zina-user/zina.ini.php}
+-rw-rw-r-- 1 wrobel apache 0 17. Jan 08:23 /var/www/test1.example.com/htd
+ocs/zina-user/zina.ini.php
+\end{ospcode}
+\index{webapp-config (Programm)!server-owned|)}%
+\index{webapp-config (Programm)!config-owned|)}%
+
+\subsection{Linktyp}
+
+\index{webapp-config (Programm)!linktyp|(}%
+Im Standard-Modus erzeugt \cmd{webapp-config}, wie weiter oben
+beschrieben, harte Verknüpfungen %
+\index{Verknüpfung!hart}%
+%\index{Link|see{Verknüpfung}}%
+zwischen den Dateien. Diese Möglichkeit besteht unter einem
+Linux-Dateisystem aber nur, wenn die verknüpften Dateien im selben
+Dateisystem liegen.
+
+Als Beispiel ein System, bei dem \cmd{/usr} %
+\index{usr@/usr}%
+und \cmd{/var} %
+\index{var@/var}%
+in verschiedenen Partitionen liegen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mount}
+...
+/dev/hda7 on /var type reiserfs (rw)
+...
+/dev/hda10 on /usr type reiserfs (rw)
+...
+\end{ospcode}
+\index{mount (Programm)}%
+
+Schauen wir uns auf diesem System die \cmd{zina}-Installation an, so
+sehen wir, dass die Dateien nicht verlinkt sind (Ziffer \cmd{1} hinter einfachen Dateien):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /var/www/localhost/htdocs/zina/}
+insgesamt 245
+drwxr-xr-x  4 root root      288 12. Jan 14:23 .
+drwxr-xr-x 13 root root      488 12. Jan 14:48 ..
+-rwxr-xr-x  1 root root      805 12. Jan 14:20 .htaccess
+-rwxr-xr-x  1 root root   170993 12. Jan 14:20 index.php
+drwxr-xr-x  3 root root      144 12. Jan 14:20 music
+-rw-------  1 root root      304 12. Jan 14:20 .webapp
+-rw-------  1 root root    27968 12. Jan 14:20 .webapp-zina-1.0_rc2
+drwxr-xr-x  6 root root      200 12. Jan 14:20 _zina
+-rwxr-xr-x  1 root root    35398 12. Jan 14:20 zina_db.php
+-rw-rw-r--  1 root apache    515 12. Jan 14:24 zina.ini.php
+\end{ospcode}
+
+Sobald \cmd{webapp-config} merkt, dass es Dateien nicht ordnungsgemäß
+hart %
+\index{Verknüpfung!hart}%
+verlinken kann, wird als Ausweichsmodus einfach kopiert. Damit wird
+natürlich die eigentliche Idee, Speicherplatz %
+\index{Speicherplatz}%
+zu sparen, zunichte gemacht, und der Nutzen von \cmd{webapp-config}
+besteht allein im Setzen der korrekten Zugriffsrechte.% %
+\index{Zugriffsrechte}%
+
+Es besteht aber auch die Möglichkeit, von harten auf weiche
+Verknüpfungen %
+%\index{Verknüpfung!weich|see{Verknüpfung, symbolisch}}%
+\index{Verknüpfung!symbolisch}%
+%\index{Symlink|see{Verknüpfung, weich}}%
+(Soft Links oder Symlinks) zu wechseln. Diese sind auch zwischen
+Dateien auf unterschiedlichen Partitionen möglich. Dazu dient die
+Option \cmd{-{}-soft} %
+\index{webapp-config (Programm)!soft (Option)}%
+bei der Installation:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{webapp-config -I --soft -d zina-soft zina 1.0_rc2}
+\rprompt{\textasciitilde}\textbf{ls -la /var/www/localhost/htdocs/zina-soft/}
+insgesamt 45
+drwxr-xr-x  4 root root     288 18. Jan 10:50 .
+drwxr-xr-x 15 root root     544 18. Jan 10:50 ..
+lrwxrwxrwx  1 root root      48 18. Jan 10:50 .htaccess -> /usr/share/we
+bapps/zina/1.0_rc2/htdocs/.htaccess
+lrwxrwxrwx  1 root root      48 18. Jan 10:50 index.php -> /usr/share/we
+bapps/zina/1.0_rc2/htdocs/index.php
+drwxr-xr-x  3 root root     144 18. Jan 10:50 music
+-rw-------  1 root root     308 18. Jan 10:50 .webapp
+-rw-------  1 root root   39834 18. Jan 10:50 .webapp-zina-1.0_rc2
+drwxr-xr-x  6 root root     200 18. Jan 10:50 _zina
+lrwxrwxrwx  1 root root      50 18. Jan 10:50 zina_db.php -> /usr/share/
+webapps/zina/1.0_rc2/htdocs/zina_db.php
+-rw-rw-r--  1 root apache     0 18. Jan 10:50 zina.ini.php
+\end{ospcode}
+
+Bleibt die Frage, warum diese Option nicht Standardmodus von
+\cmd{webapp"=config} ist. Das lässt sich bereits sehr schön an der
+gerade installierten \cmd{zina}-Version demonstrieren: Sie
+funktioniert nämlich nicht. Leider sind die wenigsten
+Web-Applikationen %
+\index{Web-Applikation}%
+darauf ausgerichtet, mit symbolischen Verknüpfungen %
+\index{Verknüpfung!symbolisch}%
+umzugehen. Zwar zeigt das eben installierte \cmd{zina} noch den
+gewohnten Text, aber es scheint vergessen zu haben, wo sich die Bilder
+und Style-Sheets befinden.  Aus diesem Grunde ist die
+\cmd{-{}-soft}-Option %
+\index{webapp-config (Programm)!soft (Option)}%
+nur mit Vorsicht zu genießen.% %
+\index{webapp-config (Programm)!linktyp|)}%
+
+\subsection{Nachteile}
+
+Web-Applikationen auf Basis von Python %
+\index{Python}%
+oder Ruby %
+\index{Ruby}%
+haben bei der Installation Hilfswerkzeuge wie \cmd{webapp-config}
+deutlich weniger nötig, denn es gleicht eigentlich nur strukturelle
+Schwierigkeiten der Sprache PHP %
+\index{PHP}%
+bzw. eines LAMP-Servers %
+\index{LAMP!Server}%
+aus. Da eine Vielzahl interessanter Applikationen aber nun einmal in
+PHP geschrieben ist, ist es aus Distributionssicht sinnvoll, ein
+Werkzeug wie \cmd{webapp-config} anzubieten.
+
+Einer der großen Nachteile von \cmd{webapp-config} ist aber dessen
+Komplexität. Viele Benutzer, die eine manuelle Installation von
+Web-Applikationen gewöhnt sind, fühlen sich durch die "`doppelte
+Installation"' irritiert und empfinden das Skript meist als
+zusätzlichen Aufwand.
+
+Erst nach einiger Zeit tritt dann häufig ein Gewöhnungseffekt auf und
+vor allem für die Betreiber mehrerer Domains wird das Tool dann schnell
+unverzichtbar.
+Allerdings ist das Werkzeug so nur für die Nutzer von Interesse, die
+virtuelle Hosts verwenden. Wer einen einzelnen Webserver mit einer
+einzelnen Domain betreibt zieht keinen Nutzen aus dem Tool.
+\index{webapp-config (Programm)|)}%
+\index{Web-Server|)}%
+\index{Web-Applikation|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% coding: latin-1-unix
+%%% TeX-master: "gentoo"
+%%% End: 

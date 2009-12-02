@@ -1,0 +1,2606 @@
+\chapter{Tipps und Tricks}
+
+Wir nähern uns dem Ende unserer Reise durch das Gentoo-System und
+schließen nach der ausführlichen Darstellung zentraler Mechanismen und
+Werkzeuge mit einer kleinen Sammlung von Tipps und Tricks.
+Diese folgende Zusammenstellung erhebt natürlich keinen Anspruch auf
+Vollständigkeit, aber hält einige Empfehlungen bereit, die den Umgang
+mit Gentoo zusätzlich vereinfachen; sie sollen darum nicht unerwähnt
+bleiben.
+
+\section{\label{appportage}Werkzeuge aus der Kategorie app-portage}
+
+\index{app-portage (Kategorie)|(}%
+Wie der Name der Kategorie verrät, finden wir hier spezielle Werkzeuge
+für das Paketmanagement. Manche dieser Pakete sind eher auf die
+Bedürfnisse von Entwicklern zugeschnitten, aber es finden sich hier
+auch einige Juwelen für jeden Gentoo-Nutzer.
+
+Wir beschränken uns hier auf \cmd{mirrorselect} und \cmd{getdelta}; es
+sei jedoch empfohlen, die gesamte Kategorie einmal zu durchstöbern.
+
+\subsection{\label{mirrorselect}Spiegel-Server auswählen:
+  app-portage/mirrorselect}
+
+\cmd{mirrorselect} %
+\index{mirrorselect (Programm)}%
+ist ein Gentoo-spezifisches Werkzeug für die Auswahl des optimalen
+Mirror-Servers. %
+\index{Mirror}%
+Das Skript befindet sich im Portage-Baum unter
+\cmd{app-portage/mirrorselect} %
+\index{mirrorselect (Paket)}%
+%\index{app-portage Kategorie)!mirrorselect (Paket)|see{mirrorselect    (Paket)}}%
+und ist folglich zu installieren über:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/mirrorselect}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-portage/mirrorselect-1.2  0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+
+Es ist ursprünglich für die Auswahl der Server mit den Quellpaketen %
+\index{Quellarchiv}%
+gedacht, aber wir können es auch für die Selektion des
+Rsync-Servers, %
+\index{Rsync!Server}%
+der den Portage-Baum %
+\index{Portage!Baum}%
+liefert, nutzen.
+
+\subsubsection{Interaktiver Modus}
+
+\cmd{mirrorselect} %
+\index{mirrorselect (Programm)}%
+kann automatisch suchen, erlaubt aber auch Eingaben des Benutzers.
+Für den interaktiven Modus startet man \cmd{mirrorselect} mit der
+Option \cmd{-{}-interactive} %
+\index{mirrorselect (Programm)!interactive (Option)}%
+(bzw.\ \cmd{-i}) %
+%\index{mirrorselect (Programm)!i (Option)|see{mirrorselect    (Programm), interactive (Option)}}%
+und landet in einem grafischen Menü mit den verfügbaren Servern.
+
+Nach Beenden des Programms finden sich die neuen Server in der Datei
+\cmd{/etc/""make.conf} %
+\index{make.conf (Datei)}%
+im Parameter \cmd{GENTOO\_MIRRORS}; %
+\index{GENTOO\_MIRRORS (Variable)}%
+%\index{make.conf (Datei)!GENTOO\_MIRRORS|see{GENTOO\_MIRRORS    (Variable)}}%
+die ursprüngliche, d.\,h. unveränderte Datei wurde zuvor nach
+\cmd{/etc/make.conf.backup} %
+\index{make.conf.backup (Datei)}%
+\index{etc@/etc!make.conf.backup}%
+verschoben.
+
+Wer bei den Veränderungen noch Zweifel hegt und \cmd{mirrorselect} nur
+testen möchte, sollte das Programm mit der Option \cmd{-{}-output} %
+\index{mirrorselect (Programm)!output (Option)}%
+(bzw. \cmd{-o}) %
+%\index{mirrorselect (Programm)!o (Option)|see{mirrorselect    (Programm), output (Option)}}%
+starten. In diesem Fall gibt \cmd{mirrorselect} bei Beenden nur den
+neuen Wert von \cmd{GENTOO\_MIRRORS} %
+\index{GENTOO\_MIRRORS (Variable)}%
+%\index{make.conf (Datei)!GENTOO\_MIRRORS|see{GENTOO\_MIRRORS    (Variable)}}%
+auf der Kommandozeile aus. Ist man mit dem neuen Wert zufrieden, kann
+man ihn manuell in \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+eintragen oder das Tool noch einmal ohne die Option \cmd{-o} laufen
+lassen.
+
+Da es ohnehin nur ein halbes Dutzend zentrale Rsync-Mirror gibt, die
+die Lastverteilung auf untergeordnete Rsync-Server automatisch
+übernehmen, ist die Selektion des Rsync-Mirrors nur interaktiv
+sinnvoll.
+
+Für das entsprechende Menü fügt man zu der Option \cmd{-i} einfach
+noch \cmd{-{}-rsync} %
+\index{mirrorselect (Programm)!rsync (Option)}%
+(bzw.\ \cmd{-r}) %
+%\index{mirrorselect (Programm)!r (Option)|see{mirrorselect    (Programm), rsync (Option)}}%
+hinzu:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mirrorselect -i -r}
+\end{ospcode}
+
+\subsubsection{Automatischer Modus}
+
+Dies ist sicher der angenehmste und effizienteste Weg, die eigenen
+Mirror-Server %
+\index{Mirror!auswählen}%
+zu bestimmen. Im automatischen Modus lädt \cmd{mirrorselect} %
+\index{mirrorselect (Programm)}%
+von jedem verfügbaren Server ein kurzes Datensegment herunter und
+ermittelt anhand der Reaktionszeit und Übertragungsgeschwindigkeit,
+welcher aktuell der günstigste ist.
+
+Wichtigster Parameter im automatischen Modus ist die Anzahl
+alternativer Server, die \cmd{mirrorselect} auswählen soll. Diesen
+Wert können wir mit der Option \cmd{-{}-servers} %
+\index{mirrorselect (Programm)!servers (Option)}%
+(bzw. \cmd{-s}) %
+%\index{mirrorselect (Programm)!s (Option)|see{mirrorselect    (Programm), servers (Option)}}%
+spezifizieren.
+
+Auch im automatischen Modus verändert \cmd{mirrorselect} die Datei
+\cmd{/etc/""make.conf} %
+\index{make.conf (Datei)}%
+unmittelbar und legt ein Backup der Ursprungsdatei als
+\cmd{/etc/""make.conf.backup} ab. Dieses Verhalten lässt sich ebenso
+wie im interaktiven Modus mit \cmd{-o} unterdrücken.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mirrorselect -s3 -o}
+* Downloading a list of mirrors... Got 223 mirrors.
+* Stripping hosts that only support ipv6... Removed 8 of 223
+* Using netselect to choose the top 3 mirrors...Done.
+
+GENTOO_MIRRORS="
+http://pandemonium.tiscali.de/pub/gentoo/ 
+ftp://ftp.snt.utwente.nl/pub/os/linux/gentoo 
+ftp://213.186.33.37/gentoo-distfiles/"
+\end{ospcode}
+
+\cmd{mirrorselect} wählt, wie in der Ausgabe zu sehen, sowohl HTTP- %
+\index{HTTP}%
+als auch FTP-Server %
+\index{FTP}%
+aus. Wer sich auf eine Variante beschränken möchte kann dies mit der
+Option \cmd{-{}-ftp} %
+\index{mirrorselect (Programm)!ftp (Option)}%
+(bzw.  \cmd{-F}) %
+%\index{mirrorselect (Programm)!F (Option)|see{mirrorselect    (Programm), ftp (Option)}}%
+oder eben \cmd{-{}-http} %
+\index{mirrorselect (Programm)!http (Option)}%
+(bzw. \cmd{-H}) %
+%\index{mirrorselect (Programm)!H (Option)|see{mirrorselect    (Programm), http (Option)}}%
+veranlassen.
+
+Wer bei der massiven Abfrage von Servern Probleme mit dem Router
+bekommt, weil dieser eine hohe Zahl gleichzeitiger Anfragen %
+\index{Mirror!Anfragen}%
+nicht akzeptiert, kann die Zahl zeitgleicher Verbindungen über die
+Option \cmd{-{}-blocksize} %
+\index{mirrorselect (Programm)!blocksize (Option)}%
+(bzw. \cmd{-b}) %
+%\index{mirrorselect (Programm)!b (Option)|see{mirrorselect    (Programm), blocksize (Option)}}%
+regulieren.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mirrorselect -s3 -b10 -H -o}
+* Downloading a list of mirrors... Got 223 mirrors.
+* Limiting test to http hosts. 123 of 223 removed.
+* Stripping hosts that only support ipv6... Removed 2 of 100
+Using netselect to choose the top3 hosts, in blocks of 10. 10 of 10 bloc
+ks complete.
+
+GENTOO_MIRRORS="
+http://ftp.gentoo.or.kr/ 
+http://ftp.twaren.net/Linux/Gentoo/ 
+http://ftp.isu.edu.tw/pub/Linux/Gentoo"
+\end{ospcode}
+
+Zu guter Letzt lässt sich die automatische Server-Auswahl ein wenig
+optimieren, indem man höhere Datenmengen von den potentiellen Servern
+herunterlädt. Mit der Option \cmd{-{}-deep} %
+\index{mirrorselect (Programm)!deep (Option)}%
+(bzw.\ \cmd{-D}) %
+%\index{mirrorselect (Programm)!D (Option)|see{mirrorselect    (Programm), deep (Option)}}%
+lädt \cmd{mirrorselect} pro Server als Test ein 100-Kilobyte-Segment
+herunter. Damit wird die Messung und die resultierende Selektion
+deutlich präziser. Gleichzeitig schwillt der Datentransfer bei
+zweihundert zu testenden Servern auch auf 20~MB an, so dass sich diese
+Tests nur mit einer geeigneten Datenleitung empfehlen.
+
+Damit diese Tests bei Server-Fehlern nicht zu lange dauern, kann man
+den Timeout-Wert für die Verbindungen mit der Option
+\cmd{-{}-timeout} %
+\index{mirrorselect (Programm)!timeout (Option)}%
+(bzw.\ \cmd{-t}) %
+%\index{mirrorselect (Programm)!t (Option)|see{mirrorselect    (Programm), timeout (Option)}}%
+regulieren.
+
+Allgemein gültig sind auch die Optionen \cmd{-{}-quiet} %
+\index{mirrorselect (Programm)!quiet (Option)}%
+(bzw.\ \cmd{-q}) %
+%\index{mirrorselect (Programm)!q (Option)|see{mirrorselect    (Programm), quiet (Option)}}%
+und \cmd{-{}-debug} %
+\index{mirrorselect (Programm)!debug (Option)}%
+(bzw.\ \cmd{-d}), %
+%\index{mirrorselect (Programm)!d (Option)|see{mirrorselect    (Programm), debug (Option)}}%
+die den Output von \cmd{mirrorselect} %
+\index{mirrorselect (Programm)}%
+reduzieren bzw.\ erhöhen.
+
+\subsection{\label{downloadsize}Downloads optimieren:
+  app-portage/getdelta}
+
+\index{getdelta (Paket)|(}%
+\index{Downloadmenge reduzieren|(}%
+%\index{app-portage Kategorie)!getdelta (Paket)|see{getdelta (Paket)}}%
+Wie schon mehrfach betont, ist eine Netzwerkverbindung für den Betrieb
+eines Gentoo-Systems nahezu unerlässlich. Angesichts der heutigen
+DSL-Durchsatzraten %
+\index{DSL}%
+haben wir darauf verzichtet, die Menge herunterzuladender Daten zu
+berücksichtigen. Nur einmal, im Zusammenhang mit
+\cmd{emerge"=delta-webrsync} %
+\index{emerge-delta-webrsync (Programm)}%
+(siehe Seite \pageref{emergedeltasync}), ging es um eine Reduktion der
+Down\-load-Menge.%
+
+Aber es ist natürlich nicht jeder mit einem volumenmäßig
+unbeschränkten Breitbandzugang %
+\index{Breitbandzugang}%
+ausgestattet, und wir beschreiben einen einfachen Weg, die
+Download-Menge beim Aktualisieren mit dem Skript \cmd{getdelta.sh} %
+\index{getdelta.sh (Programm)}%
+wirkungsvoll zu beschränken.
+
+Das zugehörige Paket \cmd{app-portage/getdelta} ist leider nicht
+stabil markiert, und auch einige der von ihm benötigten Pakete sind
+nur "`instabil"' verfügbar. Wir bedienen uns also \cmd{flagedit}, %
+\index{flagedit (Programm)}%
+um die Pakete trotzdem in unserem System zu installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{flagedit app-portage/deltup -- {\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{flagedit dev-util/bdelta -- {\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{flagedit =app-arch/bzip2-1.0.4 -- {\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{flagedit app-portage/getdelta -- {\textasciitilde}x86}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/getdelta}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-util/bdelta-0.1.0  8 kB 
+[ebuild     U ] app-arch/bzip2-1.0.4 [1.0.3-r6] USE=''-static (-build%)"
+ 822 kB 
+[ebuild  N    ] app-portage/deltup-0.4.3_pre2-r1  664 kB 
+[ebuild  N    ] app-portage/getdelta-0.7.7  11 kB 
+
+Total: 4 packages (1 upgrade, 3 new), Size of downloads: 1,503 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+
+Haben wir die Pakete installiert, ist die abschließende Konfiguration
+trivial: Wir ersetzen in der Datei \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+den Inhalt der Variablen \cmd{FETCHCOMMAND} %
+\index{FETCHCOMMAND (Variable)}%
+%\index{make.conf (Datei)!FETCHCOMMAND|see{FETCHCOMMAND (Variable)}}%
+mit folgendem Wert:
+
+\begin{ospcode}
+FETCHCOMMAND="/usr/bin/getdelta.sh {\textbackslash}\$\{URI\}"
+\end{ospcode}
+
+Normalerweise enthält \cmd{FETCHCOMMAND} direkt den
+\cmd{wget}-Befehl, %
+\index{wget (Programm)}%
+der eine ihm übergebene URL zu einem Quellarchiv %
+\index{Quellarchiv}%
+herunterlädt. Wir ersetzen also dieses direkte Vorgehen mit einem
+Aufruf des \cmd{getdelta.sh}-Skriptes. %
+\index{getdelta.sh (Programm)}%
+
+Dieses Skript geht an den Download des Quellarchivs nun etwas
+intelligenter heran als \cmd{wget}. %
+\index{wget (Programm)}%
+So schaut \cmd{getdelta.sh} %
+\index{getdelta.sh (Programm)}%
+zunächst einmal in \cmd{/usr/por\-tage/distfiles} %
+\index{distfiles (Verzeichnis)}%
+\index{usr@/usr!portage!distfiles}%
+nach, ob wir schon eine ältere Version des Quellarchivs besitzen und
+wird, sofern es eine solche findet, versuchen, nur ein
+Differenz"=Archiv der vorhandenen und der benötigten Version
+herunterzuladen.
+
+Veranschaulicht sei das am Paket \cmd{dev-libs/openssl}. %
+\index{openssl (Paket)}%
+%\index{dev-libs Kategorie)!openssl (Paket)|see{openssl (Paket)}}%
+Aktuell haben wir die Version \cmd{0.9.8d} installiert und damit auch
+das entsprechende Quellarchiv %
+\index{Quellarchiv}%
+vorliegen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /usr/portage/distfiles/openssl-*}
+-rw-rw-r-- 1 root portage 3294357 29. Jan 20:17 /usr/portage/distfiles/o
+penssl-0.9.7l.tar.gz
+-rw-rw-r-- 1 root portage 3315566 28. Jan 21:16 /usr/portage/distfiles/o
+penssl-0.9.8d.tar.gz
+\end{ospcode}
+
+Wir wollen nun die nächste Version des Pakets installieren und
+simulieren dies zunächst, indem wir \cmd{ACCEPT\_KEYWORDS} %
+\index{ACCEPT\_KEYWORDS (Variable)}%
+%\index{make.conf (Datei)!ACCEPT\_KEYWORDS|see{ACCEPT\_KEYWORDS    (Variable)}}%
+setzen und \cmd{emerge} %
+\index{emerge (Programm)}%
+aufrufen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ACCEPT_KEYWORDS="{\textasciitilde}x86" emerge -pv dev-libs/openssl}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild     U ] dev-libs/openssl-0.9.8e [0.9.8d] USE="zlib -bindist -ema
+cs -sse2 -test" 3,264 kB 
+\end{ospcode}
+
+Ein Upgrade ist demnach verfügbar. Wir wollen nun mit der
+\cmd{-{}-fetch}-Option %
+\index{emerge (Programm)!fetch (Option)}%
+nur das Quellarchiv herunterladen und schauen uns an, wie \cmd{emerge}
+vorgeht, wenn \cmd{getdelta.sh} %
+\index{getdelta.sh (Programm)}%
+als \cmd{FETCHCOMMAND} %
+\index{FETCHCOMMAND (Variable)}%
+%\index{make.conf (Datei)!FETCHCOMMAND|see{FETCHCOMMAND (Variable)}}%
+dient:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ACCEPT_KEYWORDS="{\textasciitilde}x86" emerge -f dev-libs/openssl}
+
+Calculating dependencies... done!
+
+>>> Emerging (1 of 1) dev-libs/openssl-0.9.8e to /
+>>> Downloading 'ftp://pandemonium.tiscali.de/pub/gentoo/distfiles/opens
+sl-0.9.8e.tar.gz'
+
+Searching for a previously downloaded file in /usr/portage/distfiles
+
+We have the following candidates to choose from 
+openssl-0.9.7l.tar.gz
+openssl-0.9.8d.tar.gz 
+
+The best of all is ... openssl-0.9.8d.tar.gz
+
+Checking if this file is OK.
+
+Trying to download openssl-0.9.8d.tar.gz-openssl-0.9.8e.tar.gz.dtu
+
+\ldots
+
+GOT openssl-0.9.8d.tar.gz-openssl-0.9.8e.tar.gz.dtu
+
+Successfully fetched the dtu-file - let's build openssl-0.9.8e.tar.gz...
+
+openssl-0.9.8d.tar.gz -> openssl-0.9.8e.tar.gz: OK
+cleaning up
+This dtu-file saved 3 MB (98%) download size.
+\ldots
+\end{ospcode}
+
+\cmd{getdelta.sh} %
+\index{getdelta.sh (Programm)}%
+gibt einen sehr genauen Überblick über seine Aktivitäten. So sucht es
+zuerst nach alten Quellarchiven in \cmd{/usr/portage/distfiles} %
+\index{distfiles (Verzeichnis)}%
+\index{usr@/usr!portage!distfiles}%
+(\cmd{Searching for a previously downloaded file in
+  /usr/portage/\osplinebreak{}distfiles}). Dabei identifiziert es
+\cmd{openssl-0.9.8d.tar.gz} als das Quellarchiv mit der höchsten
+Versionsnummer (\cmd{The best of all is ...\osplinebreak{}
+  openssl-0.9.8d.tar.gz}) und versucht, ein Differenz-Archiv mit Namen
+\cmd{openssl-0.9.8d.tar.gz-openssl-0.9.8e.tar.gz.dtu} zu laden
+(\cmd{Try\-ing to download
+  openssl-0.9.8d.tar.gz-openssl-0.9.8e.tar.gz.""dtu}). Da das gelingt,
+fügt es das alte Archiv mit der Differenz zusammen und erstellt daraus
+das Zielarchiv \cmd{openssl-0.9.8e.tar.gz}.
+
+Und damit sich abschließend der Nutzer auch über den Vorgang freuen
+kann, informiert \cmd{getdelta.sh}, %
+\index{getdelta.sh (Programm)}%
+dass 98 Prozent der Downloadmenge eingespart wurden (\cmd{This
+  dtu-file saved 3 MB (98\%) download size.}). Keine schlechte
+Leistung.
+
+Ein Gentoo-System, dessen Netzwerkzugang auf ein Modem %
+\index{Modem}%
+beschränkt ist, bleibt zwar trotz \cmd{getdelta.sh} eine grenzwertige
+Erfahrung, aber Nutzer mit Tarifen auf Basis der Download-Menge können
+sich damit über geringere Rechnungen freuen.% %
+\index{getdelta (Paket)|)}%
+\index{Downloadmenge reduzieren|)}%
+\index{app-portage (Kategorie)|)}%
+
+\ospnewpage
+
+\section{\label{appadmin}Werkzeuge aus der Kategorie app-admin}
+
+\index{app-admin (Kategorie)|(}%
+Diese Kategorie bietet allgemeinere Werkzeuge zur Administration eines
+Linux-Systems. Sie umfasst deutlich weniger Gentoo-spezifische Pakete,
+und wir wollen hier auch nur zwei herausgreifen:
+\cmd{app-admin/logrotate}, %
+\index{logrotate (Paket)}%
+%\index{app-admin Kategorie)!logrotate (Paket)|see{logrotate (Paket)}}%
+mit dem wir kurz das Management von Log-Files unter Gentoo beleuchten,
+und \cmd{app-admin/localepurge}, %
+\index{localepurge (Paket)}%
+%\index{app-admin Kategorie)!localepurge (Paket)|see{localepurge    (Paket)}}%
+das interessante Eigenschaften von Portage veranschaulicht.
+
+\subsection{\label{logrotate}Logs aufräumen: app-admin/logrotate}
+
+\index{Log!aufräumen|(}%
+\index{logrotate (Paket)|(}%
+Auf jedem System legen verschiedene Software-Pakete unter
+\cmd{/var/log} %
+\index{log (Verzeichnis)}%
+\index{var@/var!log}%
+Log-Dateien an. Diese zeichnen wichtige System-Ereignisse, Fehler und
+andere Informationen auf, die für den Benutzer/Administrator wichtig
+sein könnten.
+
+So legt z.\,B.\ der Apache ein eigenes Verzeichnis unter
+\cmd{/var/log/apache2} %
+\index{apache2 (Verzeichnis)}%
+\index{var@/var!log!apache2}%
+an und verzeichnet dort alle Zugriffe auf die angebotenen
+Webseiten. Gerade auf hoch frequentierten Servern können die
+entsprechenden Log"=Dateien %
+\index{Log!Dateien}%
+eine beträchtliche Größe erreichen.  Darum ist es sinnvoll, hier in
+regelmäßigen Abständen aufzuräumen, d.\,h.  Log-Dateien zu
+komprimieren %
+\index{Log!komprimieren}%
+und zu archivieren, %
+\index{Log!archivieren}%
+was insbesondere bei Textdateien häufig hohe Platzersparnis bringt.
+
+Natürlich gibt es hier ein Standard-Paket, das diese Aufgabe
+effizient erledigt: \cmd{app-admin/logrotate}.% %
+\index{logrotate (Paket)}%
+%\index{app-admin Kategorie)!logrotate (Paket)|see{logrotate (Paket)}}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-admin/logrotate}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-admin/logrotate-3.7.2  USE="(-selinux)" 0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+ * If you wish to have logrotate e-mail you updates, please
+ * emerge mail-client/mailx and configure logrotate in
+ * /etc/logrotate.conf appropriately
+ * 
+ * Additionally, /etc/logrotate.conf may need to be modified
+ * for your particular needs.  See man logrotate for details.
+\ldots
+\end{ospcode}
+
+Zum Abschluss der Installation informiert das Paket, welche
+Konfiguration notwendig ist, um einen Bericht der
+\cmd{logrotate}-Aktivitäten %
+\index{logrotate (Programm)}%
+an eine E-Mail-Adresse zu versenden.  Meist hat \cmd{logrotate} jedoch
+nicht viel zu berichten und wir verzichten auf eine entsprechende
+Konfiguration.
+
+\cmd{logrotate} ist kein großes Paket und liefert außer dem
+eigentlichen Programm \cmd{/usr/sbin/logrotate} %
+\index{logrotate (Datei)}%
+\index{usr@/usr!sbin!logrotate}%
+die Dokumentation und einige Konfigurationsdateien:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlist app-admin/logrotate}
+/etc/cron.daily/logrotate.cron
+/etc/logrotate.d/.keep_app-admin_logrotate-0
+/etc/logrotate.conf
+/usr/sbin/logrotate
+/usr/share/doc/logrotate-3.7.2/logrotate.cron.gz
+/usr/share/doc/logrotate-3.7.2/logrotate-default.gz
+/usr/share/man/man8/logrotate.8.gz
+\end{ospcode}
+
+Schauen wir uns kurz die Gentoo-Konfiguration an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/logrotate.conf}
+#
+# Logrotate default configuration file for Gentoo Linux
+#
+# See "man logrotate" for details
+
+# rotate log files weekly
+weekly
+#daily
+
+# keep 4 weeks worth of backlogs
+rotate 4
+
+# create new (empty) log files after rotating old ones
+create
+
+# uncomment this if you want your log files compressed
+compress
+
+# packages can drop log rotation information into this directory
+include /etc/logrotate.d
+
+notifempty
+nomail
+noolddir
+
+# no packages own lastlog or wtmp -- we'll rotate them here
+/var/log/wtmp \{
+    monthly
+    create 0664 root utmp
+    rotate 1
+\}
+
+# system-specific logs may be also be configured here.
+\end{ospcode}
+\index{logrotate.conf (Datei)}%
+\index{etc@/etc!logrotate.conf}%
+
+
+Auf diese Weise räumt \cmd{logrotate} %
+\index{logrotate (Programm)}%
+die Log-Files wöchentlich (\cmd{weekly}) auf. Wer einen stark
+frequentierten Server betreibt, kann die Frequenz auf ein tägliches
+Aufräumen verkürzen: \cmd{weekly} %
+\index{weekly (Variable)}%
+\index{logrotate.conf (Datei)!weekly (Option)}%
+auskommentieren und \cmd{daily} %
+\index{logrotate.conf (Datei)!daily (Option)}%
+aktivieren.
+
+\cmd{rotate 4} %
+\index{logrotate.conf (Datei)!rotate (Option)}%
+führt dazu, dass \cmd{logrotate} maximal vier alte
+Log-Archive aufbewahrt. Mit dem wöchentlichen Rhythmus behält man so
+die Log"=Informationen eines Monats. Wer sich für das tägliche
+Aufräumen entscheidet, sollte die Zahl der archivierten Dateien
+entsprechend erhöhen.
+
+\cmd{create} %
+\index{logrotate.conf (Datei)!create (Option)}%
+weist \cmd{logrotate} an, das alte Log-File nicht nur zu
+archivieren und zu verschieben, sondern wieder eine gleich benannte,
+aber leere Datei zu erstellen.
+
+Mit der Option \cmd{compress} %
+\index{logrotate.conf (Datei)!compress (Option)}%
+komprimiert \cmd{logrotate} die
+Archivdateien mit Hilfe von \cmd{gzip}.
+
+Die nächste Option \cmd{include /etc/logrotate.d} %
+\index{logrotate.d (Verzeichnis)}%
+\index{etc@/etc!logrotate.d}%
+\index{logrotate.conf (Datei)!include (Option)}%
+schauen wir uns etwas weiter unten an.
+
+Der Parameter \cmd{notifempty} %
+\index{logrotate.conf (Datei)!notifempty (Option)}%
+lässt \cmd{logrotate} leere Log-Dateien ignorieren, während
+\cmd{nomail} dazu führt, dass keine Benachrichtigung per E-Mail
+versendet wird, und zu guter Letzt bewirkt \cmd{noolddir}, dass die
+Archivdateien nicht in ein separates Archivverzeichnis verschoben
+werden.
+
+Danach folgt dann noch die spezifische Konfiguration für die Log-Datei
+\cmd{/var/log/wtmp}, %
+\index{wtmp (Datei)}%
+\index{var@/var!log!wtmp}%
+mit der wir uns hier aber nicht beschäftigen wollen. Wie wir
+\cmd{logrotate} %
+\index{logrotate (Programm)}%
+spezifische Einstellungen für jede Log-Datei mitgeben können, entnimmt
+man bei Bedarf besser der Dokumentation des Paketes.
+
+Wichtig ist die Option \cmd{include /etc/logrotate.d}, die
+alle Konfigurationsdateien in \cmd{/etc/logrotate.d} %
+\index{logrotate.d (Verzeichnis)}%
+\index{etc@/etc!logrotate.d}%
+einbezieht. Damit besteht die Möglichkeit, dass Pakete, die eigene
+Log-Dateien produzieren, direkt die Konfiguration für das Archivieren
+dieser Dateien mitliefern.
+
+Im Falle unseres Webservers sollten in dem Verzeichnis
+\cmd{/etc/logrotate.d} die Dateien \cmd{apache2}, %
+\index{apache2 (Paket)}%
+\cmd{mysql} %
+\index{mysql (Paket)}%
+und \cmd{syslog-ng} %
+\index{syslog-ng (Paket)}%
+liegen. Diese stammen aus den entsprechenden Paketen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qfile `find /etc/logrotate.d/ -type f`}
+app-admin/logrotate (/etc/logrotate.d/.keep_app-admin_logrotate-0)
+app-admin/syslog-ng (/etc/logrotate.d/syslog-ng)
+dev-db/mysql (/etc/logrotate.d/mysql)
+net-www/apache (/etc/logrotate.d/apache2)
+\end{ospcode}
+
+\cmd{`find /etc/logrotate.d/ -type f`} liefert die vollen Pfadangaben
+für die Dateien in \cmd{/etc/logrotate.d}, die wir als Eingabe für
+\cmd{qfile} %
+\index{qfile (Programm)}%
+brauchen, um den Ursprung der Dateien zu erfahren.
+
+So liefert das MySQL-Paket %
+\index{MySQL}%
+z.\,B.\ die Archivierungsoptionen für die drei Dateien in
+\cmd{/var/log/mysql}, %
+\index{mysql (Verzeichnis)}%
+\index{var@/var!log!mysql}%
+die MySQL anlegt.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/logrotate.d/mysql}
+# Copyright 1999-2006 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+/var/log/mysql/mysql.err /var/log/mysql/mysql.log /var/log/mysql/mysqld.e
+rr \{
+monthly
+create 660 mysql mysql
+notifempty
+size 5M
+sharedscripts
+missingok
+postrotate
+/bin/kill -HUP `cat /var/run/mysqld/mysqld.pid`
+endscript
+\}
+\end{ospcode}
+
+Bleibt noch eine Datei des \cmd{app-admin/logrotate}-Paketes zu
+erwähnen: \cmd{/etc/cron.daily/logrotate.cron}. %
+\index{logrotate.cron (Datei)}%
+\index{etc@/etc!cron.daily!logrotate.cron}%
+Dieses Skript bewirkt in Kombination mit dem \cmd{cron}-System, %
+\index{cron}%
+dass \cmd{logrotate} einmal täglich aufgerufen wird und die
+Log-Dateien bei Bedarf archiviert werden (siehe \ref{dailylogrot}).
+\index{logrotate (Paket)|)}%
+\index{Log!aufräumen|)}%
+
+\subsection{\label{localepurge}app-admin/localepurge}
+
+Die Meldungen vieler Programme sind mittlerweile in verschiedene
+Sprachen übersetzt, was dem Benutzer mit Hilfe der Locale-Einstellung
+(siehe Kapitel \ref{lokalisierung}) erlaubt, die gewünschten Sprache
+auszuwählen.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{export LANG="de_DE"}
+\rprompt{\textasciitilde}\textbf{ls /fehlt}
+ls: fehlt: Datei oder Verzeichnis nicht gefunden
+\end{ospcode}
+
+Was auf der einen Seite klare Vorteile hat, kann aber auch störend
+wirken: Natürlich ist es angenehm, wenn \cmd{ls} in der Muttersprache
+über Probleme informiert, aber warum wird z.\,B. gleich die finnische
+Übersetzung mit installiert, obwohl der Benutzer diese Sprache
+überhaupt nicht spricht?
+
+Derzeit kann man, wie auf Seite \pageref{localegenerate} beschrieben,
+die installierten Lokalisierungen über \cmd{/etc/locale.gen} %
+\index{locale.gen (Datei)}%
+\index{etc@/etc!locale.gen}%
+wählen. Das bezieht sich aber nur auf die Lokalisierungen der
+\cmd{glibc}, %
+\index{glibc (Paket)}%
+nicht auf die aller anderen installierten Werkzeuge.  Portage ist noch
+nicht in der Lage, nur die gewünschten Lokalisierungen zu
+erhalten. Allerdings gibt es das Werkzeug \cmd{localepurge}, %
+\index{localepurge (Programm)|(}%
+um unnötig verbrauchten Speicherplatz zurückzugewinnen.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av localepurge}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-admin/localepurge-0.5.2  5 kB 
+
+Total: 1 package (1 new), Size of downloads: 5 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+
+Nach der Installation des Tools muss man die Konfiguration unter
+\cmd{/etc/lo\-cale.nopurge} anpassen, damit sich das Programm auch
+ausführen lässt. Dafür müssen wir die Zeile \cmd{NEEDSCONFIGFIRST} wie
+im Folgenden auskommentieren:
+
+\begin{ospcode}
+####################################################
+# This is the configuration file for localepurge(8).
+####################################################
+# Comment this to enable localepurge.
+# NO COMMENT IT IF YOU ARE NOT SURE WHAT ARE YOU DOING
+# THIS APP DO NOT ASK FOR CONFIRMATION
+
+#NEEDSCONFIGFIRST
+
+####################################################
+# Uncommenting this string enables removal of localized 
+# man pages based on the configuration information for
+# locale files defined below:
+
+MANDELETE
+
+####################################################
+# Uncommenting this string enables display of freed disk
+# space if localepurge has purged any superfluous data:
+
+SHOWFREEDSPACE
+
+#####################################################
+# Commenting out this string disables verbose output:
+
+VERBOSE
+
+#####################################################
+# You like Colors?
+
+#NOCOLOR
+
+#####################################################
+# You can use the -v -d -nc options in command linei.
+
+#####################################################
+# Following locales won't be deleted from this system
+# for example:
+en
+en_GB
+de
+de_DE
+de_DE@euro
+de_DE.UTF-8
+\end{ospcode}
+
+Am unteren Ende der Datei trägt man dann die Lokalisierungen ein, die
+man \emph{behalten} möchte, im Grunde also die Lokalisierungen, die
+man auch in \cmd{/etc/locale.gen} %
+\index{locale.gen (Datei)}%
+\index{etc@/etc!locale.gen}%
+eingetragen hat.
+
+Der nachfolgende Aufruf \cmd{localepurge} befreit uns dann von
+Ballast:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{localepurge}
+ * localepurge: processing locale files in /usr/share/locale ...
+removed `/usr/share/locale/af/LC_MESSAGES/sed.mo'
+\ldots
+removed `/usr/share/locale/zh_TW/LC_MESSAGES/gettext-tools.mo'
+ * localepurge: Disk space freed in /usr/share/locale: 23472K
+ * localepurge: processing locale files in /usr/lib/locale ...
+removed `/usr/lib/locale/en_US/LC_NAME'
+\ldots
+removed `/usr/lib/locale/en_US/LC_MONETARY'
+ * localepurge: Disk space freed in /usr/lib/locale: 180K
+ * localepurge: processing man pages in /usr/share/man ...
+ * localepurge: Disk space freed in /usr/share/man: 672K
+ * localepurge: processing man pages in /usr/local/share/man ...
+\end{ospcode}
+
+Wem der so gewonnene Speicherplatz wichtig ist, sollte
+den Befehl gelegentlich nach Updates ausführen. Wie wir den Prozess
+automatisieren, beschreiben wir im nächsten Abschnitt.
+\index{localepurge (Programm)|)}%
+\index{app-admin (Kategorie)|)}%
+
+\section{\label{portage-bashrc}emerge erweitern: Die Datei /etc/portage/bashrc}
+
+\index{Portage!erweitern|(}%
+Portage bietet zwar keine überragenden Erweiterungsmöglichkeiten, aber
+wenigstens lässt sich das Verhalten des Paketmanagers recht leicht
+beeinflussen: über die Datei \cmd{/etc/portage/bashrc}.% %
+\index{bashrc (Datei)}%
+\index{etc@/etc!portage!bashrc}%
+
+Die wenigsten Benutzer werden von dieser Option Gebrauch machen, denn
+in die Innereien des Paketmanagements eines Systems einzugreifen kann
+schnell fatale Folgen haben. Dennoch wollen wir den Mechanismus hier
+erwähnen, da er ein besonderes Feature möglich macht: die
+\cmd{CFLAGS} %
+\index{CFLAGS (Variable)}%
+%\index{make.conf (Datei)!CFLAGS|see{CFLAGS (Variable)}}%
+per Paket zu setzen. Das soll keine Aufforderung zum
+Herumexperimentieren mit \cmd{CFLAGS} %
+\index{CFLAGS (Variable)}%
+%\index{make.conf (Datei)!CFLAGS|see{CFLAGS (Variable)}}%
+sein!  Es ist jedoch eine Tatsache, dass viele Gentoo-Nutzer ihre
+Maschine gerne soweit wie irgend möglich optimieren möchten. Da das
+Spiel mit den globalen \cmd{CFLAGS}, wie bereits erwähnt, bei einem
+laufenden System mehr als leichtsinnig ist, wollen wir hier wenigstens
+die etwas sicherere Variante ansprechen.
+
+\subsection{Die Funktionsweise von /etc/portage/bashrc}
+
+\index{bashrc (Datei)|(}%
+Zunächst einmal zurück zur Arbeitsweise der Datei
+\cmd{/etc/portage/bashrc}. Im Normalfall existiert die Datei gar
+nicht, aber wenn wir sie anlegen und als ausführbar markieren, wird
+sie in jeder Phase der Installation aufgerufen. Am einfachsten lässt
+sich das an einem Beispiel verdeutlichen: Legen wir mit \cmd{nano} %
+\index{nano (Programm)}%
+ein einfaches Skript in \cmd{/etc/portage/bashrc} an, das den Inhalt
+der Umgebungsvariablen \cmd{EBUILD\_PHASE} %
+\index{EBUILD\_PHASE (Variable)}%
+%\index{bashrc (Datei)!EBUILD\_PHASE|see{EBUILD\_PHASE (Variable)}}%
+ausgibt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/portage/bashrc}
+echo "*** \$EBUILD_PHASE ***"
+\end{ospcode}
+
+Jetzt installieren wie ein beliebiges, vorzugsweise kleines Paket, um
+zu sehen, was passiert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge app-misc/mime-types}
+Calculating dependencies... done!
+
+>>> Emerging (1 of 1) app-misc/mime-types-7 to /
+*** clean ***
+ * mime-types-7.tar.bz2 MD5 ;-) ...                               [ ok ]
+\ldots
+ * checking mime-types-7.tar.bz2 ;-) ...                          [ ok ]
+*** setup ***
+*** unpack ***
+>>> Unpacking source...
+>>> Unpacking mime-types-7.tar.bz2 to /var/tmp/portage/mime-types-7/work
+>>> Source unpacked.
+*** compile ***
+>>> Compiling source in /var/tmp/portage/mime-types-7/work/mime-types-7 
+\ldots
+>>> Source compiled.
+*** test ***
+>>> Test phase [not enabled]: app-misc/mime-types-7
+*** install ***
+
+>>> Install mime-types-7 into /var/tmp/portage/mime-types-7/image/ categ
+ory app-misc
+>>> Completed installing mime-types-7 into /var/tmp/portage/mime-types-7
+/image/
+
+***  ***
+>>> Merging app-misc/mime-types-7 to /
+*** preinst ***
+*** preinst ***
+--- /etc/
+>>> /etc/mime.types
+>>> Safely unmerging already-installed instance...
+*** prerm ***
+--- cfgpro obj /etc/mime.types
+--- !empty dir /etc
+*** postrm ***
+*** cleanrm ***
+>>> Regenerating /etc/ld.so.cache...
+>>> Original instance of package unmerged safely.
+*** postinst ***
+>>> Regenerating /etc/ld.so.cache...
+>>> app-misc/mime-types-7 merged.
+*** clean ***
+
+>>> No packages selected for removal by clean.
+>>> Auto-cleaning packages...
+>>> No outdated packages were found on your system.
+\end{ospcode}
+
+Man sieht, wie die Ausgabe regelmäßig von \cmd{*** \cmdvar{xyz} ***}
+unterbrochen wird. An all diesen Stellen ruft Portage das
+\cmd{bashrc}-Skript auf und übergibt die aktuelle Phase %
+\index{emerge (Programm)!Phase}%
+der Installation in der Variablen \cmd{EBUILD\_PHASE}. %
+\index{EBUILD\_PHASE (Variable)}%
+%\index{bashrc (Datei)!EBUILD\_PHASE|see{EBUILD\_PHASE (Variable)}}%
+Folgende Phasen gibt es:
+
+\begin{osplist}
+\item \cmd{clean}
+\item \cmd{setup}
+\item \cmd{unpack}
+\item \cmd{compile}
+\item \cmd{test}
+\item \cmd{install}
+\item \cmd{preinst}
+\item \cmd{prerm}
+\item \cmd{postrm}
+\item \cmd{cleanrm}
+\item \cmd{postinst}
+\end{osplist}
+
+Die zentralen Phasen \cmd{setup}, \cmd{unpack}, \cmd{compile},
+\cmd{test} und \cmd{install} haben wir bereits beim Schreiben von
+Ebuilds kennen gelernt. Einen genaueren Überblick bietet die
+Dokumentation über \cmd{man ebuild}.
+
+\subsection{\label{autolocalepurge}localepurge automatisieren}
+
+\index{localepurge (Programm)|(}%
+Wie  unter \ref{localepurge} beschrieben, kann man unnötige
+Lokalisierungen in regelmäßigen Abständen entfernen, indem man
+\cmd{localepurge} manuell aufruft. Über den
+\cmd{/etc/portage/bashrc}-Mechanismus haben wir aber nun das nötige
+Rüstzeug, um den Prozess auch automatisiert anzustoßen.
+
+Der Gewinn der Aktion ist zugegebenermaßen nicht sonderlich groß, und
+es gibt keinen zwingenden Grund, die folgende Konfiguration zu
+übernehmen, aber es ist ein  einfaches Beispiel, wie
+sich \cmd{/etc/portage/bashrc} nutzbringend einsetzen lässt.
+
+Das Skript ist wieder denkbar einfach:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/portage/bashrc}
+if [[ \$\{EBUILD_PHASE\} == "postinst" ]]; then
+        einfo "Running localepurge..."
+        PATH="/bin:/usr/bin" localepurge
+fi
+\end{ospcode}
+
+
+Hier wird nur in der Phase \cmd{postinst} (\cmd{if [[
+  \$\{EBUILD\_PHASE\} ={}=\osplinebreak{} "{}post\-inst"{} ]]; ...}), also nach der
+Installation eines neuen Paketes das Skript \cmd{localepurge}
+aufgerufen, also nach beendeter Installation erst einmal
+aufgeräumt. Die Ausgabe von z.\,B.\ 
+\cmd{emerge -av sys-apps/coreutils} sieht dann folgendermaßen aus:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-apps/coreutils}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] sys-apps/coreutils-6.4  USE="acl nls (-selinux) -static"
+ 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+ * Running localepurge...
+ * localepurge: processing locale files in /usr/share/locale ...
+/usr/share/locale/af/LC_MESSAGES/coreutils.mo entfernt
+\ldots
+/usr/share/locale/zh_TW/LC_MESSAGES/coreutils.mo entfernt
+ * localepurge: Disk space freed in /usr/share/locale: 4168K
+ * localepurge: processing locale files in /usr/lib/locale ...
+ * localepurge: processing man pages in /usr/share/man ...
+ * localepurge: processing man pages in /usr/local/share/man ...
+\ldots
+\end{ospcode}
+\index{localepurge (Programm)|)}%
+
+\subsection{\label{cflagsperpackage}Paketspezifische Einstellungen}
+
+\index{CFLAGS (Variable)!Paketspezifisch|(}%
+Kommen wir abschließend zu einer \cmd{/etc/portage/bashrc}-Variante,
+über die wir Einstellungen paketspezifisch vornehmen. Das dafür
+notwendige \cmd{bashrc}-Skript sieht wie folgt aus:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/portage/bashrc}
+if [ -n "\$\{CATEGORY\}" ] && [ -n "\$\{PN\}" ]; then 
+    PKG_ENV_FILE="/etc/portage/package.env/\$\{CATEGORY\}/\$\{PN\}" 
+    if [ -r \$\{PKG_ENV_FILE\}-\$\{PV\} ]; then 
+	source \$\{PKG_ENV_FILE\}-\$\{PV\} 
+    elif [ -r \$\{PKG_ENV_FILE\} ]; then 
+	source \$\{PKG_ENV_FILE\} 
+    fi     
+fi 
+\end{ospcode}
+
+Die Variable \cmd{EBUILD\_PHASE} %
+\index{EBUILD\_PHASE (Variable)}%
+%\index{bashrc (Datei)!EBUILD\_PHASE|see{EBUILD\_PHASE (Variable)}}%
+ist nicht der einzige Wert, der dem \cmd{bashrc}-Skript beim Aufruf
+übermittelt wird. Auch die Paket-Kategorie (\cmd{CATEGORY}) %
+\index{CATEGORY (Variable)}%
+%\index{bashrc (Datei)!CATEGORY|see{CATEGORY (Variable)}}%
+und der Paketname (\cmd{PN}) %
+\index{PN (Variable)}%
+%\index{bashrc (Datei)!PN|see{PN (Variable)}}%
+sowie die zu installierende Version des Paketes (\cmd{PV}) %
+\index{PV (Variable)}%
+%\index{bashrc (Datei)!PV|see{PV (Variable)}}%
+werden als Variablen übergeben.
+
+Im obigen Skript wird nun zuerst einmal geprüft, dass Kategorie und
+Pa\-ketname wirklich einen Wert enthalten
+
+\begin{ospcode}
+if [ -n "\$\{CATEGORY\}" ] \&\& [ -n "{}\$\{PN\}"{} ]; \ldots
+\end{ospcode}
+
+und dann getestet, ob die Datei mit angehängter Versionsnummer
+
+\begin{ospcode}
+/etc/portage/package.env/\$\{CATEGORY\}/\$\{PN\}-\$\{PV\}
+\end{ospcode}
+
+oder auch ohne Versionsnummer
+
+\begin{ospcode}
+/etc/portage/package.env/\$\{CATEGORY\}/\$\{PN\}
+\end{ospcode}
+
+existiert. Ist dies der Fall, wird diese Datei über \cmd{source}
+eingelesen.
+
+Verdeutlichen wir den Vorgang an einem Beispiel: Schreibt man das oben
+gegebene Skript in \cmd{/etc/portage/bashrc}, so passiert beim
+\cmd{emerge}-Aufruf erst einmal nichts Besonderes. Da es noch kein
+Verzeichnis \cmd{/etc/portage/""package.env} %
+\index{package.env (Verzeichnis)}%
+\index{etc@/etc!portage!package.env}%
+gibt, findet unser Skript darin auch keine lesbaren Dateien und liest
+sie folglich auch nicht ein.
+
+Machen wir uns also einmal die Mühe, dort Dateien anzulegen, und
+aktualisieren anschließend das Mini-Paket \cmd{app-misc/mime-types}:% %
+\index{mime-types (Paket)}%
+%\index{app-misc Kategorie)!mime-types (Paket)|see{mime-types (Paket)}}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mkdir -p /etc/portage/package.env/app-misc}
+\rprompt{\textasciitilde}\textbf{echo "[ \textbackslash\$EBUILD_PHASE ={}= "unpack" ] \&\&  einfo \textbackslash}
+> \textbf{\textbackslash"Per package call\textbackslash"" > /etc/portage/package.env/app-misc/mime-types}
+\end{ospcode}
+
+Da wir die Datei \cmd{/etc/portage/package.env/app-misc/mime-types} %
+\index{mime-types (Datei)}%
+\index{etc@/etc!portage!package.env!app-misc!mime-types}%
+erstellt haben, wird der Inhalt der Datei ausgewertet, was in der
+\cmd{unpack}-Phase zu einer kurzen Meldung (\cmd{Per package call})
+führt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge app-misc/mime-types}
+\ldots
+ * checking mime-types-7.tar.bz2 ;-) ...            [ ok ]
+ * Per package call
+>>> Unpacking source...
+\ldots
+\end{ospcode}
+
+Auf diese Weise lassen sich also paketspezifisch und sogar
+versionsabhängige Einstellungen vornehmen.  Wer z.\,B.\ mit der
+Performance seines Apache unzufrieden ist und durch die vage Hoffnung
+angetrieben wird, eine Optimierung auf Ebene des C-Compilers könne
+noch etwas mehr Geschwindigkeit hergeben, der kann nach diesem
+Verfahren die Datei \cmd{/etc/portage/""package.env/net-www/apache} %
+\index{apache (Datei)}%
+\index{etc@/etc!portage!package.env!net-www!apache}%
+anlegen und dort z.\,B.\ Folgendes eintragen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/portage/package.env/net-www/apache}
+export CFLAGS="\$\{CFLAGS\} -O3"
+\end{ospcode}
+
+Daraufhin bemüht sich der \cmd{gcc}-Compiler %
+\index{gcc (Programm)}%
+um eine maximale Optimierung in puncto Geschwindigkeit des
+produzierten Codes. Ob das sinnvoll ist, sei dahingestellt. Vermutlich
+beschleunigen andere Maßnahmen einen Apache-Server effektiver, aber
+dieser Thematik widmen sich andere Bücher.% %
+\index{CFLAGS (Variable)!Paketspezifisch|)}%
+\index{bashrc (Datei)|)}%
+\index{Portage!erweitern|)}%
+
+\section{\label{udev}Hardwaremanagement mit udev}
+
+\index{udev|(}%
+Da Gentoo grundsätzlich die Verwendung von \cmd{udev} empfiehlt,
+wollen wir uns mit diesem System der Geräteverwaltung %
+\index{Geräte!-verwaltung}%
+auch kurz auseinander setzen.
+
+\cmd{udev} dient auch bei wechselnden Hardware-Profilen %
+\index{Hardwareprofil}%
+einer Maschine einer stabilen Verwaltung der an einen Rechner
+angeschlossenen Geräte.  Um einen Rechner stabil konfigurieren zu
+können, muss man davon ausgehen, dass dieselben Geräte über eine
+stabile Adresse zu erreichen sind, unabhängig davon, \emph{wie} die
+Geräte an den Rechner angeschlossen sind. Die Reihenfolge der
+Verkabelung über diverse USB-Ports %
+\index{USB}%
+sollte z.\,B.\ keinen Einfluss auf die Addressierung der Geräte haben.
+
+Unter Linux steht standardmäßig der \cmd{/dev}-Dateibaum %
+\index{dev@/dev (Verzeichnis)}%
+für die Geräteverwaltung zur Verfügung. Wir wollen uns hier nur kurz
+ansehen, wie wir die Liste der Geräte mit Hilfe von \cmd{udev}
+verwalten.
+
+
+\subsection{udev-Start}
+
+Das \cmd{udev}-System wird unter Gentoo im normalen Init-Systems
+gestartet, wenn der Nutzer tatsächlich \cmd{udev} für die
+Geräteverwaltung wählt. Dies geschieht über die Variable
+\cmd{RC\_DEVICES} 
+\index{RC\_DEVICES (Variable)}%
+in der Datei \cmd{/etc/conf.d/rc}.% %
+\index{rc (Datei)}%
+\index{etc@/etc!conf.d!rc}%
+
+
+\begin{ospcode}
+# Use this variable to control the /dev management behavior.
+#  auto   - let the scripts figure out what's best at boot
+#  devfs  - use devfs (requires sys-fs/devfsd)
+#  udev   - use udev (requires sys-fs/udev)
+#  static - let the user manage /dev
+
+RC_DEVICES="udev"
+\end{ospcode}
+
+Diese Variable kann folgende Werte annehmen:
+
+\begin{ospdescription}
+\ospitem{\cmd{auto}} Das Init-System versucht eigenständig
+  herauszufinden, welche Geräteverwaltung der Benutzer wünscht. Dafür
+  zieht es Informationen über die Kernel-Version und die installierten
+  Pakete zu Rate.
+
+\ospitem{\cmd{devfs}} Immer das \cmd{devfs}-System wählen;
+  \cmd{sys-fs/devfsd} muss installiert sein.
+
+\ospitem{\cmd{udev}} Immer das \cmd{udev}-System wählen;
+  \cmd{sys-fs/udev} muss installiert sein.
+
+\ospitem{\cmd{static}} Es wird kein Verwaltungssystem initialisiert und
+  der Benutzer ist selbst für die statische Verwaltung der
+  Gerätedateien in \cmd{/dev} zuständig.
+\end{ospdescription}
+
+Wir gehen davon aus, dass der Parameter entsprechend der Empfehlung
+auf \cmd{udev} gesetzt ist. Ist dies der Fall, die Kernel-Version
+liegt über 2.6.0 und das \cmd{sys-fs/udev}-Paket %
+\index{udev (Paket)}%
+%\index{sys-fs Kategorie)!udev (Paket)|see{udev (Paket)}}%
+ist installiert, so wird das \cmd{udev}-System über das Skript
+\cmd{/lib/rcscripts/addons/udev-start.sh} %
+\index{udev-start.sh (Datei)}%
+%\index{lib@/lib!rcscripts!addons!udev-start.sh|see{udev-start.sh    (Datei)}}%
+gestartet.
+
+\label{udevrcusefstab}
+Ebenfalls über die Datei \cmd{/etc/conf.d/rc} %
+\index{rc (Datei)}%
+\index{etc@/etc!conf.d!rc}%
+können wir mit der Option \cmd{RC\_""USE\_FSTAB} %
+\index{RC\_USE\_FSTAB (Variable)}%
+%\index{rc (Datei)!RC\_USE\_FSTAB|see{RC\_USE\_FSTAB (Variable)}}%
+festlegen, ob das \cmd{udev}-Dateisystem mit einigen Standardoptionen
+auf \cmd{/dev} gemountet wird oder ob die Informationen der Datei
+\cmd{/etc/""fstab} %
+\index{fstab (Datei)}%
+genutzt werden.
+
+\begin{ospcode}
+RC_USE_FSTAB="no"
+\end{ospcode}
+
+Wer das Standardverhalten umgehen und das Dateisystem an anderer
+Stelle bzw. mit anderen Optionen mounten möchte, setzt
+\cmd{RC\_USE\_FSTAB} %
+\index{RC\_USE\_FSTAB (Variable)}%
+%\index{rc (Datei)!RC\_USE\_FSTAB|see{RC\_USE\_FSTAB (Variable)}}%
+auf \cmd{yes} und trägt die eigenen Optionen in \cmd{/etc/""fstab}
+\index{fstab (Datei)}%
+ein; ist \cmd{RC\_""USE\_""FSTAB} gesetzt, so lassen sich auch die
+Standardparameter für \cmd{/proc}, %
+\index{proc@/proc (Verzeichnis)}%
+\cmd{/sys}, %
+\index{sys@/sys}%
+und \cmd{/dev/pts} %
+\index{pts (Verzeichnis)}%
+%\index{dev@/dev!pts|see{pts (Verzeichnis)}}%
+über \cmd{/etc/fstab} %
+\index{fstab (Datei)}%
+\index{etc@/etc!fstab}%
+modifizieren. Generell dürften solche Modifikationen aber nur für sehr
+spezielle Systeme eine Rolle spielen (siehe auch Kapitel
+\ref{rcusefstab} ab Seite \pageref{rcusefstab}).
+
+Über \cmd{udev} lassen sich mittlerweile die meisten Hardware-Systeme
+problemlos ansprechen. Wer jedoch über besondere Hardware verfügt und
+einzelne Geräteeinträge in \cmd{/dev} vermisst, kann diese auch
+statisch über das Standardwerkzeug \cmd{mknod} %
+\index{mknod (Programm)}%
+hinzufügen.
+
+Betreiben wir das \cmd{/dev}-Dateisystem jedoch nur über \cmd{udev},
+entsteht hier ein Problem: Beim Neustart sind Einträge, die wir
+manuell über \cmd{mknod} hinzugefügt haben, wieder vergessen. Um aber
+auch diese Gerätedateien %
+\index{Gerätedatei}%
+permanent zur Verfügung zu stellen, bietet Gentoo die Möglichkeit, die
+Einträge des \cmd{dev}-Verzeichnisses in einem Tar-Paket über den
+Neustart hinweg zu sichern.
+
+Dazu müssen wir in der Datei \cmd{/etc/conf.d/rc} die Option
+\cmd{RC\_DEVICE\_""TARBALL} %
+\index{RC\_DEVICE\_TARBALL (Variable)}%
+auf \cmd{yes} (die empfohlene Standardeinstellung) setzen.
+
+\begin{ospcode}
+RC_DEVICE_TARBALL="yes"
+\end{ospcode}
+\index{udev|)}%
+
+\section{\label{x86info}Hardware-Informationen: sys-apps/x86info}
+
+\index{x86info (Paket)|(}%
+%\index{sys-apps Kategorie)!x86info (Paket)|see{x86info (Paket)}}%
+Die Datei \cmd{/proc/cpuinfo} %
+\index{cpuinfo (Datei)}%
+%\index{proc@/proc!cpuinfo|see{cpuinfo (Datei)}}%
+liefert zwar, wie schon unter \ref{Compiler-Flags} beschrieben, die
+wichtigsten Daten über den Prozessor einer Maschine, aber statt die
+Informationen aus dieser nicht eben übersichtlichen Datei zu klauben,
+bietet sich auf \cmd{x86}-Maschinen %
+\index{x86 (Architektur)}%
+das Werkzeug \cmd{x86info} %
+\index{x86info (Programm)}%
+an. Die Ausgabe dieses Programms ist ein wenig besser lesbar:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-apps/x86info}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-apps/x86info-1.13  58 kB 
+
+Total: 1 package (1 new), Size of downloads: 58 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+ * Your kernel must be built with the following options
+ * set to Y or M
+ *      Processor type and features ->
+ *          [*] /dev/cpu/*/msr - Model-specific register support
+ *          [*] /dev/cpu/*/cpuid - CPU information support
+\ldots
+\end{ospcode}
+
+Der Warnung gegen Ende der Installation entsprechend, müssen im Kernel
+die beiden folgenden Optionen aktiviert sein, damit das Tool
+problemlos arbeiten kann:
+
+\begin{ospdescription}
+\ospitem{\menu{Processor type and features}}
+\menu{/dev/cpu/*/msr - Model-specific register support}\\
+\menu{/dev/cpu/*/cpuid - CPU information support}
+\end{ospdescription}
+
+Unter diesen Voraussetzungen liefert das Werkzeug beim Aufruf einen
+knappen Überblick über die CPU-Eigenschaften %
+\index{CPU}%
+der Maschine:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{x86info}
+x86info v1.20.  Dave Jones 2001-2006
+Feedback to <davej@redhat.com>.
+
+Found 1 CPU
+------------------------------------------------------------------------
+Family: 6 Model: 8 Stepping: 0
+CPU Model : Athlon XP (Thoroughbred)[A0]
+Feature flags:
+ fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 
+mmx fxsr sse
+Extended feature flags:
+ syscall mmxext 3dnowext 3dnow
+\end{ospcode}
+
+Die wichtigsten Informationen sind die Familie (\cmd{Family}) und das
+Modell (\cmd{Athlon XP (Thoroughbred)[A0]}), mit denen sich aus den
+Angaben unter \cmd{http://gentoo-wiki.com/Safe\_Cflags} die korrekten
+Einstellungen für die \cmd{CFLAGS} %
+\index{CFLAGS (Variable)}%
+%\index{make.conf (Datei)!CFLAGS|see{CFLAGS (Variable)}}%
+im Portage-System ermitteln lassen.
+
+Die Prozessor-Flags verraten dem Experten ebenfalls, welche
+Optimierungen des \cmd{gcc}-Compilers %
+\index{gcc (Programm)}%
+sich auf der Maschine nutzen lassen. Wer die Flags etwas genauer
+erklärt haben möchte, fügt dem \cmd{x86info}-Aufruf die Option
+\cmd{-{}-verbose} %
+\index{x86info (Programm)!verbose (Option)}%
+(bzw.\ \cmd{-v}) %
+%\index{x86info (Programm)!v (Option)|see{x86info (Programm), verbose    (Option)}}%
+hinzu.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{x86info -v}
+x86info v1.20.  Dave Jones 2001-2006
+Feedback to <davej@redhat.com>.
+
+Found 1 CPU
+-----------------------------------------------------------------------
+Family: 6 Model: 8 Stepping: 0
+CPU Model : Athlon XP (Thoroughbred)[A0]
+Feature flags:
+	Onboard FPU
+	Virtual Mode Extensions
+	Debugging Extensions
+	Page Size Extensions
+	Time Stamp Counter
+	Model-Specific Registers
+	Physical Address Extensions
+	Machine Check Architecture
+	CMPXCHG8 instruction
+	Onboard APIC
+	SYSENTER/SYSEXIT
+	Memory Type Range Registers
+	Page Global Enable
+	Machine Check Architecture
+	CMOV instruction
+	Page Attribute Table
+	36-bit PSEs
+	MMX support
+	FXSAVE and FXRESTORE instructions
+	SSE support
+
+Extended feature flags:
+ syscall mmxext 3dnowext 3dnow
+\end{ospcode}
+
+\cmd{x86info} bietet noch einige exotischere Features, um z.\,B.\ die
+Register der CPU anzuzeigen, aber auf diese wollen wir hier nicht
+weiter eingehen. Sie sind für die Bestimmung der \cmd{CFLAGS} irrelevant.
+\index{x86info (Paket)|)}%
+
+\section{\label{cron}cron}
+
+\index{cron|(}%
+Es gibt eine Reihe von Prozessen, die in regelmäßigen Abständen auf
+dem Rechner laufen sollten, z.\,B.\ Sicherheitschecks, das Aufräumen %
+\index{Aufräumen}%
+temporärer Dateien %
+\index{Datei!temporär}%
+oder Updates.  Insbesondere bei Server-Systemen werden solche Prozesse
+im Regelfall automatisch angestoßen und bedürfen keiner
+Nutzerinteraktion.  Voraussetzung dafür ist ein \cmd{cron}-System, das
+diese Aktionen zeitabhängig startet.
+
+Wie bereits im Rahmen der Installation (Seite \pageref{cronchoice})
+erwähnt, bietet Gentoo verschiedene Cron-Systeme an; derzeit sind
+gleich fünf im Angebot: \cmd{sys-process/anacron}, %
+\index{anacron (Paket)}%
+%\index{sys-process Kategorie)!anacron (Paket)|see{anacron (Paket)}}%
+\cmd{sys-process/bcron}, %
+\index{bcron (Paket)}%
+%\index{sys-process Kategorie)!bcron (Paket)|see{bcron (Paket)}}%
+\cmd{sys-process/dcron}, %
+\index{dcron (Paket)}%
+%\index{sys-process Kategorie)!dcron (Paket)|see{dcron (Paket)}}%
+\cmd{sys"=process/fcron} %
+\index{fcron (Paket)}%
+%\index{sysprocess Kategorie)!fcron (Paket)|see{fcron (Paket)}}%
+und \cmd{sys-process/vixie-cron}. %
+\index{vixie-cron (Paket)}%
+%\index{sys-process Kategorie)!vixie-cron (Paket)|see{vixie-cron (Paket)}}%
+
+\cmd{sys-process/anacron} %
+\index{anacron (Paket)}%
+%\index{sys-process Kategorie)!anacron (Paket)|see{anacron (Paket)}}%
+nutzt allerdings nicht das Standardsystem, und
+\cmd{sys""-process/bcron} %
+\index{bcron (Paket)}%
+%\index{sys""-process Kategorie)!bcron (Paket)|see{bcron (Paket)}}%
+ist noch recht neu und nicht als stabil markiert. Beide Pakete sollte
+man nur einsetzen, wenn man auf deren besondere Features nicht
+verzichten kann.
+
+Die Pakete \cmd{sys-process/dcron}, %
+\index{dcron (Paket)}%
+%\index{sys-process Kategorie)!dcron (Paket)|see{dcron (Paket)}}%
+\cmd{sys-process/fcron} %
+\index{fcron (Paket)}%
+%\index{sys-process Kategorie)!fcron (Paket)|see{fcron (Paket)}}%
+und \cmd{sys-process/""vixie-cron} %
+\index{vixie-cron (Paket)}%
+%\index{sys-process Kategorie)!vixie-cron (Paket)|see{vixie-cron    (Paket)}}%
+haben eins gemeinsam: Sie basieren auf \cmd{sys-process/cron"=base} %
+\index{cron-base (Paket)}%
+%\index{sys-process Kategorie)!cron-base (Paket)|see{cron-base (Paket)}}%
+und liefern dem Benutzer darüber eine einheitliche Schnittstelle, die
+auch von anderen Distributionen bekannt sein dürfte.
+
+\subsection{sys-process/cronbase}
+
+\index{cron-base (Paket)|(}%
+Schauen wir uns an, welche Dateien zu \cmd{sys-process/cronbase}
+gehören, erschließt sich bereits dessen Konzept:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlist sys-process/cronbase}
+/usr/sbin/run-crons
+/usr/share/doc/cronbase-0.3.2/README.gz
+/etc/cron.hourly/.keep
+/etc/cron.daily/.keep
+/etc/cron.weekly/.keep
+/etc/cron.monthly/.keep
+/var/spool/cron/.keep
+/var/spool/cron/lastrun/.keep
+\end{ospcode}
+
+Das Skript \cmd{/usr/sbin/run-crons} %
+\index{run-crons (Datei)}%
+\index{usr@/usr!sbin!run-crons}%
+führt die einzelnen Skripte in den Verzeichnissen
+\cmd{/etc/cron.hourly}, %
+\index{cron.hourly (Verzeichnis)}%
+\index{etc@/etc!cron.hourly}%
+\cmd{/etc/cron.daily}, %
+\index{cron.daily (Verzeichnis)}%
+\index{etc@/etc!cron.daily}%
+\cmd{/etc/cron.weekly} %
+\index{cron.weekly (Verzeichnis)}%
+\index{etc@/etc!cron.weekly}%
+und \cmd{/etc/cron.monthly} %
+\index{cron.monthly (Verzeichnis)}%
+\index{etc@/etc!cron.monthly}%
+aus. Diese Verzeichnisse finden sich auch bei anderen Distributionen.
+
+In jedem dieser Verzeichnisse lassen sich wiederum ausführbare Skripte
+ablegen, die das \cmd{cron}-System entsprechend dem Verzeichnisnamen
+in regelmäßigen Abständen stündlich, täglich, wöchentlich oder
+monatlich ausführt.
+
+Zuletzt sorgt das auf der \cmd{cronbase} aufsetztende
+\cmd{cron}-System dafür, dass \cmd{/usr/sbin/run-crons} %
+\index{run-crons (Datei)}%
+\index{usr@/usr!sbin!run-crons}%
+auch wirklich in regelmäßigen Abständen aufgerufen wird. Wie das genau
+vor sich geht beschreiben wir im folgenden Abschnitt anhand des
+\cmd{vixie-cron}-Systems.% %
+\index{vixie-cron (Paket)}%
+
+
+Auch wenn \cmd{cronbase} nur einen Bruchteil der Funktionen nutzt, die
+ein \cmd{cron}-System im Normalfall bietet, ist es als Grundlage
+sinnvoll, da es sicher 95\% der Anwendungsfälle im
+Administratorenalltag abdeckt. Wem es also genügt, Skripte in den vier
+oben genannten Zeitabständen auszuführen, wählt als auf
+\cmd{sys-process/cronbase} aufsetztendes \cmd{cron}-System einfach
+den von Gentoo empfohlenen Standard \cmd{sys-process/vixie-cron}.
+\index{cron-base (Paket)|)}%
+
+\subsection{Die einfachste Lösung: sys-process/vixie-cron}
+
+\index{vixie-cron (Paket)|(}%
+Das Paket ist in Sachen Konfiguration einfach zu handhaben. Nach der
+Installation startet man den \cmd{cron}-Service und fügt ihn, wenn
+gewünscht, dem \cmd{default}-Runlevel %
+\index{default (Runlevel)}%
+\index{Runlevel}%
+hinzu:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-process/vixie-cron}
+\ldots
+\rprompt{\textasciitilde}\textbf{/etc/init.d/vixie-cron start}
+\rprompt{\textasciitilde}\textbf{rc-update add vixie-cron default}
+\end{ospcode}
+
+Da \cmd{sys-process/vixie-cron} eine systemweite
+\cmd{cron}-Konfiguration in\osplinebreak{} \cmd{/etc/crontab} %
+\index{crontab (Datei)}%
+\index{etc@/etc!crontab}%
+akzeptiert, funktioniert damit das oben beschriebene
+\cmd{sys"=process/cronbase}-System sofort. Ein Blick in die Datei
+\cmd{/etc/crontab} verrät den Ablauf:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/crontab}
+# for vixie cron
+
+# Global variables
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+HOME=/
+
+# check scripts in cron.hourly, cron.daily, cron.weekly and cron.monthly
+0  *  * * *      root  rm -f /var/spool/cron/lastrun/cron.hourly
+1  3  * * *      root  rm -f /var/spool/cron/lastrun/cron.daily
+15 4  * * 6      root  rm -f /var/spool/cron/lastrun/cron.weekly
+30 5  1 * *      root  rm -f /var/spool/cron/lastrun/cron.monthly
+*/10  *  * * *   root  test -x /usr/sbin/run-crons && /usr/sbin/run-crons 
+\end{ospcode}
+
+Die letzten fünf Zeilen sind für den zeitlichen Ablauf des
+\cmd{sys-process/""cronbase}-Systems verantwortlich.  Die Einträge
+bestimmen in \cmd{cron}"=üblicher Manier die gewünschten Zeitabstände.
+Die erste Spalte definiert die Minute, die zweite die Stunden, die
+dritte die Tage des Monats und die vierte die Monate. Die fünfte
+Spalte nennt Wochentage für wöchentliche Aufgaben.
+
+Die erste Zeile definiert über \cmd{0 * * * *} eine stündliche
+Aktion: in der ersten Spalte die Minute \cmd{0} und in allen anderen
+Spalten jeder Zeitpunkt über \cmd{*}. So führt das \cmd{cron}-System
+jeweils zur vollen Stunde die in der siebten Spalte genannte Aktion
+(\cmd{rm -f /var/spool/cron/lastrun/cron.hour\-ly}) aus. Die sechste
+Spalte bezeichnet den Benutzer, unter dessen Kennung das Skript
+ausgeführt wird. Die zweite Zeile spezifiziert für das
+"`Tages-Skript"' mit \cmd{1 3 * * *} die Uhrzeit \cmd{3:01} an jedem
+Tag der Woche.
+
+Der Ablauf sieht so aus, dass der \cmd{cron}-Prozess zu den angegebenen
+Zeiten die Information über einen ausgeführten \cmd{cron}-Job löscht,
+indem er die entsprechende Indikator-Datei
+\cmd{/var/spool/cron/lastrun/cron.\{hourly,""daily,weekly,monthly\}}
+entfernt. Alle zehn Minuten (siehe \cmd{*/10 * * * *} in Zeile fünf)
+wird dann das Skript \cmd{/usr/sbin/run-crons} aus dem
+\cmd{cron\-base}-Paket ausgeführt. Dieses überprüft, ob eine der
+\cmd{/var/spool/cron/""lastrun/cron.*}-Dateien fehlt; sollte dies der
+Fall sein, führt es die Skripte in dem entsprechenden
+\cmd{/etc/cron.*}-Verzeichnis aus.
+
+Wem die \cmd{/etc/cron.*}-Verzeichnisse für das Management der
+notwendigen Aufgaben genügen, muss sich an dieser Stelle nicht weiter
+mit dem \cmd{cron}-System auseinander setzen, sondern fügt bei Bedarf
+einfach ein Skript in die \cmd{/etc/cron.*}-Verzeichnisse ein.
+\index{vixie-cron (Paket)|)}%
+
+\subsection{sys-process/dcron und sys-process/fcron}
+
+\index{dcron (Paket)|(}%
+\index{fcron (Paket)|(}%
+Sowohl \cmd{sys-process/dcron} als auch \cmd{sys-process/fcron}
+unterstützen keine zentrale, systemweite \cmd{/etc/crontab}-Datei und
+benötigen damit für die Konfiguration zumindest einen weiteren
+Schritt.
+
+Beide Pakete liefern die notwendigen Informationen zum Abschluss der
+Installation:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-process/dcron}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-process/dcron-3.2  22 kB 
+
+Total: 1 package (1 new), Size of downloads: 22 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+ * To activate /etc/cron.\{hourly|daily|weekly|monthly\} please run:
+ *  crontab /etc/crontab
+ * 
+ * !!! That will replace root's current crontab !!!
+ * 
+ * You may wish to read the Gentoo Linux Cron Guide, which can be
+ * found online at:
+ *     http://www.gentoo.org/doc/en/cron-guide.xml
+\end{ospcode}
+
+Da beide nur Benutzerspezifische \cmd{crontab}-Informationen
+akzeptieren und \cmd{/etc/crontab} %
+\index{crontab (Datei)}%
+\index{etc@/etc!crontab}%
+nicht automatisch ausgeführt wird, ist \cmd{/etc/crontab} einmal für
+einen spezifischen Nutzer zu installiert.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{crontab /etc/crontab}
+\end{ospcode}
+
+Dieses Kommando, als \cmd{root} %
+\index{root (Benutzer)}%
+ausgeführt, installiert die Anweisungen aus \cmd{/etc/crontab} für den
+Benutzer \cmd{root}. Die Angaben in der Standard-\cmd{cron\-tab}
+ähneln stark der Syntax von \cmd{sys-process/vixie-cron}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/crontab}
+# /etc/crontab
+
+# fcron || dcron:
+# This is NOT the system crontab! fcron and dcron do not support a syste
+m crontab.
+# to get /etc/cron.\{hourly|daily|weekly|montly\} working with fcron or 
+dcron do
+# crontab /etc/crontab
+# as root.
+# NOTE: This will REPLACE root's current crontab!!
+
+
+# check scripts in cron.hourly, cron.daily, cron.weekly and cron.monthly
+0  *  * * *      rm -f /var/spool/cron/lastrun/cron.hourly
+0  3  * * *      rm -f /var/spool/cron/lastrun/cron.daily
+15 4  * * 6      rm -f /var/spool/cron/lastrun/cron.weekly
+30 5  1 * *      rm -f /var/spool/cron/lastrun/cron.monthly
+*/15 * * * *     test -x /usr/sbin/run-crons \&\& /usr/sbin/run-crons 
+\end{ospcode}
+
+Hier fehlt im Vergleich zu \cmd{sys-process/vixie-cron} nur die Angabe
+zum Benutzer, da diese ja durch die benutzerspezifische Installation
+der \cmd{sys"=process/cronbase}-Informationen vorgegeben ist.
+
+Es gibt übrigens Pakete, die \cmd{sys-process/cronbase} zwingend
+erfordern, da sie bei der Installation Skripte in den
+\cmd{/etc/cron.*}-Verzeichnissen ablegen.  Wer also
+\cmd{sys-process/dcron} oder \cmd{sys-process/fcron} installiert, darf
+nicht vergessen, die \cmd{crontab} auch tatsächlich zu aktivieren. Die
+einmal erzeugten Einträge in der \cmd{root}-\cmd{crontab} sollten
+wir darum auch nicht einfach als "`überflüssig"' entfernen.
+
+Wer das \cmd{cron}-System über die Funktionalität der
+\cmd{sys-process/cronbase} %
+\index{cronbase (Paket)}%
+%\index{sys-process Kategorie)!cronbase (Paket)|see{cronbase (Paket)}}%
+hinaus nutzen möchte, sei auf die
+Gentoo-Referenz\footnote{\cmd{http://www.gentoo.org/doc/en/cron-guide.xml}}
+verwiesen. Diese gibt einen detaillierten Überblick über die
+Unterschiede in Bedienung und Konfiguration zwischen den Paketen.
+\index{dcron (Paket)|)}%
+\index{fcron (Paket)|)}%
+
+\subsection{Beispielszenarien}
+
+\index{cron!Skripte|(}%
+Abschließend wollen wir auf Basis des
+\cmd{sys-process/cronbase}-Systems einige Beispielszenarien für das
+\cmd{cron}-System auf einer Gentoo-Maschine vorstellen, wobei wir uns
+der Einfachheit halber auf das Verzeichnis \cmd{/etc/""cron.daily}, also
+tägliche Aufgaben beschränken. Natürlich können Sie die Zeitintervalle
+beliebig anpassen und die Skripte in anderen Verzeichnissen
+platzieren.
+
+Die meisten der im Folgenden besprochenen Skripte müssen Sie manuell
+mit \cmd{nano} %
+\index{nano (Programm)}%
+in den entsprechenden Ordnern erstellen; andere -- wie \cmd{slocate}
+oder \cmd{logrotate.cron} -- installiert \cmd{emerge} als Teil
+entsprechender Pakete (\cmd{sys-apps/slocate} %
+\index{slocate (Paket)}%
+%\index{sys-apps Kategorie)!slocate (Paket)|see{slocate (Paket)}}%
+bzw.\ \cmd{app-admin/logrotate}). %
+\index{logrotate (Paket)}%
+%\index{app-admin Kategorie)!logrotate (Paket)|see{logrotate (Paket)}}%
+
+
+\subsubsection{\label{dailyclean}Aufräumen mit eclean}
+
+\index{eclean (Programm)|(}%
+\index{Aufräumen!täglich}%
+Es empfiehlt sich, das Verzeichnis mit den heruntergeladenen
+Quellarchiven in regelmäßigen Abständen mit Hilfe von \cmd{eclean}
+(siehe Kapitel \ref{eclean}) von unnötigem Ballast zu befreien, denn
+einige dieser Quellarchive haben einen beträchtlichen Umfang und
+verschwenden wertvollen Speicherplatz.
+
+Folgendes Skript in \cmd{/etc/cron.daily/eclean} löscht überflüssige
+Dateien:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/cron.daily/eclean}
+#! /bin/sh
+
+echo
+echo "******************************************************"
+echo "* Running eclean"
+echo "******************************************************"
+echo
+
+eclean --nocolor distfiles
+\end{ospcode}
+
+Die \cmd{echo}-Zeilen sind nicht zwingend notwendig, erhöhen aber die
+Übersicht, wenn wir uns den Bericht über \cmd{cron}-Aktivitäten per
+Mail zuschicken lassen.
+\index{eclean (Programm)|)}%
+
+\subsubsection{\label{dailysync}Tägliche Synchronisation}
+
+\index{Aktualisierung!täglich|(}%
+Wir haben schon in Kapitel \ref{updatecycle} den Update-Zyklus %
+\index{Aktualisierung}%
+angesprochen und wollen hier eine Möglichkeiten beschreiben, die
+Aktualisierung %
+\index{Aktualisierung}%
+zu automatisieren.
+
+Es kann auf keinen Fall schaden, den Portage-Baum %
+\index{Portage!Baum}%
+täglich zu synchronisieren, %
+\index{Portage!synchronisieren}%
+um stets über Updates informiert zu sein.  Man könnte also direkt
+\cmd{emerge -{}-sync} über ein Skript in \cmd{/etc/cron.daily} %
+\index{cron.daily (Verzeichnis)}%
+\index{etc@/etc!cron.daily}%
+aufrufen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/cron.daily/esync}
+#! /bin/sh
+
+echo
+echo "******************************************************"
+echo "* Running esync"
+echo "******************************************************"
+echo
+
+emerge --sync --quiet
+\end{ospcode}
+
+Wer sich das Ergebnis der täglichen Aktualisierung zumailen lässt
+sollte mit der Option \cmd{-{}-quiet} %
+\index{emerge (Programm)!quiet (Option)}%
+die Ausgabe der \cmd{rsync}-Meldungen unterdrücken.
+
+Beim Einsatz von \cmd{esearch} (siehe Kapitel \ref{esearch})
+sollte sollte man auch automatisiert die \cmd{esearch}-Datenbank %
+\index{esearch (Programm)}%
+aktualisieren und folgende Zeile anhängen:
+
+\begin{ospcode}
+eupdatedb --quiet --nocolor
+\end{ospcode}
+\index{eupdatedb (Programm)}%
+
+Wir verwenden auch hier wieder die Option \cmd{-{}-quiet} %
+\index{eupdatedb (Programm)!quiet (Option)}%
+und dazu \cmd{-{}-nocolor}, %
+\index{eupdatedb (Programm)!nocolor (Option)}%
+da die Farbcodes in der Ausgabe des Cron-Logs problematisch sein
+können.
+
+Wer \cmd{eix} %
+\index{eix (Programm)}%
+(siehe Kapitel \ref{eix}) als Suchwerkzeug nutzt muss nach der
+Synchronisation des Portage-Baums ebenfalls die Datenbank dieses
+Werkzeugs mit \cmd{update-eix} %
+\index{update-eix (Programm)}%
+aktualisieren und hängt folgende Zeile an:
+
+\begin{ospcode}
+update-sync --quiet
+\end{ospcode}
+
+Wer ausschließlich \cmd{esearch} bzw. \cmd{eix} verwendet kann sich
+auch für das entsprechende der kombinierten Skripte \cmd{esync} %
+\index{esync (Programm)}%
+bzw.\ \cmd{eix-sync} %
+\index{eix-sync (Programm)}%
+entscheiden. Jedes kombiniert den Aufruf \cmd{emerge -{}-sync} mit der
+Aktualisierung der jeweiligen Datenbank.
+
+Um das System darüber hinaus täglich mit den neuesten Paketversionen
+zu bestücken, muss der Aktualisierung erneut \cmd{emerge} folgen, so
+dass wir das Kommando zur Systemaktualisierung von Seite
+\pageref{fullupdate} an unser Skript anfügen:
+
+\begin{ospcode}
+emerge -uND world
+\end{ospcode}
+
+Wie schon in Kapitel \ref{updatecycle} erwähnt, finden sich
+gelegentlich auch Fehler in den Paketen, die eine Installation
+verhindern. Beim manuellen Aufruf von \cmd{emerge -uND world} wird
+\cmd{emerge} %
+\index{emerge (Programm)!world (Paket)}%
+den Installations-Vorgang bei problematischen Paketen abbrechen, so
+dass man den Fehler beheben und \cmd{emerge -uND world} erneut
+aufrufen kann. Bei der automatischen Installation führen solche Fehler
+dazu, dass \cmd{emerge} alle nachfolgenden Pakete nicht mehr
+bearbeiten kann.
+
+Hier helfen zwei Optionen von \cmd{emerge}, die wir bislang noch nicht
+genutzt haben: \cmd{-{}-resume} %
+\index{emerge (Programm)!resume (Option)}%
+und \cmd{-{}-skipfirst}. %
+\index{emerge (Programm)!skipfirst (Option)}%
+\cmd{-{}-resume} greift den \cmd{emerge}-Prozess dort wieder auf, wo
+er zuletzt unterbrochen wurde, und \cmd{-{}-skipfirst} sorgt -- stets
+in Kombination mit \cmd{-{}-resume} -- dafür, dass \cmd{emerge} das
+erste Paket auf der verbleibenden Aktualisierungsliste überspringt.
+
+Daraus ergibt sich folgendes Bash-Skript:
+
+\begin{ospcode}
+emerge -uDN world || until emerge --resume --skipfirst ; do emerge
+--resume --skipfirst ; done
+\end{ospcode}
+
+Die Zeile bewirkt, dass zunächst einmal \cmd{emerge -uDN world}
+durchlaufen wird. Bei Erfolg passiert weiter gar nichts. Sollte es zu
+einem Fehler kommen, wird der Teil hinter der ODER-Anweisung
+(\cmd{||}) ausgeführt, und zwar so oft (\cmd{do \ldots ; done}), bis
+(\cmd{until}) \cmd{emerge -{}-resume -{}-skipfirst} keinen Fehler mehr
+zurück gibt.  Auf diese Weise werden alle problematischen Pakete
+übersprungen.
+
+Zugegebenermaßen ist dies ein recht rabiates Vorgehen, zumal es völlig
+außer Acht lässt, dass manche Pakete auch eine Aktualisierung der
+Konfiguration erfordern (siehe Kapitel \ref{configupdate}).  Auch der
+Tatsache, dass eine Aktualisierung Abhängigkeiten zwischen
+Bibliotheken stören kann und wir vor einer Fortsetzung der
+Installation \cmd{revdep-rebuild} laufen lassen sollten (siehe Kapitel
+\ref{revdeprebuild}), wird das Verfahren nicht gerecht.
+
+Es gibt mittlerweile ausgefeiltere Skripte zur Aktualisierung, und es
+bleibt zu hoffen, dass diese in Portage selbst einfließen.  Bis dahin
+empfiehlt das manuelle Update in größeren Zeitabständen.
+\index{Aktualisierung!täglich|)}%
+
+\subsubsection{layman synchronisieren}
+
+\index{layman (Programm)|(}%
+\index{Overlay!aktualisieren|(}%
+Ähnlich lassen sich auch über \cmd{layman} verwaltete Overlays
+automatisch aktualisieren. Der Befehl \cmd{layman -S} synchronisiert
+alle installierten Overlays:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/cron.daily/layman_update}
+#! /bin/sh
+
+echo
+echo "******************************************************"
+echo "* Running layman -S"
+echo "******************************************************"
+echo
+
+layman -S
+\end{ospcode}
+
+Die Ausgabe dieses Befehls kann bei vielen Overlays allerdings
+unübersichtlich werden. Wer mag kann die Ausgabe 
+mit \cmd{layman -S > /dev/null} an \cmd{/dev/null} schicken und damit
+unterdrücken.
+\index{layman (Programm)|)}%
+\index{Overlay!aktualisieren|)}%
+
+\subsubsection{\label{dailysec}Sicherheitscheck mit glsa-check}
+
+\index{Sicherheit!automatisch testen|(}%
+Den Sicherheitsstatus einer Maschine zu überprüfen ist eine Aufgabe,
+die das Cron-System ebenfalls täglich abhandeln sollte. Dazu lässt
+sich das in Kapitel \ref{glsa-check} besprochene Skript
+\cmd{glsa-check} %
+\index{glsa-check (Programm)|(}%
+verwenden. Ein mögliches Cron-Skript könnte z.\,B.\ so aussehen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/cron.daily/glsa-check}
+#! /bin/sh
+
+echo
+echo "******************************************************"
+echo "* Running glsa-check"
+echo "******************************************************"
+echo
+
+glsa-check --list --nocolor | grep -v "\textbackslash[U\textbackslash]"
+\end{ospcode}
+
+Der \cmd{grep}-Befehl filtert nur die wirklich bestehenden
+Sicherheitslücken aus der \cmd{glsa-check}-Ausgabe, denn
+normalerweise listet das Werkzeug alle bekannten GLSA auf. Das würde
+aber die zusammengefasste Ausgabe der täglichen \cmd{cron}-Aufgaben
+sehr unübersichtlich gestalten.
+\index{Sicherheit!automatisch testen|)}%
+\index{glsa-check (Programm)|)}%
+
+\subsubsection{locate-Datenbank aktualisieren}
+
+\index{Dateien!finden|(}%
+\cmd{sys-apps/slocate} %
+\index{slocate (Paket)}%
+%\index{sys-apps Kategorie)!slocate (Paket)|see{slocate (Paket)}}%
+ist eines der Pakete, das bei der Installation ein Skript in
+\cmd{/etc/cron.daily} %
+\index{cron.daily (Verzeichnis)}%
+\index{etc@/etc!cron.daily}%
+legt. Um über \cmd{slocate} eine Datei möglichst schnell im
+Dateisystem zu finden, hält das Paket eine interne Datenbank vor, die
+wir regelmäßig aktualisieren sollten.  Genau diesem Zweck dient das
+Skript \cmd{/etc/cron.daily/slocate}, %
+\index{slocate (Datei)}%
+\index{etc@/etc!cron.daily!slocate}%
+das den Befehl \cmd{updatedb} %
+\index{updatedb (Programm)}%
+aufruft:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/cron.daily/slocate}
+#! /bin/sh
+
+if [ -x /usr/bin/updatedb ]
+then
+	if [ -f /etc/updatedb.conf ]
+	then
+		nice /usr/bin/updatedb
+	else
+		nice /usr/bin/updatedb -f proc
+	fi
+fi
+\end{ospcode}
+
+Auch diesem Standard-Skript kann man \cmd{echo}-Zeilen wie in den
+übrigen Beispielen hinzufügen. Im Normalfall liefert \cmd{updatedb}
+zwar keine Ausgabe, aber sollten Fehler auftreten, lassen sich diese
+besser zuordnen, wenn sie in der Ausgabe aller
+\cmd{/etc/cron.daily}-Skripte mit einer eindeutigen Kopfzeile versehen
+sind.
+\index{Dateien!finden|)}%
+
+\subsubsection{\label{dailylogrot}Log-Dateien rotieren}
+
+\index{Log!archivieren|(}%
+In der gleichen Weise installiert das Paket
+\cmd{app-admin/logrotate} %
+\index{logrotate (Paket)}%
+%\index{app-admin Kategorie)!logrotate (Paket)|see{logrotate (Paket)}}%
+ein Skript namens \cmd{logrotate.cron} in \cmd{/etc/cron.daily}. %
+\index{cron.daily (Verzeichnis)}%
+\index{etc@/etc!cron.daily}%
+Es dient dazu, die Log-Dateien eines Systems in regelmäßigen Abständen
+zu archivieren und so zu verhindern, dass diese Dateien ins Unendliche
+wachsen.
+
+Um diesen Prozess in definierten Zeitabständen ablaufen zu lassen,
+verlässt sich \cmd{logrotate} %
+\index{logrotate (Programm)}%
+vollständig auf ein installiertes \cmd{cron}-System.  Der
+entsprechende Befehl im Skript ist denkbar einfach:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/cron.daily/logrotate.cron}
+#! /bin/sh
+
+/usr/sbin/logrotate /etc/logrotate.conf
+\end{ospcode}
+\index{cron|)}%
+\index{cron!Skripte|)}%
+\index{Log!archivieren|)}%
+
+\section{Schnelleres Kompilieren}
+
+\index{Kompilieren!Beschleunigen|(}%
+Einer der gravierenden Nachteile von Gentoo ist und bleibt das
+Kompilieren der Pakete. Verständlicherweise versuchen sowohl
+Entwickler als auch Benutzer die für diesen Vorgang benötigte Zeit
+soweit wie möglich zu reduzieren.
+
+Der Spielraum ist allerdings sehr begrenzt, aber wir wollen hier doch
+einige Möglichkeiten für einen kleinen Zeitgewinn beschreiben.
+
+
+\subsection{\label{ccache}ccache}
+
+\index{Compiler!Cache|(}%
+Als es um die Datei \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+in Kapitel \ref{makeconfccache} ging, war auf Seite
+\pageref{makeconfccache} bereits von dem Feature %
+\index{FEATURES (Variable)}%
+%\index{make.conf (Datei)!FEATURE|see{FEATURE (Variable)}}%
+\cmd{ccache} die Rede.
+
+Es aktiviert einen sogenannten \emph{Compiler-Cache}. Mit dessen Hilfe
+behält der \cmd{gcc}-Compiler %
+\index{gcc (Programm)}%
+eine Kopie jeder übersetzten C-Datei %
+\index{C}%
+und kann beim erneuten Kompilieren derselben Datei unter identischen
+Bedingungen (CPU, %
+\index{CPU}%
+\cmd{CFLAGS} %
+\index{CFLAGS (Variable)}%
+%\index{make.conf (Datei)!CFLAGS|see{CFLAGS (Variable)}}%
+etc.) direkt auf das Ergebnis zugreifen.
+
+Wie sinnvoll das Verfahren ist und welche Zeitersparnis daraus
+resultiert, wollen wir erst am Ende des Abschnitts diskutieren und
+zunächst einmal den Cache selber in Betrieb nehmen. Das ist recht
+einfach und darum auch zu empfehlen.
+
+\subsubsection{ccache einrichten}
+
+Um den Compiler-Cache in Betrieb zu nehmen, ist das Paket
+\cmd{dev-util/""ccache} %
+\index{ccache (Paket)}%
+%\index{dev-util Kategorie)!ccache (Paket)|see{ccache (Paket)}}%
+zu installieren, das das Programm \cmd{ccache} %
+\index{ccache (Programm)}%
+bereitstellt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av dev-util/ccache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-util/ccache-2.4-r6  0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+
+Damit ist der Cache auch schon fast einsatzbereit. Wir müssen zuvor in
+der Datei \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+der Variablen \cmd{FEATURES} %
+\index{FEATURES (Variable)}%
+%\index{make.conf (Datei)!FEATURES|see{FEATURES (Variable)}}%
+noch den Wert \cmd{ccache} hinzufügen (vgl.\ Seite
+\pageref{makeconfccache}).
+
+\begin{ospcode}
+FEATURES="sandbox parallel-fetch strict distlocks ccache"
+\end{ospcode}
+
+Dazu sollten wir ebenfalls in \cmd{/etc/make.conf} über
+\cmd{CCACHE\_SIZE} %
+\index{CCACHE\_SIZE (Variable)}%
+%\index{make.conf (Datei)!CCACHE\_SIZE|see{CCACHE\_SIZE (Variable)}}%
+die Größe des Caches festlegen:
+
+\begin{ospcode}
+CCACHE_SIZE="2G"
+\end{ospcode}
+
+Standardmäßig ist er auf 512~MB festgelegt, empfohlen werden 2
+GB (die wir, wie oben angegeben, mit \cmd{2G} bestimmen).
+
+Den Ort des Caches legt \cmd{CCACHE\_DIR} %
+\index{CCACHE\_DIR (Variable)}%
+%\index{make.conf (Datei)!CCACHE\_DIR|see{CCACHE\_DIR (Variable)}}%
+per Default auf \cmd{/var/tmp/ccache}, %
+\index{ccache (Verzeichnis)}%
+\index{var@/var!tmp!ccache}%
+und wir wollen diesen Wert auch nicht verändern.
+
+\subsubsection{ccache testen}
+
+Testen wir den Effekt des Compiler-Cache am schon bekannten
+\cmd{dev-libs/""openssl}-Beispiel! %
+\index{openssl (Paket)}%
+%\index{dev-libs Kategorie)!openssl (Paket)|see{openssl (Paket)}}%
+Für dieses Paket hatten wir uns auf Seite \pageref{openssltimes} mit
+\cmd{qlop} %
+\index{qlop (Programm)}%
+die Compile-Zeiten angesehen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlop -H -g dev-libs/openssl}
+openssl: Tue Jan 29 20:16:51 2008: 9 minutes, 8 seconds
+openssl: Wed Jan 30 08:18:00 2008: 15 minutes, 21 seconds
+openssl: Wed Jan 30 10:09:51 2008: 8 minutes, 40 seconds
+openssl: Wed Jan 30 14:23:20 2008: 12 minutes, 53 seconds
+openssl: 4 times
+\end{ospcode}
+
+Schauen wir uns zunächst den Zustand des (noch) leeren Caches an.
+Dafür verwenden wir das oben erwähnte \cmd{ccache} %
+\index{ccache (Programm)}%
+und geben ihm mit \cmd{CCACHE\_DIR""="{}/var/tmp/ccache"{}} die
+Position unseres Caches an. Die Option \cmd{-s} %
+\index{ccache (Programm)!s (Option)}%
+liefert die Statistik der unter \cmd{/var/tmp/ccache} %
+\index{ccache (Verzeichnis)}%
+\index{var@/var!tmp!ccache}%
+gespeicherten Compiler"=Ergebnisse:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{CCACHE_DIR="/var/tmp/ccache" ccache -s}
+cache directory                     /var/tmp/portage
+cache hit                              0
+cache miss                             0
+files in cache                         0
+cache size                             0 Kbytes
+max cache size                       2.0 Gbytes
+\end{ospcode}
+
+Wir kompilieren bzw.\ installieren \cmd{dev-libs/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-libs Kategorie)!openssl (Paket)|see{openssl (Paket)}}%
+nun einfach noch einmal und schauen uns die Ergebnisse des Laufs an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge dev-libs/openssl}
+\ldots
+\rprompt{\textasciitilde}\textbf{qlop -H -g dev-libs/openssl}
+openssl: Tue Jan 29 20:16:51 2008: 9 minutes, 8 seconds
+openssl: Wed Jan 30 08:18:00 2008: 15 minutes, 21 seconds
+openssl: Wed Jan 30 10:09:51 2008: 8 minutes, 40 seconds
+openssl: Wed Jan 30 14:23:20 2008: 12 minutes, 53 seconds
+openssl: Sat Feb  2 08:11:04 2008: 13 minutes, 19 seconds
+openssl: 5 times
+\end{ospcode}
+
+Der Lauf ist offensichtlich nicht schneller geworden, allerdings war
+das auch nicht zu erwarten, denn schließlich haben wir den Cache
+gerade erst in Betrieb genommen und noch überhaupt keine
+\cmd{gcc}-Ergebnisse %
+\index{gcc (Programm)}%
+zwischengespeichert.
+
+Vielmehr ist es also erfreulich, dass das Aktivieren des Caches keinen
+negativen Effekt hatte.  Immerhin haben wir nun auch die ersten Daten
+gesammelt und schauen uns die Cache-Statistik an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{CCACHE_DIR="/var/tmp/ccache" ccache -s}
+cache directory                     /var/tmp/ccache
+cache hit                              0
+cache miss                           610
+called for link                        1
+not a C/C++ file                      54
+unsupported compiler option           51
+no input file                          2
+files in cache                      1220
+cache size                           4.8 Mbytes
+max cache size                       2.0 Gbytes
+\end{ospcode}
+
+\cmd{gcc} %
+\index{gcc (Programm)}%
+und \cmd{ccache} %
+\index{ccache (Programm)}%
+haben also bei der letzten Installation 1220 Ergebnisse
+zwischengespeichert. Wir prüfen, ob diese Zwischenergebnisse den
+nächsten Lauf beschleunigen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge dev-libs/openssl}
+\ldots
+\rprompt{\textasciitilde}\textbf{qlop -H -g dev-libs/openssl}
+openssl: Tue Jan 29 20:16:51 2008: 9 minutes, 8 seconds
+openssl: Wed Jan 30 08:18:00 2008: 15 minutes, 21 seconds
+openssl: Wed Jan 30 10:09:51 2008: 8 minutes, 40 seconds
+openssl: Wed Jan 30 14:23:20 2008: 12 minutes, 53 seconds
+openssl: Sat Feb  2 08:11:04 2008: 13 minutes, 19 seconds
+openssl: Sat Feb  2 08:30:59 2008: 7 minutes, 51 seconds
+openssl: 6 times
+\end{ospcode}
+
+Jetzt macht sich der Cache deutlich bemerkbar: Wir haben ca. fünf
+Minuten eingespart und damit den Zeitbedarf für die Installation des
+Pakets um ein Drittel reduziert.
+
+\subsubsection{Der Effekt von ccache}
+
+Das klingt gut, aber man darf eines nicht vergessen: Wir haben
+das Paket einfach zweimal kompiliert und installiert, und das simuliert
+nicht gerade eine Standardsituation.
+
+Natürlich kann es vorkommen, dass man ein Paket zweimal kurz
+hintereinander kompiliert, weil z.\,B. im ersten Lauf ein bestimmtes
+USE-Flag vergessen wurde; üblich sind Neuinstallationen aber nur nach
+einigen Wochen, nämlich wenn eine neue Version verfügbar ist.
+
+Versionsunterschiede bedingen wiederum auch Veränderungen am Code, so
+dass nicht mehr alle Ergebnisse aus dem Cache verwendbar sind.
+Außerdem kann es sein, dass wir in der Zwischenzeit so viele Pakete
+neu kompiliert haben, dass der letzte Installationsprozess aus
+Platzgründen schon aus dem Cache entfernt wurde. Aus diesen Gründen
+fallen Einsparungen im tatsächlichen Betrieb deutlich geringer aus als
+uns das eingesparte Drittel bei \cmd{dev-libs/openssl} hat hoffen
+lassen.
+
+Andererseits ist das Paket so trivial einzurichten, dass auch nichts
+dagegen spricht, \cmd{dev-util/ccache} %
+\index{ccache (Paket)}%
+%\index{dev-util Kategorie)!ccache (Paket)|see{ccache (Paket)}}%
+einzusetzen, jedenfalls nicht, wenn noch zwei GB Platz auf der
+Festplatte zur Verfügung stehen.% %
+\index{Compiler!Cache|)}%
+
+\subsection{\label{distcc}distcc einrichten}
+
+Während jeder Nutzer einen Compiler-Cache %
+\index{Compiler!Cache}%
+einrichten kann, um die Installationszeiten zu reduzieren, fällt das
+beim verteilten Kompilieren schwerer. Die eigentliche Installation
+bzw.\ Konfiguration ist ähnlich simpel, aber es bedarf zwingend
+mehrerer Gentoo-Rechner -- und das ist wohl nicht immer gegeben.
+
+Darüber hinaus müssen die Rechner in gewissen Grenzen binär
+kompatibel %
+\index{Binär!Kompatibel}%
+sein, d.\,h.\
+
+\begin{osplist}
+
+\item die Rechner sollten die gleiche Architektur bzw.\ den gleichen
+  \cmd{CHOST}-Wert %
+  \index{CHOST (Variable)}%
+%  \index{make.conf (Datei)!CHOST|see{CHOST (Variable)}}%
+  haben (z.\,B.\ \cmd{CHOST="{}i686-pc-linux-gnu"{}}).
+
+\item die verwendete \cmd{gcc}-Version %
+  \index{gcc (Programm)}%
+  sollte auf allen Rechnern identisch sein.
+
+\end{osplist}
+
+Wir sprechen bei beiden Bedingungen von "`sollte"', denn tatsächlich
+lassen sie sich durch eine deutlich komplexere Konfiguration umgehen;
+allerdings können dadurch auch Fehler in den erstellten Programmen auftreten.
+
+Wir beleuchten hier also nur den einfachsten Fall und
+verweisen Experimentierfreudige auf die einschlägige
+Gentoo-Dokumentation\footnote{\cmd{http://www.gentoo.org/doc/en/distcc.xml}}.
+
+Ersteinmal installieren wir das Paket \cmd{sys-devel/distcc} %
+\index{distcc (Paket)}%
+%\index{sys-devel Kategorie)!distcc (Paket)|see{distcc (Paket)}}%
+auf allen beteiligten Rechnern:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-devel/distcc}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-devel/distcc-2.18.3-r10  USE="-gnome -gtk -ipv6 (-se
+linux)" 334 kB 
+
+Total: 1 package (1 new), Size of downloads: 334 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+
+Es folgt, wie oben für den Compiler-Cache, die Aktivierung des
+Portage-Features \cmd{distcc} (vgl.\ Seite \pageref{makeconfccache}):
+Wir fügen die Option \cmd{ccache} auf allen verwendeten Rechnern zur
+Variable \cmd{FEATURES} %
+\index{FEATURES (Variable)}%
+%\index{make.conf (Datei)!FEATURES|see{FEATURES (Variable)}}%
+hinzu:
+
+\begin{ospcode}
+FEATURES="sandbox parallel-fetch strict distlocks ccache distcc"
+\end{ospcode}
+
+Indem wir mehrere Rechner zum Kompilieren nutzen, fügen wir unserem
+System quasi zusätzliche CPUs %
+\index{CPU}%
+hinzu. Wir hatten schon in Abschnitt \ref{makeopts} die Variable
+\cmd{MAKEOPTS} %
+\index{MAKEOPTS (Variable)}%
+%\index{make.conf (Datei)!MAKEOPTS|see{MAKEOPTS (Variable)}}%
+beschrieben und festgelegt, dass sie die Option \cmd{-j} mit der
+Anzahl der verfügbaren CPUs plus eins enthalten soll. Entsprechend
+müssen wir diesen Wert ebenfalls auf allen Maschinen in unserem
+Compiler-Netzwerk anpassen. Nehmen wir einmal an, wir verwenden nur
+zwei Rechner:
+
+\begin{ospcode}
+MAKEOPTS="-j3"
+\end{ospcode}
+
+Damit sind wir fast fertig, müssen aber noch zusehen, dass die
+verwendeten Rechner miteinander kommunizieren.  Dazu verwenden wir zum
+einen das Programm \cmd{distcc-config}. %
+\index{distcc-config (Programm)}%
+Diesem teilen wir auf jedem Rechner mit der Option \cmd{-{}-set-hosts} %
+\index{distcc-config (Programm)!set-hosts (Option)}%
+die IP-Adressen aller Hosts in unserem Compiler-Netzwerk mit:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{distcc-config --set-hosts "192.168.178.2 192.168.178.3"}
+\end{ospcode}
+
+Außerdem müssen die Rechner des Compiler-Netzwerkes %
+\index{Compiler!Netzwerk}%
+in der Lage sein, automatisch Compile-Jobs %
+\index{Compiler!Job}%
+auszutauschen. Dafür sorgt der \cmd{distcc}-Dae\-mon
+(\cmd{distccd}). %
+\index{distcc (Programm)}%
+Damit dieser nicht einfach von jedem Rechner Aufträge entgegennimmt,
+müssen wir die als sicher eingestuften IP-Adressen in der Datei
+\cmd{/etc/conf.d/distcc} %
+\index{distcc (Datei)}%
+\index{etc@/etc!conf.d!distcc}%
+eintragen und fügen einzelne Hosts bzw.\ ganze Netzwerke mit der
+Option \cmd{-{}-allow \cmdvar{IP}} bzw.\ \cmd{\cmdvar{IP/SUBNETMASK}}
+zur Variablen \cmd{DISTCCD\_OPTS} %
+\index{DISTCCD\_OPTS (Variable)}%
+%\index{distccd (Datei)!DISTCCD\_OPTS|see{DISTCCD\_OPTS (Variable)}}%
+hinzu.
+
+In Beispiel würden wir auf der Maschine mit der IP
+\cmd{192.168.178.2} in der Datei \cmd{/etc/conf.d/distcc} die Variable
+\cmd{DISTCCD\_OPTS} folgendermaßen setzen:
+
+\begin{ospcode}
+DISTCCD_OPTS="\$\{DISTCCD_OPTS\} --allow 192.168.178.3"
+\end{ospcode}
+
+Entsprechend findet sich dann auf der Maschine mit der IP
+\cmd{192.168.178.3} der passende Eintrag:
+
+\begin{ospcode}
+DISTCCD_OPTS="\$\{DISTCCD_OPTS\} --allow 192.168.178.2"
+\end{ospcode}
+
+Damit können wir den Daemon starten und sollten ihn auch mit
+\cmd{rc-update} %
+\index{rc-update (Programm)}%
+unserer Bootsequenz hinzufügen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/distccd start}
+\rprompt{\textasciitilde}\textbf{rc-update add distccd default}
+\end{ospcode}
+
+Das System ist damit korrekt konfiguriert. Während man auf der einen
+Maschine ein Paket kompiliert, kann man nun auf der zweiten die von
+\cmd{distccd} %
+\index{distccd (Programm)}%
+angestoßene \cmd{gcc}-Aktivität %
+\index{gcc (Programm)}%
+beobachten:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ps -ax --forest}
+28118 ?        SNs    0:00 /usr/bin/distccd --pid-file /var/run/distccd/
+29934 ?        SN     0:00  \textbackslash{}_ /usr/bin/distccd --pid-file /var/run/dist
+29950 ?        SN     0:00  \textbackslash{}_ /usr/bin/distccd --pid-file /var/run/dist
+30631 ?        SN     0:00  |   \textbackslash{}_ i686-pc-linux-gnu-gcc -O2 -mtune=i686
+30632 ?        RN     0:00  |       \textbackslash{}_ /usr/libexec/gcc/i686-pc-linux-gn
+30633 ?        SN     0:00  |       \textbackslash{}_ /usr/lib/gcc/i686-pc-linux-gnu/3.
+29984 ?        SN     0:00  \textbackslash{}_ /usr/bin/distccd --pid-file /var/run/dist
+30634 ?        SN     0:00  |   \textbackslash{}_ i686-pc-linux-gnu-gcc -O2 -mtune=i686
+30635 ?        RN     0:00  |       \textbackslash{}_ /usr/libexec/gcc/i686-pc-linux-gn
+30636 ?        SN     0:00  |       \textbackslash{}_ /usr/lib/gcc/i686-pc-linux-gnu/3.
+30010 ?        SN     0:00  \textbackslash{}_ /usr/bin/distccd --pid-file /var/run/dist
+30637 ?        RN     0:00      \textbackslash{}_ /usr/bin/distccd --pid-file /var/run/
+\end{ospcode}
+
+Beim Kompilieren wird sich nun ein deutlicher
+Zeitvorteil bemerkbar machen.
+\index{Kompilieren!Beschleunigen|)}%
+
+\section{Interaktion mit dem Gentoo-Projekt}
+
+\index{Gentoo!Interaktion|(}%
+Gentoo ist freie Software, ein offenes Projekt und bietet eine
+Vielzahl von Schnittstellen zur Interaktion. Vor allem wenn Sie
+Hilfe benötigen, sollte es keine Schwierigkeit geben, diese auch zu
+finden.
+
+Wir wollen hier nur die wesentlichen Anlaufstellen nennen und zeigen,
+wie Sie auf der Kommandozeile mit Hilfe von IRC %
+\index{IRC}%
+möglichst zeitnah Unterstützung bei einem Problem bekommen.
+
+Zu guter Letzt beschreiben wir, wie Sie Fehler in der Bug-Datenbank
+von Gentoo einreichen. Keine Sorge, früher oder später werden
+Sie einen finden.
+
+\subsection{Hilfe suchen und finden}
+
+Die professionelle Dokumentation zu allen möglichen Themenbereichen
+rund um Gentoo wird vom \emph{Gentoo Documentation Project} %
+\index{Gentoo!Dokumentation}%
+erstellt und gepflegt. Als Einstiegspunkt dient hier entweder die
+englische Seite des
+Projekts\footnote{\cmd{http://www.gentoo.org/doc/en/index.xml}} oder
+die deutsche
+Übersetzung\footnote{\cmd{http://www.gentoo.org/doc/de/index.xml}}.
+Die Qualität dieser Dokumente ist sehr hoch und die meisten Artikel
+werden regelmäßig aktualisiert.
+
+Findet sich hier keine Antwort auf Ihre Fragen, sollten Sie im zweiten
+Schritt das
+englische\footnote{\cmd{http://gentoo-wiki.com/Main\_Page}} bzw.\ das
+deutsche
+Gentoo-Wiki\footnote{\cmd{http://de.gentoo-wiki.com/Hauptseite}} %
+\index{Wiki}%
+konsultieren.
+
+Bleiben nach wie vor Fragen offen, bieten sich interaktive
+Kommunikationssysteme an.  Hier sind vor allem das
+Forum\footnote{\cmd{http://forums.gentoo.org/}} %
+\index{Forum}%
+und die
+Mailinglisten\footnote{\cmd{http://www.gentoo.org/main/en/lists.xml}} %
+\index{Mailinglisten}%
+zu nennen.
+
+Bevor Sie selbst Fragen stellen, sollten Sie unbedingt versuchen, in
+Forums-Beiträgen bzw.\ den Nachrichten der Mailingliste nach passenden
+Schlagwörtern zu suchen, um ähnliche, vielleicht schon beantwortete
+Fragen zu finden; so vermeiden Sie unnötige Wiederholungen.
+
+Manchmal benötigt man auch sofort eine Antwort auf seine Frage, und
+für diesen Fall bietet sich IRC %
+\index{IRC|(}%
+(\emph{Internet Relay Chatting}) an.
+
+\subsection{\label{IRC}IRC}
+
+IRC ist ein textbasiertes Chat-System, das sich auch von der
+Kommandozeile bedienen lässt. So bietet z.\,B.\ schon die LiveDVD %
+\index{LiveDVD}%
+den IRC-Client %
+\index{IRC!Client}%
+\cmd{net-irc/irssi}, %
+\index{irssi (Paket)}%
+%\index{net-irc Kategorie)!irssi (Paket)|see{irssi (Paket)}}%
+über den Sie bereits während der Installation Fragen im Netz stellen
+können. Voraussetzung ist natürlich, dass zumindest die Netzwerkkarte
+funktioniert.
+
+In einem neu installierten System ist der Client zunächst
+zu installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av net-irc/irssi}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N   ] dev-libs/glib-2.12.9  USE="-debug -doc -hardened" 0 kB 
+[ebuild  N   ] net-irc/irssi-0.8.10-r4  USE="ipv6 perl ssl -socks5" 0 kB
+
+Total: 2 packages (2 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+
+Wir starten den Client mit \cmd{irssi} %
+\index{irssi (Programm)}%
+(wenn irgend möglich \emph{nicht} als Administrator unter dem
+\cmd{root}-Account) und landen in einer grafischen Benutzeroberfläche,
+in der wir uns mit einem IRC-Server verbinden. Da sich alle
+Gentoo-spezifischen Kanäle auf Freenode befinden, lautet das Kommando
+\cmd{/connect irc.freenode.net}.
+
+Anschließend sollten Sie sich einen Namen mit \cmd{/nick
+  \cmdvar{meinname}} geben und betreten dann einen der
+Gentoo-Kanäle\footnote{Eine Liste finden Sie unter
+  \cmd{http://www.gentoo.org/main/en/irc.xml}.} mit \cmd{/join
+  \cmdvar{\#\cmdvar{kanal}}}.
+
+Im englische Kanal (\cmd{/join \#gentoo}) tummeln sich meist mehrere
+hundert Nutzer, während es im deutschen Pendant (\cmd{/join
+  \#gentoo.de}) etwas ruhiger zugeht. Den Autor des Buches
+finden Sie im Kanal \cmd{\#gentoo-web}.
+
+IRC bietet zahlreiche Funktionen und Sie sollten sich auf jeden Fall
+die Dokumentation zu \cmd{irssi} %
+\index{irssi (Programm)}%
+genauer anschauen und ein wenig über die Netiquette im IRC
+informieren. Der Befehl \cmd{/help} in \cmd{irssi} ist schon einmal
+ein guter Einstieg.% %
+\index{IRC|)}%
+
+\subsection{Bugs einreichen}
+
+\index{Bug|(}%
+Früher oder später werden Sie bei dem ein oder anderen Paket auf
+einen Fehler stoßen. Je mehr instabile Pakete Sie verwenden, desto
+früher.
+
+In diesem Fall \emph{sollten} Sie einen Fehlerbericht unter
+\cmd{http://bugs.gentoo.""org} einreichen. Sie sind in den seltensten
+Fällen der einzige Benutzer, der den Fehler zu spüren bekommt, und die
+Entwickler können nicht alle Situationen vorher testen. Darum lebt
+die Distribution von diesem Korrekturverfahren.
+
+Die Bugzilla-Installation\footnote{\cmd{http://bugs.gentoo.org}} führt
+recht komfortabel durch das Erstellen eines Fehlerberichts.  Wenn
+möglich überprüft man vor Anlegen eines Bugs, ob dieses Problem
+bereits gemeldet wurde.
+
+Der Fehlerbericht ist in Englisch zu verfassen, und Sie sollten darauf
+achten, dass auch Portage alle Fehlermeldungen in Englisch ausspuckt
+(vgl. Seite \pageref{portagelocale}).  Zum Abschluss hängen Sie die
+Informationen zu Ihrem System an, denn schließlich hat jeder Benutzer
+seine eigene Umgebung, die für das Problem eine Rolle spielen könnte.
+Grundsätzlich fügt man die Ausgabe des Befehls \cmd{emerge -{}-info} %
+\index{emerge (Programm)!info (Option)}%
+(siehe auch Seite \pageref{emergeinfolist}) an:
+
+\label{emergeinfo}
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --info}
+Portage 2.1.2.2 (default-linux/x86/2007.0, gcc-4.1.1, glibc-2.5-r0, 2.6.
+19-gentoo-r5 i686)
+=================================================================
+System uname: 2.6.19-gentoo-r5 i686 Intel(R) Celeron(R) CPU 2.60GHz
+Gentoo Base System release 1.12.9
+Timestamp of tree: Thu, 08 Mar 2007 00:30:01 +0000
+ccache version 2.4 [enabled]
+dev-java/java-config: 1.3.7, 2.0.31
+dev-lang/python:     2.4.3-r4
+dev-python/pycrypto: 2.0.1-r5
+dev-util/ccache:     2.4-r6
+sys-apps/sandbox:    1.2.17
+sys-devel/autoconf:  2.61
+sys-devel/automake:  1.9.6-r2, 1.10
+sys-devel/binutils:  2.16.1-r3
+sys-devel/gcc-config: 1.3.14
+sys-devel/libtool:   1.5.22
+virtual/os-headers:  2.6.17-r2
+ACCEPT_KEYWORDS="x86"
+AUTOCLEAN="yes"
+CBUILD="i686-pc-linux-gnu"
+CFLAGS="-O2 -march=pentium4 -pipe -fomit-frame-pointer"
+CHOST="i686-pc-linux-gnu"
+CONFIG_PROTECT="/etc"
+CONFIG_PROTECT_MASK="/etc/env.d /etc/env.d/java/ /etc/gconf /etc/java-co
+nfig/vms/ /etc/php/apache1-php5/ext-active/ /etc/php/apache2-php5/ext-ac
+tive/ /etc/php/cgi-php5/ext-active/ /etc/php/cli-php5/ext-active/ /etc/r
+evdep-rebuild /etc/splash /etc/terminfo"
+CXXFLAGS="-O2 -march=pentium4 -pipe -fomit-frame-pointer"
+DISTDIR="/usr/portage/distfiles"
+FEATURES="autoconfig ccache distlocks metadata-transfer parallel-fetch s
+andbox sfperms strict"
+GENTOO_MIRRORS="ftp://pandemonium.tiscali.de/pub/gentoo/ http://mirror.m
+untinternet.net/pub/gentoo/ ftp://gentoo.imj.fr/pub/gentoo/ http://213.1
+86.33.38/gentoo-distfiles/ ftp://ftp-stud.fht-esslingen.de/pub/Mirrors/g
+entoo/"
+LANG="de_DE.utf8"
+LC_ALL="de_DE.utf8"
+PKGDIR="/usr/portage/packages"
+PORTAGE_RSYNC_OPTS="--recursive --links --safe-links --perms --times --c
+ompress --force --whole-file --delete --delete-after --stats --timeout=1
+80 --exclude=/distfiles --exclude=/local --exclude=/packages --filter=H_
+**/files/digest-*"
+PORTAGE_TMPDIR="/var/tmp"
+PORTDIR="/usr/portage"
+PORTDIR_OVERLAY="/usr/portage/local/overlay"
+SYNC="rsync://rsync.europe.gentoo.org/gentoo-portage"
+USE="acl apache2 berkdb bitmap-fonts cli cracklib crypt cups dri \ldots
+Unset:  CTARGET, EMERGE_DEFAULT_OPTS, INSTALL_MASK, LDFLAGS, LINGUAS, MA
+KEOPTS, PORTAGE_RSYNC_EXTRA_OPTS
+\end{ospcode}
+\index{Gentoo!Interaktion|)}%
+\index{Bug|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

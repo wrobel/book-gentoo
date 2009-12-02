@@ -1,0 +1,703 @@
+\chapter{\label{overlays}Gentoo erweitern}
+
+Der Portage-Baum %
+\index{Portage!Baum}%
+liefert derzeit rund 12.000 Pakete, %
+\index{Paket!Zahl}%
+also eine durchaus beachtliche Auswahl.  Das ändert aber nichts daran,
+dass man gelegentlich eine Software finden wird, die eben noch nicht
+im Portage-Baum verfügbar ist, denn die Kapazität der Entwickler ist
+begrenzt.
+
+Wir wollen im Folgenden beschreiben, wie sich das eigene System recht
+unproblematisch mit experimentellen Paketen und der neuesten Software
+ausstatten lässt. Es wäre allerdings fahrlässig, den Umgang mit
+experimentellen Paketen als trivial und risikolos zu beschreiben;
+darum gehen wir noch einmal kurz auf die \emph{Qualität} %
+\index{Paket!Qualität}%
+der Ebuilds ein.
+
+Wir hatten uns schon in Kapitel \ref{unstablepkg} mit "`stabilen"' %
+\index{Paket!stabil}%
+und "`instabilen"' Paketen %
+\index{Paket!instabil}%
+beschäftigt.  Ist eine Paket-Version als "`instabil"' markiert,
+treffen die Entwickler mit dieser Markierung eine deutliche
+Qualitätsaussage.  Solche Pakete wurden noch nicht ausreichend
+getestet, um Inkompatibilitäten auszuschließen, und können kritische
+Fehler enthalten.
+
+Als Nutzer können wir bewusst diese Qualitätsaussage der Entwickler
+außer Acht lassen und auf der Grundlage eines stabilen Systems
+einzelne Pakete über die Datei \cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei)}%
+\index{etc@/etc!portage!package.keywords}%
+auswählen, die Portage dann in der instabilen Version akzeptiert. Man
+sollte das aber nur bei Paketen tun, bei denen die instabile Version
+Features bietet, die man tatsächlich benötigt.  Das setzt allerdings
+ein wenig Beschäftigung mit diesem Paket voraus, und daraus
+resultieren zwei Vorteile: Man kann mit auftretenden Problemen besser
+umgehen, aber auch qualifizierte Fehlerberichte %
+\index{Paket!Fehler}%
+liefern, was wiederum die Entwickler freut und ihnen die Behebung des
+Problems erleichtert.
+
+Nun gibt es über den Mechanismus des \emph{Keywordings} hinaus eine
+weitere Abstufung, um experimentelle Pakete in das System einzubinden:
+\emph{Overlays}. %
+\index{Overlay|(}%
+Über diese lassen sich sehr experimentelle Pakete %
+\index{Paket!experimentell}%
+einbinden, die nicht einmal von den Gentoo-Entwicklern selbst stammen
+müssen; darum ist hier der Warnhinweis in Bezug auf deren Qualität %
+\index{Paket!Qualität}%
+noch eindringlicher.  Der Qualitätsunterschied zu den Paketen des
+Portage-Baumes ist bei den Overlays nicht zu unterschätzen!
+
+Auf der anderen Seite arbeiten oft Personen mit großem Fachwissen in
+einem spezifischen Bereich an diesen Overlays, und so sind diese
+Projekte ein Ort regen Austauschs und wertvoller Ideen, die nach
+einiger Zeit des Testens in den Portage-Baum einfließen.  Schauen wir
+uns aber nun einmal an, wie diese Overlays überhaupt funktionieren.
+
+\section{Overlays}
+
+Portage ermöglicht über die Variable \cmd{PORTAGE\_OVERLAYS} %
+\index{PORTAGE\_OVERLAYS (Variable)}%
+%\index{make.conf (Datei)!PORTAGE\_OVERLAYS|see{PORTAGE\_OVERLAYS    (Variable)}}%
+in der Datei \cmd{/etc/""make.conf}%
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+die Einbindung einer beliebigen Menge an Dateibäumen, die den
+Original-Portage-Baum %
+\index{Portage!Baum}%
+"`überdecken"' (daher der Begriff "`Overlay"').
+
+Ein Overlay ist genauso strukturiert wie der normale Portage-Baum
+(siehe Seite \pageref{packagenamebasics}). Einzelne Verzeichnisse
+entsprechen einer Kategorie, %
+\index{Paket!Kategorie}%
+und innerhalb dieser Kategorien befinden sich Ordner, die jeweils
+einem einzelnen Paket %
+\index{Paket}%
+entsprechen und die Ebuilds %
+\index{Ebuild}%
+enthalten.
+
+Hier beispielhaft die Struktur des Overlays \cmd{php-experimental}, %
+\index{php-experimental (Overlay)}%
+wenn man es auf der eigenen Maschine installiert; wie das vor sich geht,
+beschreiben wir im Laufe dieses Kapitels:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /usr/portage/local/layman/php-experimental}
+app-admin  
+dev-db  
+dev-lang  
+dev-php  
+dev-php4  
+dev-php5  
+eclass  
+profiles
+
+\rprompt{\textasciitilde}\textbf{ls /usr/portage/local/layman/php-experimental/dev-php5}
+ffmpeg-php  
+pecl-uuid
+\end{ospcode}
+\index{php-experimental (Verzeichnis)}%
+\index{usr@/usr!portage!local!layman!php-experimental}%
+
+Das Overlay enthält also weniger Kategorien, und auch jede Kategorie %
+\index{Paket!Kategorie}%
+enthält (wie am Beispiel \cmd{dev-php5} %
+\index{dev-php5 (Kategorie)}%
+demonstriert) nur eine reduzierte, spezialisierte Anzahl an
+Paketen. Abgesehen davon ist ein Overlay strukturell aber mit dem
+Portage-Baum %
+\index{Portage!Baum}%
+vergleichbar (siehe Kapitel \ref{packagenamebasics}) und kann sogar
+eigene Eclasses %
+\index{Eclass}%
+(siehe Seite \pageref{eclass}) oder Profil-Informationen liefern
+(siehe Kapitel \ref{profiles}). Das PHP-Overlay %
+\index{PHP!Overlay}%
+enthält Eclasses in dem Verzeichnis \cmd{eclass} %
+\index{eclass (Verzeichnis)}%
+und Profilinformationen in \cmd{profiles}.% %
+\index{profiles (Verzeichnis)}%
+
+Das Overlay befindet sich unter dem Pfad
+\cmd{/usr/portage/local/layman/""php-experimental}. %
+\index{php-experimental (Verzeichnis)}%
+\index{usr@/usr!portage!local!layman!php-experimental}%
+Möchte man es nutzen, fügt man diesen Pfad der Variable
+\cmd{PORTAGE\_OVERLAYS} %
+\index{PORTAGE\_OVERLAYS (Variable)}%
+%\index{make.conf (Datei)!PORTAGE\_OVERLAYS|see{PORTAGE\_OVERLAYS    (Variable)}}%
+hinzu, die mehrere, durch Leerzeichen getrennte Pfade enthalten
+enthalten kann.
+
+Portage selbst betrachtet Overlays als normale Paketbäume, die den
+Standard"=Paketbaum ergänzen bzw.\ überdecken. Dieser Mechanismus und
+die Tatsache, dass Abhängigkeiten %
+\index{Paket!-abhängigkeiten}%
+zwischen Gentoo-Paketen im Vergleich mit anderen Distributionen
+deutlich geringer sind, erlaubt es, das Grundgerüst der Distribution
+recht einfach zu erweitern.% %
+\index{Gentoo!erweitern}%
+
+Wie wir ein eigenes Overlay erstellen und einbinden, zeigen wir im
+nächsten Kapitel ab Seite \pageref{ownoverlay}. Hier wollen wir uns
+aber erst einmal damit beschäftigen, fremde Overlays in unser
+System zu integrieren.
+
+\section{overlays.gentoo.org}
+
+Ursprünglich war der Overlays-Mechanismus eher für Entwickler gedacht,
+um experimentelle %
+\index{Paket!experimentell}%
+Versionen ihrer Pakete außerhalb des Portage-Baumes zu pflegen und zu
+testen.  Recht schnell haben dann einige Entwickler begonnen, ihre
+Overlays %
+\index{Overlay!veröffentlichen}%
+über das Netz zu exportieren und so den Nutzern zur Verfügung zu
+stellen. Dieser Schritt ist für beide Seiten von Vorteil: Die Nutzer
+haben plötzlich die Möglichkeit, die neueste Software innerhalb des
+gewohnten Gentoo-Paket-Managements zu testen.  Gleichzeitig erhalten
+Entwickler wertvolles Feedback von Anwendern, die sich ja bewusst für
+experimentelle Pakete entscheiden und meist auch über das Know-how
+verfügen, mit auftretenden Fehlern umzugehen.
+
+Als der Overlay-Gedanke immer mehr Anklang fand und mehr und mehr
+Overlays im Netz %
+\index{Overlay!veröffentlichen}%
+auftauchten, wurde es sinnvoll, diese Anstrengungen zu
+zentralisieren. Dies hat zu dem Projekt %
+\index{Overlay!Projekt}%
+\cmd{overlays.gentoo.org}
+geführt\footnote{\cmd{http://overlays.gentoo.org}}, das jedem
+Entwickler die Möglichkeit gibt, sein eigenes Overlay zu verwalten.
+Auch jedes Gentoo-Unterprojekt kann sein eigenes Overlay anlegen.
+
+Jedes Overlay wird über eine \cmd{trac}-Installation %
+\index{trac (Paket)}%
+verwaltet, die automatisch einen Source-Code-Viewer und ein Wiki %
+\index{Wiki}%
+zu Dokumentationszwecken zur Verfügung stellt. Alle Veränderungen an
+den Overlays werden als zentraler RSS-Feed %
+\index{RSS}%
+zusammengefasst und auch direkt auf \cmd{overlays.gentoo.org}
+angezeigt.  Gerade Dokumentation und der einfache Zugriff auf
+Source-Code und ChangeLog %
+\index{ChangeLog (Datei)}%
+sind bei diesen experimentellen %
+\index{Paket!experimentell}%
+Paketen besonders wichtig.
+
+Doch \cmd{overlays.gentoo.org} ist nicht die einzige Quelle für
+experimentelle Pakete. Es gibt viele langjährige Gentoo-Nutzer, die an
+anderen Stellen eigene Overlays %
+\index{Overlay!veröffentlichen}%
+pflegen. Viele davon sind über \cmd{layman} (siehe den folgenden
+Abschnitt) verfügbar, aber einige muss man im Netz suchen, wobei die
+Gentoo-Foren %
+\index{Forum}%
+oder das Gentoo-Wiki %
+\index{Wiki}%
+gute Anlaufstellen sind.
+
+\begin{netnote}
+  Overlays lassen sich nur direkt über das Netz herunterladen. Sie
+  benötigen also für die folgenden Abschnitte eine funktionierende
+  Netzwerkverbindung.
+\end{netnote}
+
+\section{layman}
+
+\index{layman (Programm)|(}%
+Das Skript \cmd{layman} vereinfacht die Benutzung von Overlays. Es ist
+in der Lage, Overlays automatisch im System zu installieren und sie zu
+verwalten. Darum wollen wir es zunächst installieren:
+
+\index{layman (Paket)}%
+%\index{app-portage Kategorie)!layman (Paket)|see{layman (Paket)}}%
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/layman}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-misc/neon-0.26.1-r1  USE="nls ssl zlib -expat -socks
+5" 0 kB 
+[ebuild  N    ] dev-util/subversion-1.3.2-r3  USE="apache2 berkdb nls pe
+rl python zlib -bash-completion -emacs -java -nowebdav -ruby" 0 kB 
+[ebuild  N    ] app-portage/layman-1.0.6  0 kB 
+
+Total: 3 packages (3 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+
+Zum Abschluss der Installation gibt der Ebuild die weiteren Schritte vor:
+
+\begin{ospcode}
+ * You are now ready to add overlays into your system.
+ * 
+ * layman -L
+ * 
+ * will display a list of available overlays.
+ * 
+ * Select one and add it using
+ * 
+ * layman -a overlay-name
+ * 
+ * If this is the very first overlay you add with layman, you need 
+ * to append the following statement to your /etc/make.conf file:
+ * 
+ * source /usr/portage/local/layman/make.conf
+ * 
+\end{ospcode}
+
+Es gibt eine zentrale Liste %
+\index{Overlay!Liste|(}%
+bekannterer
+Overlays\footnote{\cmd{http://www.gentoo.org/proj/en/overlays/layman-global.txt}},
+die von den Entwicklern regelmäßig aktualisiert wird.  Über die Option
+\cmd{-{}-list} %
+\index{layman (Programm)!list (Option)}%
+(bzw.\ \cmd{-L}) %
+%\index{layman (Programm)!L (Option)|see{layman (Programm), list    (Option)}}%
+lädt \cmd{layman} diese Liste herunter und zeigt die verfügbaren
+Overlays an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{layman -L}
+\ldots
+* chtekk-apps       [Subversion] (source: http://overlays.gentoo.org...)
+* chtekk-syscp      [Subversion] (source: http://overlays.gentoo.org...)
+* common-lisp       [Darcs     ] (source: http://www.common-lisp.net...)
+* dev-zero          [Subversion] (source: http://overlays.gentoo.org...)
+* efika             [Subversion] (source: http://overlays.gentoo.org...)
+* genstef           [Subversion] (source: http://overlays.gentoo.org...)
+* gentopia          [Subversion] (source: http://overlays.gentoo.org...)
+\ldots
+\end{ospcode}
+
+Diese Liste führt den Namen des Overlays, seinen Typ, der im
+Normalfall dem Namen des eingesetzten Revisionskontrollsystems
+entspricht, und schließlich den Link auf die Quelle des Overlays. Die
+meisten Overlays werden in einem \cmd{subversion}-Repository
+bereitgehalten, sind also vom Typ \cmd{Subversion}. %
+\index{Subversion}%
+Layman beherrscht aber neben \cmd{subversion} alle anderen
+verbreiteten Versionskontrollsysteme und erlaubt auch die Installation
+aus \cmd{tar}-Archiven.% %
+\index{Archiv!tar}%
+\index{tar (Programm)}%
+\index{Overlay!Liste|)}%
+
+
+Reicht der kurze Name für eine Beschreibung nicht aus, können wir den
+Output über den bekannten \cmd{-{}-verbose}-Schalter %
+\index{layman (Programm)!verbose (Option)}%
+(bzw. \cmd{-v}) %
+%\index{layman (Programm)!v (Option)|see{layman (Programm), verbose    (Option)}}%
+erhöhen. Damit spuckt \cmd{layman} allerdings eine unangenehm lange
+Liste aus. Es ist dann besser, sich mit der Option \cmd{-{}-info} %
+\index{layman (Programm)!info (Option)}%
+(bzw. \cmd{-i}) %
+%\index{layman (Programm)!i (Option)|see{layman (Programm), info    (Option)}}%
+in Kombination mit dem Namen des Overlays die spezifische Beschreibung
+für ein einzelnes Overlay %
+\index{Overlay!Informationen}%
+anzeigen zu lassen. Allerdings wird diese Option erst von neueren
+\cmd{layman}-Versionen unterstützt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{layman -i webapps-experimental}
+* webapps-experimental
+* ~~~~~~~~~~~~~~~~~~~~
+* Source  : https://overlays.gentoo.org/svn/proj/webapps/experimental
+* Contact : web-apps@gentoo.org
+* Type    : Subversion; Priority: 50
+* 
+* Description:
+*   This is the home of Gentoo's wider collection of ebuilds for
+*   web-based applications. This is where we collect all the ebuilds
+*   submitted to Bugzilla by our users, and make them available in
+*   an easy-to-use overlay for wider testing.
+* 
+* Link:
+* 
+*   http://overlays.gentoo.org
+\end{ospcode}
+\index{webapps-experimental (Overlay)}%
+
+Mit der Option \cmd{-{}-add} %
+\index{layman (Programm)!add (Option)}%
+(bzw.\ \cmd{-a}) %
+%\index{layman (Programm)!a (Option)|see{layman (Programm), add    (Option)}}%
+installiert \cmd{layman} dieses Overlay:% %
+\index{Overlay!hinzufügen}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{layman -a webapps-experimental}
+\end{ospcode}
+
+\cmd{layman} lädt das Overlay nun automatisch über \cmd{subversion} %
+\index{svn (Programm)}%
+herunter und legt es in dem in \cmd{/etc/layman/layman.cfg} %
+\index{layman.cfg (Datei)}%
+\index{etc@/etc!layman!layman.cfg}%
+unter \cmd{storage} %
+\index{storage (Variable)}%
+%\index{layman.cfg (Datei)!storage|see{storage (Variable)}}%
+angegebenen Ort ab:
+
+\begin{ospcode}
+storage   : /usr/portage/local/layman
+\end{ospcode}
+\index{layman (Verzeichnis)}%
+\index{usr@/usr!portage!local!layman}%
+
+Der Name des dort angelegten Unterverzeichnisses entspricht der
+Bezeichnung des Overlays:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /usr/portage/local/layman}
+total 41
+drwxr-xr-x  3 root root   264 2006-10-21 18:53 .
+drwxr-xr-x  3 root root    72 2006-09-17 16:03 ..
+-rw-r--r--  1 root root 26314 2006-10-21 18:53 cache_65bd38402ac8431067b5
+4904bd2ed2d1.xml
+-rw-r--r--  1 root root    69 2006-10-21 18:53 make.conf
+-rw-r--r--  1 root root   412 2006-10-21 18:53 overlays.xml
+drwxr-xr-x 15 root root   496 2006-10-21 18:54 webapps-experimental
+\end{ospcode}
+\index{layman (Verzeichnis)}%
+\index{usr@/usr!portage!local!layman}%
+
+Die drei anderen Dateien hat \cmd{layman} für die Verwaltung der
+Overlays angelegt. \cmd{overlays.xml} %
+\index{overlays.xml (Datei)}%
+enthält die Liste der bereits installierten Overlays, während die
+\cmd{cache\_*.xml}-Datei %
+\index{cache\_*.xml (Datei)}%
+die zentrale Liste zwischenspeichert, damit \cmd{layman} diese Daten
+nicht für jede Operation erneut herunterladen muss.
+
+Die Datei, die uns hier aber eigentlich interessiert, ist \cmd{make.conf}, %
+\index{make.conf (Datei)}%
+die entsprechend der zentralen Gentoo-Konfigurationsdatei
+\cmd{/etc/make.conf}
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+benannt ist. Sie enthält nur eine Variable, die
+normalerweise auch in \cmd{/etc/""make.conf} vorkommt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /usr/portage/local/layman/make.conf}
+PORTDIR_OVERLAY="\$PORTDIR_OVERLAY
+/usr/portage/local/layman/webapps-experimental
+"
+\end{ospcode}
+\label{portdiroverlay}
+
+Um dem System Overlays automatisiert hinzuzufügen bzw.\ zu
+deinstallieren, muss \cmd{layman} die Variable
+\cmd{PORTDIR\_OVERLAY} %
+\index{PORTDIR\_OVERLAY (Variable)}%
+%\index{make.conf (Datei)!PORTDIR\_OVERLAY|see{PORTDIR\_OVERLAY    (Variable)}}%
+automatisiert verwalten. Dies geschieht in der ausgelagerten Datei
+\cmd{/usr/portage/local/layman/""make.conf}, %
+\index{make.conf (Datei)}%
+\index{usr@/usr!portage!local!layman!make.conf}%
+nicht direkt in \cmd{/etc/make.conf}, %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+da eine automatisierte Be\-arbeitung solch zentraler
+Konfigurationsdateien wenig wünschenswert ist.
+
+Natürlich müssen wir die Erweiterung in die Datei \cmd{/etc/make.conf}
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+einbinden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo "source /usr/portage/local/layman/make.conf"}
+> \textbf{>> /etc/make.conf}
+\end{ospcode}
+
+Der \cmd{source}-Befehl bewirkt, dass Portage die externe
+Konfigurationsdatei einliest und auswertet. Da die von \cmd{layman}
+verwaltete Konfigurationsdatei die Pfade der mit dem Tool
+installierten Overlays nur an die Variable \cmd{PORTDIR\_OVERLAY} %
+\index{PORTDIR\_OVERLAY (Variable)}%
+%\index{make.conf (Datei)!PORTDIR\_OVERLAY|see{PORTDIR\_OVERLAY (Variable)}}%
+anhängt, kann der Nutzer andere Overlays auch weiterhin manuell über
+die Standardeinstellung in  \cmd{/etc/make.conf} 
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+verwalten.  Damit ist \cmd{layman} vollständig eingerichtet, und wir
+können es für das Management von Overlays verwenden.
+
+Overlays %
+\index{Overlay!entfernen}%
+entfernen wir mit der Option \cmd{-{}-delete} %
+\index{layman (Programm)!delete (Option)}%
+(bzw.\ \cmd{-d}) %
+%\index{layman (Programm)!d (Option)|see{layman (Programm), delete    (Option)}}%
+wieder aus dem System:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{layman -d webapps-experimental}
+\end{ospcode}
+
+Die häufigste Operation wird allerdings das Update der Overlays %
+\index{Overlay!synchronisieren}%
+sein, und zwar über die Option \cmd{-{}-sync-all} %
+\index{layman (Programm)!sync-all (Option)}%
+(bzw.\ \cmd{-S}). %
+%\index{layman (Programm)!S (Option)|see{layman (Programm), sync-all    (Option)}}%
+Damit synchronisieren wir alle installierten Overlays
+nacheinander. Mit der Option \cmd{-{}-sync} %
+\index{layman (Programm)!sync (Option)}%
+(bzw.\ \cmd{-s}) %
+%\index{layman (Programm)!s (Option)|see{layman (Programm), sync    (Option)}}%
+und der Angabe eines Overlay-Namens lassen sich einzelne Overlays
+synchronisieren. %
+\index{Overlay!synchronisieren}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{layman -s webapps-experimental}
+\end{ospcode}
+
+Die derzeit installierten Overlays %
+\index{Overlay!Liste}%
+sind mit dem Flag \cmd{-{}-list-local} %
+\index{layman (Programm)!list-local (Option)}%
+(bzw.\ \cmd{-l}) %
+%\index{layman (Programm)!l (Option)|see{layman (Programm), list-local    (Option)}}%
+abrufbar:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{layman -l}
+* webapps-experimental     [Subversion] (source: http://overlays.gentoo.
+org...)
+\end{ospcode}
+\index{layman (Programm)|)}%
+
+\section{\label{overlayseix}Overlays mit eix durchsuchen}
+
+\index{eix (Programm)|(}%
+\index{Paket!Suche|(}%
+Da es eine ganze Reihe zusätzlicher Pakete in den Overlays %
+\index{Overlay!durchsuchen}%
+gibt, wäre es praktisch, diese in die Suche einzubeziehen, die wir im
+Kapitel \ref{chaptersearch} besprochen haben.  \cmd{qsearch} %
+\index{qsearch (Programm)}%
+kann aber beispielsweise mit Overlays gar nichts anfangen.
+\cmd{emerge -{}-search} %
+\index{emerge (Programm)!search (Option)}%
+bzw.\ \cmd{esearch} %
+\index{esearch (Programm)}%
+beziehen zumindest die lokal installierten Overlays in die Suche
+ein. Für die Suche über diese Programme wären wir also gezwungen,
+unserem System ein Overlay hinzuzufügen, damit wir überhaupt Pakete
+darin finden.
+
+\cmd{eix} bietet als einziges Werkzeug die Möglichkeit
+\emph{virtuelle}, also externe Overlays %
+\index{Overlay!virtuell}%
+in die Suche einzubeziehen, auch ohne dass diese lokal installiert
+sind.  Allerdings müssen wir dafür die Konfiguration des Programms
+anpassen, denn per Default durchsucht auch \cmd{eix} nur lokal
+installierte Overlays, wie ein \cmd{update-eix} %
+\index{update-eix (Programm)}%
+zeigt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{update-eix}
+Reading Portage settings ..
+Building database (/var/cache/eix) ..
+[0] "gentoo" /usr/portage/ (cache: metadata)
+     Reading 100\%
+[1] "wrobel" /usr/portage/local/layman/wrobel (cache: none)
+     Reading 100\%
+[2] "kolab" /usr/portage/local/layman/kolab (cache: none)
+     Reading 100\%
+[3] "webapp-experimental"
+/usr/portage/local/layman/webapps-experimental (cache: none)
+     Reading 100\%
+[4] "sunrise" /usr/portage/local/layman/sunrise (cache: none)
+     Reading 100\%
+Applying masks ..
+Database contains 12826 packages in 151 categories.
+\end{ospcode}
+
+Als Beispiel nehmen wir einmal an, wir suchen einen Ebuild für das
+Spiel "`Second %
+\index{Second Life}%
+Life"'. Dieser befindet sich nicht direkt im Portage-Baum, %
+\index{Portage!Baum}%
+und so findet \cmd{eix} bei der derzeitigen Konfiguration nichts:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix -c secondlife}
+No matches found.
+\end{ospcode}
+
+Um Informationen über Pakete in externen Overlays %
+\index{Overlay!extern|(}%
+verfügbar zu machen, verwenden wir das Skript \cmd{update-eix-remote} %
+\index{update-eix-remote (Programm)}%
+mit der Aktion \cmd{update}: %
+\index{update-eix-remote (Programm)!update (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{update-eix-remote update}
+ * Fetching eix-caches.tbz2
+--10:31:58--
+http://dev.gentooexperimental.org/eix_cache/eix-caches.tbz2
+           => `eix-caches.tbz2'
+Auflösen des Hostnamen >dev.gentooexperimental.org<.... 81.93.240.53
+Verbindungsaufbau zu
+dev.gentooexperimental.org|81.93.240.53|:80... verbunden.
+HTTP Anforderung gesendet, warte auf Antwort... 200 OK
+Länge: 241.618 (236K) [application/octet-stream]
+
+100%[==================================================================>]
+   %241.618        1.25M/s             
+
+10:31:59 (1.25 MB/s) - >eix-caches.tbz2< gespeichert [241618/241618]
+
+ * Unpacking data
+ * Calling update-eix
+\ldots
+\end{ospcode}
+
+\cmd{eix} lädt ein Datenarchiv mit den Ebuild-Informationen von etwas
+mehr als einhundert verschiedenen Overlays herunter und fügt es seiner
+lokalen Datenbank hinzu.
+
+Würden wir allerdings jetzt den Portage-Baum aktualisieren und
+anschließend \cmd{update-eix} %
+\index{update-eix (Programm)}%
+laufen lassen, würde \cmd{eix} diese Daten wieder verwerfen, da es
+standardmäßig eben nur die lokal installierten Overlays in die
+Datenbank einbezieht.  Das lässt sich ändern, indem wir
+\cmd{KEEP\_VIRTUALS} %
+\index{KEEP\_VIRTUALS (Variable)}%
+%\index{eixrc (Datei)!KEEP\_VIRTUALS|see{KEEP\_VIRTUALS (Variable)}}%
+in der Konfigurationsdatei \cmd{/etc/eixrc} %
+\index{eixrc (Datei)}%
+\index{etc@/etc!eixrc}%
+suchen und von \cmd{false} auf \cmd{true} setzen:
+
+\begin{ospcode}
+\ldots
+# BOOLEAN
+# Keep virtuals of the old cache file by adding corresponding entries
+# implicitly to the values of ADD_OVERLAY and ADD_CACHE_METHOD
+KEEP_VIRTUALS='true'
+\ldots
+\end{ospcode}
+
+\cmd{eixrc} ist eine etwas überfrachtete Datei, die mit über
+zweihundert Konfigurationsvariablen aufwartet, aber
+\cmd{eix} ist eben derzeit das einzige Werkzeug, das externe Overlays in die
+Suche  einbeziehen kann.
+
+Nach dieser Veränderung erhält \cmd{update-eix} %
+\index{update-eix (Programm)}%
+die heruntergeladenen Dateien, und wir können problemlos in den
+externen Overlays suchen.  Schauen wir also, ob unsere Suche nach dem
+"`SecondLife"'-Paket %
+\index{secondlife (Paket)|(}%
+\index{Second Life|(}%
+diesmal erfolgreich ist:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix secondlife}
+[N] games-rpg/secondlife [1] (~1.18.0.6!m): A 3D MMORPG virtual world
+                             entirely built and owned by its residents
+[N] games-rpg/secondlife-bin (~1.13.3.2!m[2] ~1.17.2.0[3]
+                              ~1.17.2.0-r1!m[3] ~1.18.0.6!m[1]
+                              ~1.18.0.6!m[3]): A 3D MMORPG virtual
+                             world entirely built and owned by its 
+                             residents
+[N] games-simulation/secondlife (~1.18.0.6[5] ~1.18.0.6-r1!m[5]
+                                 \ldots
+                                 ~1.18.6.0_rc!m[5] ~1.18.6.1_rc!m[5]): 
+                                A 3D MMORPG virtual world entirely
+                                built and owned by its residents
+[N] games-simulation/secondlife-bin (~1.13.1.6!m[5] ~1.13.2.11!m[5]
+                                     \ldots
+                                     ~1.18.6.76453_alpha!m[4]): A 3D
+                                    MMORPG virtual world entirely built
+                                    and owned by its residents
+[1] (layman/arcon)
+[2] (layman/drizzt-overlay)
+[3] (layman/sabayon)
+[4] (layman/secondlife)
+[5] (layman/zugaina)
+
+Found 4 matches.
+\end{ospcode}
+\index{Overlay!extern|)}%
+
+\index{Paket!Qualität}%
+Wir haben aus Gründen der Übersicht an einigen Stellen ein paar
+Versionsnummern aus der Ausgabe entfernt. Aber auch so verdeutlicht
+das Ergebnis schon ein Problem: Welcher ist nun der beste Ebuild?
+Welches Overlay sollen wir lokal installieren und verwenden?
+
+Die Anbieter der verschiedenen Pakete scheinen sich auch nicht einig
+bei der Wahl der Kategorie. Wir kommen als Benutzer auf jeden Fall
+nicht umhin, uns die verschiedenen Anbieter genauer anzusehen.  Am
+besten geht man mit \cmd{layman -{}-info} %
+\index{layman (Programm)!info (Option)}%
+die fünf verschiedenen Overlay-Namen (\cmd{arcon}, %
+\index{arcon (Overlay)}%
+\cmd{drizzt-overlay}, %
+\index{drizzt-overlay (Overlay)}%
+\cmd{sabayon}, %
+\index{sabayon (Overlay)}%
+\cmd{secondlife} %
+\index{secondlife (Overlay)}%
+und \cmd{zugaina}) %
+\index{zugaina (Overlay)}%
+durch und schaut sich dann auf den angegebenen Projektseiten an, wie
+aktuell die Ebuilds sind.
+
+Sowohl im \cmd{arcon}-Overlay als auch im \cmd{drizzt-overlay} findet
+sich nur eine einige Monate alte Version, und es gibt keinerlei
+Updates. Ob die Installation gelingen würde ist eher fraglich.
+\cmd{sabayon} und \cmd{zugaina} scheinen hingegen einigermaßen
+aktuelle Ebuilds zu liefern. Hier sollte die Chance auf eine erfolgreiche
+Installation höher sein.
+
+Letztlich scheint aber \cmd{secondlife} %
+\index{secondlife (Overlay)}%
+die sinnvollste Wahl, nicht aufgrund des Namens, der ja keine Aussage
+über die Aktualität der angebotenen Pakete trifft, sondern weil es von
+\cmd{overlays.gentoo.org} angeboten und von einem Gentoo-Entwickler
+gepflegt wird.% %
+\index{secondlife (Paket)|)}%
+\index{Second Life|)}%
+
+Dennoch ist das natürlich keine Garantie dafür, dass die Installation
+gelingt. Das bleibt der Nachteil der Overlays: Niemand kann wirklich
+garantieren, dass die Qualität der angebotenen Ebuilds ausreicht, um
+auf jedem System einwandfrei zu laufen.
+\index{Paket!Qualität}%
+\index{Overlay|)}%
+\index{eix (Programm)|)}%
+\index{Paket!Suche|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

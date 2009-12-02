@@ -1,0 +1,1099 @@
+\chapter{\label{kernel}Der Kernel}
+
+An dieser Stelle haben wir hoffentlich zum ersten Mal erfolgreich das
+neue System gebootet und können uns als \cmd{root} %
+\index{root (Benutzer)}%
+mit dem im vorigen Kapitel festgelegten Passwort %
+\index{Root Passwort}%
+einloggen. Anschließend erwartet Gentoo unsere Eingaben auf der
+Kommandozeile:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}
+\end{ospcode}
+
+Das System ist nun noch nicht sonderlich üppig ausgestattet; um
+weitere Pakete zu installieren, nutzen wir, wenn möglich, eine
+Netzwerkverbindung, wobei der Kernel vorhandene Netzwerkkarten
+unterstützen muss -- und dies meist auch automatisch tut. Bei
+ausgefallenerer Hardware werden wir um eine manuelle Konfiguration
+aber nicht herum kommen.
+
+Auf der anderen Seite haben wir während der Installation einen Kernel mit
+sehr breiter Hardware-Unterstützung erstellt, so dass wir unser
+Betriebssystem etwas entschlacken und die Unterstützung
+nicht vorhandener Hardware deaktivieren.
+
+Steht eine Netzwerkverbindung bereits zur Verfügung, so sei empfohlen,
+zum nächsten Kapitel zu springen und Veränderungen am Kernel hier zu
+unterlassen. Es gibt wichtigere Stellschrauben in einem Gentoo-System,
+und wir können jederzeit an diese Stelle zurückkehren, wenn wir ein
+wenig Erfahrung mit dem System gesammelt haben.
+
+\index{Kernel!erstellen|(}%
+%\index{Betriebssystem|see{Kernel}}%
+%\index{OS|see{Kernel}}%
+%\index{Linux|see{Kernel}}%
+Ein korrekt konfigurierter Kernel, der die vorhandene Hard\-ware
+vollständig unterstützt, ist essentiell für ein funktionierenden
+Linux-System. Der Experte wird sich mit der Konfiguration des Kernels
+manuell auseinander setzen wollen, aber als Anfänger verliert man sich
+sehr leicht in der Komplexität dieses Unterfangens und endet schnell
+mit einem defekten System. Gentoo bietet zur Unterstützung des
+Kernel-Baus das Werkzeug \cmd{genkernel}, mit dem sich dieses Kapitel
+näher befasst.
+
+
+\section{\label{genkernel}genkernel}
+
+\index{genkernel (Programm)|(}%
+Da die Kernel-Konfiguration schon fast eine Wissenschaft für sich ist,
+gehen wir an dieser Stelle nicht auf Details der Kernel-Parameter
+ein. Stattdessen beschränken wir uns darauf, auf die
+Netzwerkkonfiguration hinzuweisen und den
+\index{Kernel!entschlacken}%
+anfänglichen, auf der Konfiguration der LiveDVD basierenden Kernel zu
+entschlacken, um \cmd{genkernel} dabei im Detail kennen zu lernen.
+
+\index{Spieltrieb|(}%
+Es geht hier keineswegs darum, mit dem Kernel herumzuspielen, auf dass
+man zuletzt mit einem defekten System endet. Gerade bei Experimenten
+mit dem Kernel kann so etwas schnell passieren. Wer also glücklich
+über sein gerade gebootetes Gentoo ist und wenig Lust verspürt, sich
+mit den Untiefen der Kernel-Konfiguration auseinander zu setzen, sollte
+den nachfolgenden Teil als Überblick über \cmd{genkernel} betrachten
+und vor allem die  verzichtbaren Elemente ab
+Seite \pageref{verzichtbareelemente} überspringen. %
+\index{Spieltrieb|)}%
+
+Wie man einen lauf"|fähigen Kernel aus einer funktionierenden LiveDVD
+generiert, haben wir in Kapitel \ref{genkernelinstall} ab Seite
+\pageref{genkernelinstall} gezeigt. Von dieser Konfiguration
+gehen wir im Folgenden aus. \cmd{genkernel} übernimmt allerdings nur das
+Übersetzen der Kernel-Quellen und die korrekte
+Installation des fertigen Kernel-Produkts.
+Bei der richtigen Wahl der Kernel-Parameter hilft es nicht.
+
+\subsection{Die grundlegenden Funktionen}
+
+Wir müssen \cmd{genkernel} unter Nennung einer durchzuführenden Aktion
+aufrufen. Wie im Kapitel \ref{genkernelinstall} gesehen, lautet die
+einfachste, aber gleichzeitig umfangreichste Handlung \cmd{all}:
+\index{genkernel (Programm)!all (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{genkernel all}
+\end{ospcode}
+
+Dieser Befehl bewirkt, dass \cmd{genkernel} das initiale %
+\index{Initrd erstellen}%
+%\index{Initial RAM-Disk|see{Initrd}}%
+Dateisystem aus der Initial RAM-Disk (\emph{Initrd}), den Kernel
+selbst und schließlich die Kernel-Module erstellt und
+installiert. Jede dieser Aktionen lässt sich auch einzeln
+ausführen. \cmd{genkernel initrd} erstellt nur das %
+\index{bzImage}%
+\index{genkernel (Programm)!initrd (Option)}%
+initiale Dateisystem, welches der Kernel beim Booten quasi als
+Vorstufe des Dateisystems verwendet, wenn die eigentliche
+Festplatte noch nicht eingebunden wurde. \cmd{genkernel bzImage}
+\index{Kernel!-Image erstellen}%
+\index{genkernel (Programm)!bzImage (Option)}%
+erstellt ausschließlich den Kernel, und \cmd{genkernel kernel}
+\index{Kernel!-Module erstellen}%
+\index{genkernel (Programm)!kernel (Option)}%
+generiert sowohl den Kernel als auch die Module. Die meisten Nutzer
+benötigen jedoch nicht mehr als \cmd{genkernel all}.
+
+Bevor wir einen neuen Kernel erstellen, sollten wir zusehen, dass wir
+diesen auch wirklich in unserem Boot-Verzeichnis installieren können.
+Wir hatten während der Installation auf Seite \pageref{mountnoauto}
+mit der \cmd{mount}-Option \cmd{noauto} %
+\index{mount (Programm)!noauto (Option)}%
+festgelegt, dass das \cmd{/boot}-Verzeichnis %
+\index{boot@/boot}%
+nicht automatisch während des Rechnerstarts eingebunden wird. Wir
+holen das hier nach, indem wir \cmd{mount} explizit
+aufrufen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mount /boot}
+\end{ospcode}
+\index{mount (Programm)}%
+\index{boot@/boot!einbinden}%
+
+
+\subsection{Die Konfiguration}
+
+Das Verhalten von \cmd{genkernel} lässt sich über eine
+Konfigurationsdatei beeinflussen:
+\index{etc@/etc!genkernel.conf}%
+\index{genkernel.conf (Datei)}%
+\cmd{/etc/genkernel.conf} ist in zwei Teile unterteilt, von denen der
+erste die Benutzer-Optionen umfasst und der zweite interne Variablen
+des Programms festlegt. Folglich werden wir nur den oberen Teil
+verändern. Die dort angegebenen Einstellungen lassen sich allerdings
+auch alle über \cmd{genkernel}-Parameter auf der
+Kommandozeile beeinflussen, und wir werden in den folgenden
+Abschnitten klären, welche Optionen äquivalent sind.
+
+
+\subsection{Den Kernel reduzieren}
+
+Bevor wir mit \cmd{genkernel} eine reduzierte Kernel-Konfiguration,
+ausgehend von der LiveDVD-Variante, erstellen können, müssen wir
+sicherstellen, dass die erste, funktionierende Konfiguration wirklich
+verfügbar ist. Die Standard"=Konfiguration speichert der Aufruf
+\cmd{genkernel all} (siehe
+Seite \pageref{genkernelinstall}) 
+\index{etc@/etc!kernels}%
+\index{kernels (Verzeichnis)}%
+standardmäßig unter \cmd{/etc/kernels/} ab:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /etc/kernels}
+kernel-config-x86-2.6.19-gentoo-r5
+\end{ospcode}
+
+\index{Kernel!Konfiguration automatisch speichern}%
+Ob dies tatsächlich geschieht, lässt sich über die Optionen
+\cmd{-{}-safe-config} und \cmd{-{}-no-safe-config} %
+\index{genkernel (Programm)!save-config (Option)}%
+\index{genkernel (Programm)!no-save-config (Option)}%
+aktivieren bzw.\ abstellen. Den Standard gibt die Variable
+\cmd{SAVE\_CONFIG} in der %
+\index{SAVE\_CONFIG (Variable)}%
+%\index{genkernel.conf (Datei)!SAVE\_CONFIG (Variable)|see{SAVE\_CONFIG    (Variable)}}%
+Konfigurationsdatei \cmd{/etc/genkernel.conf} vor:
+\cmd{SAVE\_CONFIG="{}yes"{}} schaltet die Speicherung ein.
+
+\begin{ospcode}
+# Save the new configuration in /etc/kernels upon
+# successfull compilation
+SAVE_CONFIG="yes"
+\end{ospcode}
+
+Bevor wir die lauf"|fähige Kernel-Konfiguration aus Versehen
+überschreiben, kopieren wir diese einmal zur Sicherheit:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cp /etc/kernels/kernel-config-x86-2.6.19-gentoo-r5 \textbackslash}
+\textbf{/etc/kernels/kernel-config-x86-2.6.19-gentoo-r5-LiveDVD}
+\end{ospcode}
+
+Damit können wir im Notfall auf eine funktionierende
+Kernel-Konfiguration zurückgreifen.
+Um nun den Konfigurationsdialog des Kernels aufzurufen, %
+\index{Kernel!Konfigurationsdialog}%
+gibt es drei verschiedene \cmd{genkernel}-Optionen:
+
+\begin{ospdescription}
+  \index{genkernel (Programm)!menuconfig (Option)}%
+  \ospitem{\cmd{-{}-menuconfig}} ruft zur Konfiguration ein
+  textbasiertes, pseudografisches Interface auf. %
+  \index{genkernel (Programm)!xconfig (Option)}%
+  \ospitem{\cmd{-{}-xconfig}} öffnet ein grafisches Frontend, das
+  nicht mehr verlangt als einen laufenden X-Server. %
+  \index{genkernel (Programm)!gconfig (Option)}%
+  \ospitem{\cmd{-{}-gconfig}} erlaubt bei laufendem X-Server die
+  Konfiguration über ein GTK"=basiertes Frontend.
+\end{ospdescription}
+
+Da wir keinen X-Server voraussetzen, bietet sich nur
+\cmd{-{}-menuconfig} an.  Wer mag kann auch die Variable
+\cmd{MENUCONFIG} in der %
+\index{MENUCONFIG (Variable)}%
+%\index{genkernel.conf (Datei)!MENUCONFIG (Variable)|see{MENUCONFIG    (Variable)}}%
+Konfigurationsdatei von \cmd{MENUCONFIG="{}no"{}} auf \cmd{"{}yes"{}}
+setzen und damit auf die \cmd{-{}-menuconfig}-Option auf der
+Kommandozeile verzichten.
+
+\begin{ospcode}
+# Run 'make menuconfig' before compiling this kernel?
+MENUCONFIG="yes"
+\end{ospcode}
+
+Bevor wir \cmd{genkernel} nun aufrufen, sollten wir zwei Dinge
+sicherstellen:
+
+\begin{osplist}
+\item Wir wollen den alten Kernel nicht überschreiben und sollten
+  daher dem neuen Kernel einen anderen Namen geben.
+\item Bereits kompilierte Teile des Kernels wollen wir, wenn möglich,
+  nicht nochmals kompilieren.
+\end{osplist}
+
+Den Kernel versehen wir über den Parameter %
+\index{genkernel (Programm)!kernname (Option)}%
+\cmd{-{}-kernname} mit einem neuen Namen. Dieser ersetzt die
+Zeichenkette \cmd{genkernel}, die \cmd{genkernel} normalerweise in den
+Dateinamen der resultierenden Dateien in \cmd{/boot}
+%\index{boot@/boot|see{boot (Verzeichnis)}}%
+\index{boot (Verzeichnis)}%
+einbaut
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /boot}
+System.map-genkernel-x86-2.6.19-gentoo-r5  
+initramfs-genkernel-x86-2.6.19-gentoo-r5  
+grub                                       
+kernel-genkernel-x86-2.6.19-gentoo-r5
+\end{ospcode}
+\index{System.map-* (Datei)}%
+\index{kernel-* (Datei)}%
+\index{initramfs-* (Datei)}%
+
+durch eine andere, z.\,B.\ \cmd{reduced}.  Mit \cmd{-{}-kernname
+  reduced} heißt der neue Kernel also
+\cmd{kernel-reduced-x86-2.6.19-gentoo-r5}.  Damit bleibt die alte
+Kernelversion erhalten, und wir haben jederzeit einen Kern zur
+Verfügung, der wirklich bootet.
+
+Den zweiten Wunsch, die schon kompilierten Dateien so weit wie möglich
+zu erhalten, erfüllen wir uns mit der Option %
+\index{genkernel (Programm)!noclean (Option)}%
+\cmd{-{}-no-clean}. Normalerweise würde \cmd{genkernel} im
+Kernel-Quellverzeichnis \cmd{/usr/src/linux}
+\index{usr@/usr!src/linux}%
+\index{linux (Verzeichnis)}%
+ein \cmd{make clean} durchführen und damit bereits kompilierte Dateien
+löschen.
+
+\cmd{genkernel} wird das Kernel-Quellverzeichnis automatisch mit
+\cmd{clean} aufräumen, da die Konfigurationsdatei standardmäßig
+\cmd{CLEAN="{}yes"{}} setzt. Wer mag kann diese Option auch in der
+Konfiguration ändern und dann auf die \cmd{-{}-no-clean}-Option
+verzichten:
+
+\begin{ospcode}
+# Run 'make clean' before compilation?
+# If set to NO, implies MRPROPER WILL NOT be run
+# Also, if clean is NO, it won't copy over any configuration
+# file, it will use what's there.
+CLEAN="no"
+\end{ospcode}
+\index{CLEAN (Variable)}%
+%\index{genkernel.conf (Datei)!CLEAN (Variable)|see{CLEAN (Variable)}}%
+
+Mit all diesen Parametern rufen wir \cmd{genkernel} nun folgendermaßen
+auf:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{genkernel --menuconfig --kernname=reduced --no-clean all}
+* Gentoo Linux Genkernel; Version 3.4.8
+* Running with options: --menuconfig --kernname=reduced --no-clean all
+
+* Linux Kernel 2.6.19-gentoo-r5 for x86...
+* mount: /boot mounted successfully!
+* config: --no-clean is enabled; leaving the .config alone.
+* config: >> Invoking menuconfig...
+\end{ospcode}
+\index{genkernel (Programm)!noclean (Option)}%
+\index{genkernel (Programm)!kernname (Option)}%
+\index{genkernel (Programm)!menuconfig (Option)}%
+
+An dieser Stelle erscheint das Kernel-Konfigurationsmenü, in dem wir
+unnötige Subsysteme und Module deaktivieren, um danach den Kernel neu
+zu kompilieren.
+
+Wir können hier die verschiedenen
+Kernel"=Einstellungen nicht umfassend diskutieren, da die Auswahl
+notwendiger und verzichtbarer Optionen sehr stark von der verwendeten
+Hardware abhängt. Wir wollen aber zeigen, wo sich die
+Einstellungen für Netzwerkkarten verstecken und welche Subsysteme sich
+bei den meisten Rechnern komplett deaktivieren lassen, wenn die
+entsprechende Hardware nicht vorhanden ist.
+
+Wer ein in Sachen Hardware standardisiertes System verwendet oder
+einen bestimmten Laptop-Typ sollte vor Experimenten mit dem Kernel
+auf jeden Fall die Hardware-Sektion des
+Gentoo-Wiki\footnote{\cmd{http://gentoo-wiki.com/Index:Hardware}}
+konsultieren. Vielfach finden sich hier für verbreitete Rechnersysteme
+wichtige Hinweise für die Kernel-Konfiguration wie auch Tipps zur
+allgemeinen Konfiguration.
+
+\subsection{\label{netzwerkkarten}Netzwerkkarten}
+
+\index{Netzwerk!-treiber|(}%
+%\index{Kernel!Netzwerktreiber|see{Netzwerktreiber}}%
+Es gibt zwei Sektionen, in denen sich die Treiber für Netzwerkkarten
+befinden können. Die meisten Treiber finden sich unter 
+
+\index{Kernel!Konfiguration|(}%
+\begin{ospdescription}
+  \ospitem{\menu{Device Drivers\sm Network device support}}
+  Die verschiedenen Treiber verstecken sich hinter den Einträgen
+  \menu{ARC\-net}, \menu{PHY device support}, \menu{Ethernet
+    (\ldots)}, \menu{Token Ring Devices}, \menu{Wireless LAN},
+  \menu{WAN interfaces} und \menu{ATM devices}.
+\end{ospdescription}
+
+Die gebräuchlichen Karten sind meist solche aus einer der
+\menu{Ethernet}"=Sektionen. Hier sind auch fast alle Karten
+standardmäßig als Modul aktiviert und sollten vom Kernel unterstützt
+werden.
+
+USB-basierte Netzwerkkarten finden sich dagegen in der USB-Sektion:
+
+\begin{ospdescription}
+  \ospitem{\menu{Device Drivers\sm USB-Support}}
+  Hier finden sich noch einmal einige Netzwerktreiber unter den
+  \menu{USB Network Adapters}. %
+  \index{USB}%
+%  \index{Kernel!USB-Support (Option)|see{USB-Unterstützung}}%
+\end{ospdescription}
+
+
+Und schließlich finden sich noch exotischere Varianten im allgemeinen
+\menu{Networking}-Abschnitt:
+
+\begin{ospdescription}
+  \ospitem{\menu{Networking\sm IrDA (infrared) subsystem support}}
+    Für Infrarotgeräte. %
+  \index{Infrarotgeräte}%
+%  \index{Kernel!IrDA (infrared) subsystem support    (Option)|see{Infrarotgeräte}}%
+
+    \ospitem{\menu{Networking\sm Bluetooth subsystem support}}
+  Für die Unterstützung von Bluetooth-Verbindungen.
+  \index{Bluetooth}%
+%  \index{Kernel!Bluetooth subsystem support (Option)|see{Bluetooth}}%
+\end{ospdescription}
+
+Ist die eigene Hardware hier nicht verzeichnet, bleibt
+eventuell die Möglichkeit, ein externes Modul zu
+installieren. Wir beschreiben dies
+in Abschnitt \ref{modulesautoload}. %
+\index{Kernel!Netzwerktreiber|)}%
+
+\subsection{\label{verzichtbareelemente}Verzichtbare Elemente}
+
+Kommen wir zu den Treibern, auf die der Nutzer im Normalfall
+verzichten kann und ohne die der Kernel kleiner und übersichtlicher
+wird.
+
+\index{Kernel!entschlacken|(}%
+Die folgenden Punkte entsprechen jeweils kompletten Subsystemen, die
+im Kernel der LiveDVD aktiviert sind, jedoch nur selten gebraucht
+werden. Vor deren Deaktivierung muss man sich natürlich vergewissern,
+dass die jeweiligen Systeme auch wirklich fehlen:
+
+\begin{ospdescription}
+\ospitem{\menu{Bus options (PCI, PCMCIA, EISA, MCA, ISA)}}
+\menu{PCCARD (PCMCIA/CardBus) support}\\ Lässt sich deaktivieren,
+  wenn kein PCMCIA-Slot vorhanden ist, was bei
+  Nicht-Laptop-Systemen die Regel ist.
+  \index{PCMCIA}%
+%  \index{Kernel!PCCARD (PCMCIA/CardBus) support (Option)|see{PCMCIA}}%
+
+
+\ospitem{\menu{Networking}}
+\menu{Bluetooth subsystem support}\\
+  kann deaktiviert werden, wenn die Maschine keine
+  Blue\-tooth-Schnitt\-stelle besitzt.
+  \index{Bluetooth}%
+%  \index{Kernel!Bluetooth subsystem support (Option)|see{Bluetooth}}%
+
+\ospitem{\menu{Device Drivers}}
+\menu{Multi-device support (RAID and LVM)}\\
+  Wer ein System ohne
+  RAID-Platte besitzt kann auf diese Module verzichten.
+  \index{RAID}%
+%  \index{Kernel!Multi-device support (RAID and LVM) (Option)|see{RAID}}%
+
+\menu{Fusion MPT device support}\\
+  Ohne spezielle Fusion-MPT-SCSI- oder Netzwerkgeräte kann man
+  getrost auf diese Module verzichten.
+  \index{SCSI}%
+%  \index{Kernel!Fusion MPT device support (Option)|see{SCSI}}%
+
+\menu{IEEE 1394 (FireWire) support}\\
+  Fehlt dem Rechner die FireWire-Schnittstelle,  werden auch die
+  entsprechenden Module nicht benötigt.
+  \index{Firewire}%
+%  \index{Kernel!IEEE 1394 (FireWire) support (Option)|see{Firewire}}%
+
+\menu{I2O device support}\\
+  I2O ist dem SCSI-Protokoll vergleichbar und wird nur von wenigen
+  Geräten unterstützt. Im Normalfall kann dieser Bereich deaktiviert
+  werden.
+  \index{I2O}%
+%  \index{Kernel!I2O device support (Option)|see{I2O}}%
+
+\menu{ISDN subsystem}\\
+  Wer keine ISDN-Karte besitzt kann folglich auch diese Module aus dem
+  System entfernen. %
+  \index{ISDN}%
+%  \index{Kernel!ISDN subsystem (Option)|see{ISDN}}%
+
+\menu{Speakup console speech}\\
+  Wer den Output der Konsole lieber liest als hört kann
+  auf das \menu{Speakup}-System verzichten.
+  \index{Speakup}%
+%  \index{Kernel!Speakup console speech (Option)|see{Speakup}}%
+
+\menu{InfiniBand}\\
+  Eine Form der seriellen Übertragung, die nur von wenigen Geräten
+  genutzt wird.
+  \index{InfiniBand}%
+%  \index{Kernel!InfiniBand (Option)|see{InfiniBand}}%
+\end{ospdescription}
+\index{Kernel!Konfiguration|)}%
+
+Es gibt zahlreiche Gerätetreiber, die als Modul %
+\index{Kernel!Module}%
+aktiviert sind und die nur in Verbindung mit dem
+entsprechenden Gerät benötigt werden. Wer sich also die Mühe machen möchte
+kann den Kernel weiter ausdünnen. %
+\index{Kernel!unterstützte Geräte}%
+
+Generell sollte man jedoch Vorsicht beim Deaktivieren von Treibern
+\index{Kernel!Treiber deaktivieren}%
+walten lassen und vor allem darauf verzichten, Elemente zu
+deaktivieren, nur weil einem der Name nichts sagt. Ist ein Treiber
+klar als spezifisches Modul für einen bestimmten Gerätetyp erkennbar,
+kann er deaktiviert werden. Aber gerade wenn es um Treiber mit
+breiterer Geräte-Unterstützung geht, sollte man sich erst einmal
+zurückhalten, bis man nachvollzogen hat, welche Funktion das
+entsprechende Modul hat. %
+\index{Kernel!entschlacken|)}%
+
+Hat man die unnötigen Elemente deaktiviert, verlässt man das Menü %
+\index{Kernel!Konfigurationsdialog}%
+über \menu{Exit} und speichert auf Nachfrage die neue
+Kernel-Konfiguration. \cmd{gen\-kernel} fährt nun mit seiner Arbeit
+fort:
+
+\begin{ospcode}
+*         >> Compiling 2.6.19-gentoo-r5 bzImage...
+*         >> Compiling 2.6.19-gentoo-r5 modules...
+* Copying config for successful build to /etc/kernels/kernel-config-x86-
+2.6.19-gentoo-r5
+* initramfs: >> Initializing...
+*         >> Appending base_layout cpio data...
+*         >> Appending auxilary cpio data...
+*         >> Appending busybox cpio data...
+*         >> Appending insmod cpio data...
+*         >> Appending modules cpio data...
+* 
+* Kernel compiled successfully!
+* 
+* Required Kernel Parameters:
+*     real_root=/dev/$ROOT
+* 
+*     Where $ROOT is the device node for your root partition as the
+*     one specified in /etc/fstab
+* 
+* If you require Genkernel's hardware detection features; you MUST
+* tell your bootloader to use the provided INITRAMFS file. Otherwise;
+* substitute the root argument for the real_root argument if you are
+* not planning to use the initrd...
+
+* WARNING... WARNING... WARNING...
+* Additional kernel cmdline arguments that *may* be required to boot pro
+perly...
+* add ``vga=791 splash=silent'' if you use a bootsplash framebuffer
+
+* Do NOT report kernel bugs as genkernel bugs unless your bug
+* is about the default genkernel configuration...
+* 
+* Make sure you have the latest genkernel before reporting bugs.
+\end{ospcode}
+
+Nach Abschluss des Vorgangs finden wir den neuen Kernel ebenfalls im
+Verzeichnis \cmd{/boot}: %
+\index{boot (Verzeichnis)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /boot}
+System.map-genkernel-x86-2.6.19-gentoo-r5  
+System.map-reduced-x86-2.6.19-gentoo-r5  
+initramfs-genkernel-x86-2.6.19-gentoo-r5  
+initramfs-reduced-x86-2.6.19-gentoo-r5  
+grub                                       
+kernel-genkernel-x86-2.6.19-gentoo-r5
+kernel-reduced-x86-2.6.19-gentoo-r5
+\end{ospcode}
+\index{System.map-* (Datei)}%
+\index{kernel-* (Datei)}%
+\index{initramfs-* (Datei)}%
+
+\subsection{Eine sichere Boot-Konfiguration}
+
+Damit der neue Kernel beim Booten %
+\index{Kernel!Booten}%
+auch zur Verfügung steht, müssen wir ihn zur GRUB-Konfiguration
+\index{grub.conf (Datei)|(}%
+hinzufügen. \cmd{/boot/grub/""grub.conf} sollte dann so aussehen:
+
+\begin{ospcode}
+default 0
+timeout 30
+
+title=Gentoo Linux (Reduced Kernel)
+root (hd0,0)
+kernel /kernel-reduced-x86-2.6.19-gentoo-r5 root=/dev/ram0 init=/linuxr\textbackslash
+c ramdisk=8192 real_root=/dev/hda3 udev
+initrd /initramfs-reduced-x86-2.6.19-gentoo-r5
+
+title=Gentoo Linux
+root (hd0,0)
+kernel /kernel-genkernel-x86-2.6.19-gentoo-r5 root=/dev/ram0 init=/linu\textbackslash
+xrc ramdisk=8192 real_root=/dev/hda3 udev
+initrd /initramfs-genkernel-x86-2.6.19-gentoo-r5
+\end{ospcode}
+\index{grub.conf (Datei)!root (Option)}%
+\index{grub.conf (Datei)!kernel (Option)}%
+
+Damit bietet GRUB beim Systemstart zwei verschiedene Kernel zur
+Auswahl. %
+\index{grub.conf (Datei)!Kernel auswählen}%
+Diese Vorgehensweise ist grundsätzlich zu empfehlen: einen erprobten
+und sicher funktionierenden Kernel, und einen zweiten, den wir
+verändert, aber noch nicht getestet haben.  So lässt sich das System
+auch  booten, wenn der neue Kernel fehlerhaft ist.
+
+Vereinfachen kann man sich diese Organisation durch
+entsprechendes Verlinken des Kernels:
+\index{grub.conf (Datei)!Sicheren Kernel verlinken}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cd /boot}
+\rprompt{boot}\textbf{for fl in *genkernel*;do ln -s \$fl \textbackslash}
+> \textbf{\$\{fl/-genkernel*/-safe\};done}
+\rprompt{boot}\textbf{for fl in *reduced*;do ln -s \$fl \$\{fl/-reduced*/\}; done}
+\rprompt{boot}\textbf{ls -la}
+total 8477
+drwxr-xr-x  4 root root    4096 Jan 25 11:44 .
+drwxr-xr-x 21 root root     520 Nov 20 14:47 ..
+lrwxrwxrwx  1 root root      39 Jan 25 11:44 System.map -> System.map-re
+duced-x86-2.6.19-gentoo-r5
+-rw-r--r--  1 root root  674983 Oct 12 14:04 System.map-genkernel-x86-2.
+6.19-gentoo-r5
+-rw-r--r--  1 root root  653889 Jan 25 10:44 System.map-reduced-x86-2.6.
+19-gentoo-r5
+lrwxrwxrwx  1 root root      41 Jan 25 11:44 System.map-safe -> System.m
+ap-genkernel-x86-2.6.19-gentoo-r5
+drwxr-xr-x  2 root root    4096 Oct 12 16:25 grub
+lrwxrwxrwx  1 root root      38 Jan 25 11:44 initramfs -> initramfs-redu
+ced-x86-2.6.19-gentoo-r5
+-rw-r--r--  1 root root 2243032 Oct 12 15:21 initramfs-genkernel-x86-2.6
+.19-gentoo-r5
+-rw-r--r--  1 root root 1898019 Jan 25 11:39 initramfs-reduced-x86-2.6.1
+9-gentoo-r5
+lrwxrwxrwx  1 root root      40 Jan 25 11:44 initramfs-safe -> initramfs
+-genkernel-x86-2.6.19-gentoo-r5
+lrwxrwxrwx  1 root root      35 Jan 25 11:44 kernel -> kernel-reduced-x8
+6-2.6.19-gentoo-r5
+-rw-r--r--  1 root root 1600800 Oct 12 14:04 kernel-genkernel-x86-2.6.19
+-gentoo-r5
+-rw-r--r--  1 root root 1548843 Jan 25 10:44 kernel-reduced-x86-2.6.19-g
+entoo-r5
+lrwxrwxrwx  1 root root      37 Jan 25 11:44 kernel-safe -> kernel-genke
+rnel-x86-2.6.19-gentoo-r5
+drwx------  2 root root   16384 Oct 12 11:49 lost+found
+\rprompt{boot}\textbf{cd \textasciitilde}
+\rprompt{\textasciitilde}\textbf{}
+\end{ospcode}
+\index{System.map-* (Datei)}%
+\index{kernel-* (Datei)}%
+\index{initramfs-* (Datei)}%
+
+Wir erhalten dadurch die Verknüpfungen \cmd{kernel} und \cmd{kernel-safe}
+\index{kernel-safe (Datei)}%
+%\index{boot@/boot!kernel-safe|see{kernel-safe (Datei)}}%
+(sowie die zugehörigen Dateien \cmd{System.map},
+\cmd{System.map-safe}, \cmd{initramfs} und \cmd{initramfs-safe}),
+\index{System.map-* (Datei)}%
+\index{kernel-* (Datei)}%
+\index{initramfs-* (Datei)}%
+die auf die entsprechenden Originaldateien verweisen. Damit können wir
+\cmd{/boot/grub/grub.""conf} folgendermaßen vereinfachen:
+
+\begin{ospcode}
+default 0
+timeout 30
+
+title=Gentoo Linux
+root (hd0,0)
+kernel /kernel root=/dev/ram0 init=/linuxrc ramdisk=8192 real_root=/dev\textbackslash
+/hda3 udev
+initrd /initramfs
+
+title=Gentoo Linux (Safe Kernel)
+root (hd0,0)
+kernel /kernel-safe root=/dev/ram0 init=/linuxrc ramdisk=8192 real_root\textbackslash
+=/dev/hda3 udev
+initrd /initramfs-safe
+\end{ospcode}
+\index{grub.conf (Datei)!root (Option)}%
+\index{grub.conf (Datei)!kernel (Option)}%
+
+GRUB wird so den neuen Kernel booten, aber zur Sicherheit den alten
+ebenfalls anbieten.
+
+Sobald wir einen neuen Kernel kompiliert haben, entfernen wir den
+alten, als \cmd{kernel-safe} verlinkten Kernel inklusive den
+zugehörigen \cmd{initrd}- und \cmd{System.map}-Dateien sowie den
+\cmd{*-safe}-Verknüpfungen. Danach benennen wir die %
+\index{System.map-* (Datei)}%
+\index{kernel-* (Datei)}%
+\index{initramfs-* (Datei)}%
+\cmd{kernel}- sowie die zugehörigen \cmd{initrd}- und
+\cmd{System.map}-Verknüpfungen in die entsprechenden \cmd{*-safe}-Varianten um und verlinken schließlich die Dateien des neuen Kernels
+mit den frei gewordenen \hbox{\cmd{kernel}-,} \cmd{initrd}- und
+\cmd{System.map}-Links. So müssen wir die GRUB"=Konfiguration nicht
+jedes Mal neu anpassen. %
+\index{grub.conf (Datei)|)}%
+
+\subsection{\label{splashscreen}Spielzeug: Splash-Screen}
+
+\index{Splash-Screen|(}%
+\index{gensplash (Programm)|(}%
+\index{bootsplash (Programm)|(}%
+Die LiveDVD wechselt beim Booten recht zügig in einen grafischen
+Modus, der optisch deutlich ansprechender ist als die schnell
+vorüberhuschenden Textzeilen -- im Grunde reine Kosmetik, aber
+\cmd{genkernel} beherrscht auch die Erstellung eines solchen
+\emph{Splash-Screens}, und darum wollen wir die Konfiguration
+nicht verheimlichen.
+
+\begin{netnote}
+  Die Pakete für den Splash-Screen lassen sich nur installieren, wenn
+  wir bereits eine Netzwerkverbindung zur Verfügung und unser System
+  mit \cmd{emerge -{}-sync} aktualisiert haben.
+
+  Bei einer Erstinstallation können Sie diesen Abschnitt ohne Bedenken
+  überspringen.
+\end{netnote}
+
+Die notwendigen Einstellungen sind etwas komplexer, und wir werden
+hier nur die wichtigsten Schritte beleuchten, um den Splash-Screen auf
+den meisten Systemen zum Laufen zu bekommen. Bei Schwierigkeiten oder
+komplexeren Konfigurationen bietet sich die entsprechende Seite im
+deutschen
+Gentoo-Wiki\footnote{\cmd{http://de.gentoo-wiki.com/Fbsplash}} oder
+dem englischen\footnote{\cmd{http://gentoo-wiki.com/HOWTO\_fbsplash}}
+an.
+
+Über die Befehle \cmd{-{}-gensplash} %
+\index{genkernel (Programm)!gensplash (Option)}%
+bzw. \cmd{-{}-bootsplash} %
+\index{genkernel (Programm)!bootsplash (Option)}%
+aktiviert \cmd{gensplash} für den Kernel den Support für einen
+Splash-Screen. %
+%\index{Grafischer Boot-Prozess|see{Splash-Screen}}%
+%\index{Kernel!Splash-Screen|see{Splash-Screen}}%
+Der Boot-Prozess wird damit, wie bei der LiveDVD auch, grafisch
+begleitet und die Vielzahl an Meldungen des Init-Systems
+\index{Init-System}%
+(siehe Kapitel \ref{initsystem}) ausgeblendet. Man kann sich hier nur
+für \cmd{gensplash} oder \cmd{bootsplash} entscheiden. Genaueres
+findet man auf der Homepage des
+\cmd{gensplash}-Autors\footnote{\cmd{http://dev.gentoo.org/\textasciitilde{}spock/projects/gensplash}}. Für
+\cmd{gensplash} muss das Paket \cmd{media-gfx/splashutils}, für
+\cmd{bootsplash} das Paket \cmd{media-gfx/boot\-splash} installiert
+sein, andernfalls meldet \cmd{genkernel} während der Ausführung:
+
+\begin{ospcode}
+*       >> No splash detected; skipping!
+\end{ospcode}
+
+Als Standard wählt \cmd{genkernel} über die Konfigurationsoption
+\cmd{BOOTSPLASH="""{}yes"{}} %
+\index{BOOTSPLASH (Variable)}%
+%\index{genkernel.conf (Datei)!BOOTSPLASH (Variable)|see{BOOTSPLASH    (Variable)}}%
+\cmd{bootsplash} aus, aber da das Projekt \cmd{gensplash} mittlerweile
+weiter entwickelt ist als das ursprüngliche \cmd{bootsplash}, sei die
+Einstellung \cmd{GENSPLASH="{}yes"{}} %
+\index{GENSPLASH (Variable)}%
+%\index{genkernel.conf (Datei)!BOOTSPLASH (Variable)|see{GENSPLASH    (Variable)}}%
+empfohlen. %
+\index{gensplash (Programm)|)}%
+\index{bootsplash (Programm)|)}%
+\index{Splash-Screen|)}%
+
+\begin{ospcode}
+# Copy bootsplash into the initrd image?
+GENSPLASH="yes"
+\end{ospcode}
+
+Wer also den grafischen Boot-Modus bevorzugt installiert an dieser
+Stelle das zugehörige Paket \cmd{media-gfx/splashutils}.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{USE="png mng truetype" emerge -av media-gfx/splashutils}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] media-libs/jpeg-6b-r7  0 kB 
+[ebuild  N    ] media-libs/libpng-1.2.15  USE="-doc" 0 kB 
+[ebuild  N    ] media-libs/freetype-2.1.10-r3  USE="zlib -bindist -doc" 
+0 kB 
+[ebuild  N    ] dev-lang/swig-1.3.31  USE="perl python -doc -guile -java
+ -lua -mono -ocaml -php -pike -ruby -tcl -tk" 0 kB 
+[ebuild  N    ] dev-perl/Locale-gettext-1.05  0 kB 
+[ebuild  N    ] dev-libs/klibc-1.4.13  USE="-debug (-n32)" 463 kB 
+[ebuild  N    ] media-libs/lcms-1.15  USE="python zlib -jpeg -tiff" 0 kB 
+[ebuild  N    ] sys-apps/help2man-1.36.4  USE="nls" 0 kB 
+[ebuild  N    ] media-gfx/fbgrab-1.0  0 kB 
+[ebuild  NS   ] sys-devel/automake-1.9.6-r2  0 kB 
+[ebuild  N    ] media-libs/libmng-1.0.9-r1  USE="-lcms" 0 kB 
+[ebuild  N    ] media-gfx/splashutils-1.4.1  USE="gpm mng png truetype -
+hardened" 1,515 kB 
+
+Total: 12 packages (11 new, 1 in new slot), Size of downloads: 1,977 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{splashutils (Paket)}%
+%\index{media-gfx (Kategorie)!splashutils|see{splashutils (Paket)}}%
+
+Hier aktivieren wir auf etwas unorthodoxem Wege (siehe Seite
+\pageref{useoncli}) mehrere USE-Flags und erreichen damit, dass
+\cmd{splash\-utils} verschiedene Bildformate und TrueType-Schriften
+unterstützt. USE-Flags sind ein etwas komplexeres Thema, das wir
+ausführlich in Kapitel \ref{USE-Flags} behandeln. Dort behandeln wir
+auch, wie wir die USE-Flags mit \cmd{flagedit} korrekt setzen.% %
+\index{USE-Flag}%
+
+Die Werkzeuge für den Splash-Screen haben wir jetzt, aber es fehlt
+noch ein ansprechendes grafisches Thema, das
+\cmd{media-gfx/splashutils} nicht automatisch mitliefert. 
+Für das Thema der LiveDVD
+installieren wir \cmd{media"=gfx/splash-themes-livecd}. Einige weitere
+Alternativen finden sich in \cmd{media-gfx/splash-themes-gentoo}.
+
+\osppagebreak
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av media-gfx/splash-themes-livecd}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] media-gfx/splash-themes-livecd-2007.0  4,649 kB 
+
+Total: 1 package (1 new), Size of downloads: 4,649 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+\index{splash-themes-livecd (Paket)}%
+%\index{media-gfx (Kategorie)!splash-themes-livecd|see{splash-themes-livecd (Paket)}}%
+
+Die Themen installiert \cmd{emerge} im Verzeichnis
+\cmd{/etc/splash}, %
+\index{splash (Verzeichnis)}%
+\index{etc@/etc!splash}%
+das Thema der LiveDVD unter \cmd{/etc/splash/livecd-2007.0}. %
+\index{livecd-2007.0 (Verzeichnis)}%
+\index{etc@/etc!splash!livecd-2007.0}%
+
+Jetzt rufen wir \cmd{genkernel} nochmals mit der
+\cmd{-{}-gensplash}-Option auf:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{genkernel --kernname=reduced --no-clean \textbackslash}
+\textbf{--gensplash=livecd-2007.0 all}
+\end{ospcode}
+
+Auf die Option \cmd{-{}-menuconfig} %
+\index{genkernel (Programm)!menuconfig (Option)}%
+verzichten wir, da wir die Konfiguration nicht verändern,
+sondern nur die für den Splash-Screen notwendigen Dateien in der
+\cmd{initramfs}-Datei ablegen.
+
+In diesem Durchlauf sollte sich \cmd{genkernel} zwischendurch mit
+
+\begin{ospcode}
+*   >> Installing gensplash [ using the livecd-2007.0 theme ]...
+\end{ospcode}
+
+melden und damit anzeigen, dass das Thema erfolgreich
+installiert wurde.
+
+Sowohl bei \cmd{bootsplash} als auch bei
+\cmd{gensplash} braucht man neben den
+installierten Paketen zusätzliche Angaben in der
+GRUB-Konfiguration. Für \cmd{bootsplash} fügt man \cmd{vga=791
+  splash=silent} zu der \cmd{kernel}-Zeile in der %
+\index{grub.conf (Datei)!vga (Option)}%
+\index{grub.conf (Datei)!splash (Option)}%
+\cmd{grub.conf} hinzu, bei \cmd{gensplash} hingegen
+\cmd{splash=silent,theme:""THEME vga=791 CONSOLE=/dev/tty1 quiet}. %
+\index{grub.conf (Datei)!CONSOLE (Option)}%
+\cmd{THEME} steht für das ausgewählte grafische Thema. Die
+\cmd{vga}-Option %
+\index{grub.conf (Datei)!vga (Option)}%
+bezeichnet den Video-Modus (hier 1024$\times$768 Pixel bei 24 Bit
+Farbtiefe), \cmd{splash=silent} %
+\index{grub.conf (Datei)!splash (Option)}%
+startet den Splash-Screen in dem Modus, bei dem die Textzeilen des
+Init-Systems ausgeblendet sind. Der Modus lässt sich beim Booten über
+die \taste{F2}-Taste %
+\index{grub.conf (Datei)!F2}%
+\index{grub.conf (Datei)!Modus}%
+\index{Boot!Modus}%
+wechseln.
+
+Damit gelangen wir schließlich zu der folgenden Konfiguration für
+unseren Eintrag \cmd{Gentoo Linux} in der Datei
+\cmd{/boot/grub/grub.conf}:
+
+\begin{ospcode}
+title=Gentoo Linux
+root (hd0,0)
+kernel /kernel root=/dev/ram0 init=/linuxrc ramdisk=8192 real_root=/dev\textbackslash
+/hda3 splash=silent,theme:livecd-2007.0 vga=791 CONSOLE=/dev/tty1 quiet\textbackslash
+ udev
+initrd /initramfs
+\end{ospcode}
+\index{grub.conf (Datei)}%
+
+
+\subsection{Weitere genkernel-Optionen}
+
+Schließen wir das Kapitel über \cmd{genkernel} mit einigen
+weniger bekannten Optionen, die sich bei häufigerem Gebrauch
+jedoch als recht nützlich erweisen.
+
+So verhindert \cmd{-{}-no-install}, %
+\index{genkernel (Programm)!no-install (Option)}%
+dass \cmd{genkernel} den Kernel in \cmd{/boot} %
+\index{boot (Verzeichnis)}%
+installiert.  Einzelteile für den Boot-Prozess (\cmd{kernel},
+\cmd{System.map}, \cmd{initramfs}) findet man dadurch in
+\cmd{/var/tmp/genkernel} %
+\index{genkernel (Verzeichnis)}%
+\index{var@/var!tmp!genkernel}%
+und kann sie manuell nach \cmd{/boot} %
+\index{boot (Verzeichnis)}%
+verschieben.
+
+Wer Nutzern beim Booten die Keymap %
+\index{Kernel!Keymap auswählen}%
+für die Unterstützung verschiedener Keyboards (wie auf der
+LiveDVD) auswählen lassen möchte, aktiviert dieses Feature mit
+\cmd{-{}-do-keymap-auto}. %
+\index{genkernel (Programm)!do-keymap-auto (Option)}%
+In der Boot-Konfiguration ist dann zusätzlich die
+Option \cmd{dokeymap} %
+\index{grub.conf (Datei)!dokeymap (Option)}%
+an die Kernel-Optionen anzuhängen.
+
+Es gibt darüber hinaus einen Satz weiterer Optionen, die allerdings
+für den hier beschriebenen "`Hausgebrauch"' kaum relevant sind.  
+\index{genkernel (Programm)|)}%
+\index{Kernel!erstellen|)}%
+
+\section{\label{kernelmodules}Kernel-Erweiterungen}
+
+\index{Kernel!erweitern|(}%
+Es sollte nun ein Kernel zur Verfügung stehen, der zumindest
+eine  Netzwerkkarte Ihres Systems unterstützt. Ist das nicht der
+Fall, hilft vermutlich nur ein externer Treiber weiter.  In diesem
+Zusammenhang beschreiben wir die Integration externer Module in den
+Kernel, verlassen damit allerdings den Bereich, der
+auch für Anfänger als sicher gelten kann. Bei einer Erst\-installation
+sollten Sie, wenn irgend möglich, diesen Abschnitt überspringen und
+zu einem späteren Zeitpunkt als Referenz nutzen, um in
+einem stabil laufenden System eine noch nicht funktionierende
+Hardware-Komponente zu aktivieren.
+
+Nicht alle Hardwaretreiber sind notwendigerweise schon im Kernel
+enthalten. Die Anforderungen an Code, der in den Linux-Kernel
+aufgenommen werden soll, sind hoch, und so gibt es
+zahlreiche Erweiterungen, die zwar (noch) nicht in den Kernel integriert
+sind (und es vielleicht auch nie sein werden), aber von den
+Entwicklern als externe Module %
+\index{Kernel!externes Modul}%
+angeboten werden. Falls ein solches Modul für die Unterstützung 
+"`exotischer"' Hardware %
+\index{Kernel!Hardwareunterstützung}%
+%\index{Hardwareunterstützung|see{Kernel, Hardwareunterstützung}}%
+notwendig ist, gibt es in den meisten Fällen auch
+das zugehörige Gentoo-Paket.
+
+\subsection{\label{modulesautoload}Externe Module automatisch laden}
+
+Nach der Installation eines Pakets, das ein externes Kernel-Modul
+bereitstellt, muss dieses auch beim Booten %
+\index{Kernel!Modul laden}%
+mit \cmd{modprobe} %
+\index{modprobe (Programm)}%
+geladen werden. Vielfach ist der Gerätemanager
+\cmd{udev} %
+\index{udev}%
+(siehe auch Kapitel \ref{udev}) in der Lage, ein Gerät und den
+notwendigen Treiber automatisch zu identifizieren %
+\index{Kernel!Gerätetreiber identifizieren}%
+und den entsprechenden \cmd{modprobe}-Befehl %
+\index{modprobe (Programm)}%
+aufzurufen. Ist das allerdings nicht der Fall und das neu installierte
+Modul wurde beim nächsten Booten oder dem Einstecken der Hardware
+nicht automatisch geladen,  besteht die Möglichkeit, dies
+für den Boot-Vorgang explizit anzuweisen.
+
+Nehmen wir an, wir benötigen zur Unterstützung einer
+Funknetzwerkkarte %
+\index{WLAN}%
+den Windows-Treiber und müssen dazu das Paket
+\cmd{net-wireless/ndis\-wrapper} %
+\index{ndiswrapper (Paket)}%
+%\index{net-wireless (Kategorie)!ndiswrapper|see{ndiswrapper (Paket)}}%
+installieren. Dieses installiert unter
+\cmd{/lib/modules/2.6.19-gen\-too-r5} %
+\index{2.6.19-gentoo-r5 (Verzeichnis)}%
+%\index{lib@/lib!modules!2.6.19-gentoo-r5|see{2.6.19-gentoo-r5    (Verzeichnis)}}%
+ein neues Kernel-Modul: %
+\index{Kernel!Modul installieren}
+
+\label{ndiswrapper}
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av net-wireless/ndiswrapper}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-apps/pciutils-2.2.3-r2  0 kB 
+[ebuild  N    ] net-wireless/wireless-tools-28 USE="nls -multicall" 0 kB
+[ebuild  N    ] net-wireless/ndiswrapper-1.33 USE="-debug -usb" 186 kB 
+
+Total: 3 packages (3 new), Size of downloads: 186 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+>>> /lib/modules/2.6.19-gentoo-r5/misc/ndiswrapper.ko
+\end{ospcode}
+
+\begin{netnote}
+  Die Installation von \cmd{net-wireless/ndiswrapper} setzt leider
+  eine Internetverbindung voraus. Für eine mögliche Alternative siehe
+  Seite \pageref{lastchancendiswrapper}.
+\end{netnote}
+
+Um das Modul beim Booten automatisch zu laden, ergänzen wir dessen
+Namen in der Datei \cmd{/etc/modules.autoload.d/kernel-2.6}, %
+\index{kernel-2.6 (Datei)}%
+\index{etc@/etc!modules.d!kernel-2.6}%
+indem wir \cmd{ndiswrapper} über den \cmd{echo}-Befehl %
+\index{echo (Programm)}%
+an die Liste anhängen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo "ndiswrapper" >> /etc/modules.autoload.d/kernel-2.6}
+\rprompt{\textasciitilde}\textbf{cat /etc/modules.autoload.d/kernel-2.6}
+# /etc/modules.autoload.d/kernel-2.6:  kernel modules to load when syste
+m boots.
+#
+# Note that this file is for 2.6 kernels.
+#
+# Add the names of modules that you'd like to load when the system
+# starts into this file, one per line.  Comments begin with # and
+# are ignored.  Read man modules.autoload for additional details.
+
+# For example:
+# aic7xxx
+ndiswrapper
+\end{ospcode}
+\index{kernel-2.6 (Datei)}%
+
+Das Skript \cmd{/etc/init.d/modules} %
+\index{modules (Init-Skript)}%
+\index{etc@/etc!init.d!modules}%
+ist dann dafür zuständig, die gelisteten Treiber während des
+Boot-Vorgangs zu laden.
+
+\subsection{Gerätenamen mit Treibern verknüpfen}
+
+Der Gerätemanager \cmd{udev} %
+\index{udev}%
+%\index{Gerätemanager|see{udev}}%
+lädt Kernel-Module bisweilen auch aufgrund der Gerätenamen nach. %
+\index{Kernel!Modul laden}%
+So wird z.\,B.\ \cmd{wlan0} (bzw.\ \cmd{/dev/wlan0}) %
+\index{wlan0 (Netzwerkkarte)}%
+%\index{dev@/dev!wlan0|see{wlan0 (Netzwerkkarte)}}%
+nach der Installation von \cmd{ndiswrapper} %
+\index{ndiswrapper (Paket)}%
+automatisch mit diesem Treiber identifiziert -- sofern
+\cmd{udev} %
+\index{udev}%
+keinen anderen Treiber findet, der dieses Gerät noch spezifischer
+unterstützen könnte. Wir wollen uns hier aber nicht mit den
+Untiefen der \cmd{udev}-Konfiguration beschäftigen (vgl. dazu Kapitel \ref{udev}), sondern uns
+ansehen, wie wir Gerätebezeichnungen mit dem Treiber-Namen assoziieren.
+
+\cmd{ndiswrapper} installiert dafür eine kleine Datei in
+\cmd{/etc/modules.d}, ebenfalls mit dem Namen \cmd{ndiswrapper}.
+\index{ndiswrapper (Datei)}
+\index{etc@/etc!modules.d!ndiswrapper}
+\index{modules.d (Verzeichnis)}
+\index{etc@/etc!modules.d}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/modules.d/ndiswrapper}
+# modules.d configuration file for NDISWRAPPER
+
+# Internal Aliases - Do not edit
+# ------------------------------
+alias wlan0 ndiswrapper
+
+
+# Configurable module parameters
+# ------------------------------
+# if_name:Network interface name or template (default: wlan%d)
+# proc_uid:The uid of the files created in /proc (default: 0).
+# proc_gid:The gid of the files created in /proc (default: 0).
+# debug:debug level
+# hangcheck_interval:The interval, in seconds, for checking if driver is
+ hung. (default: 0)
+\end{ospcode}
+
+Mit der Zeile \cmd{alias wlan0 ndiswrapper} führt der Aufruf
+\cmd{modprobe wlan0} %
+\index{modprobe (Programm)}%
+dazu, dass  das \cmd{ndiswrapper}-Modul %
+\index{ndiswrapper (Modul)}%
+in den Kernel geladen wird.
+
+Da ältere Versionen von \cmd{modprobe} %
+\index{modprobe (Programm)}%
+nicht automatisch mit dem Verzeichnis \cmd{/etc/modules.d} %
+\index{modules.d (Verzeichnis)}
+\index{etc@/etc!modules.d}%
+umgehen können, sondern die Alias-Deklarationen in 
+\cmd{/etc/modprobe.conf} erwarten, %
+\index{modprobe.conf (Datei)}
+\index{etc@/etc!modprobe.conf}%
+gibt es das Tool \cmd{modules-update}. %
+\index{modules-update (Programm)}%
+Dieses fasst die Dateien in \cmd{/etc/modules.d} %
+\index{modules.d (Verzeichnis)}
+\index{etc@/etc!modules.d}%
+zu einer  Datei \cmd{/etc/modprobe.conf} %
+\index{modprobe.conf (Datei)}
+\index{etc@/etc!modprobe.conf}%
+zusammen.
+
+Nimmt man selbst Veränderungen an den Dateien in
+\cmd{/etc/modules.d} vor, um z.\,B.\ weitere Gerätenamen mit
+\cmd{ndiswrapper} zu verbinden,  muss man anschließend
+\cmd{modules-update} %
+\index{modules-update (Programm)}%
+aufrufen. Nach der Installation eines Paketes, das neue Dateien zu
+\cmd{/etc/modules.d} %
+\index{modules.d (Verzeichnis)}
+\index{etc@/etc!modules.d}%
+hinzufügt, ist dies nicht notwendig, da \cmd{emerge} das Werkzeug
+während der Installation automatisch aufruft.
+
+\index{Kernel!erweitern|)}%
+
+\ospvacat
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 
+
+% LocalWords:  initiale Initrd no

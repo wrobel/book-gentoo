@@ -1,0 +1,854 @@
+\chapter{\label{chaptersearch}Software finden und installieren}
+
+Im vorangegangenen Kapitel ging es exemplarisch um den Einsatz eines
+Gentoo-Systems als Webserver, doch mit Tausenden Software-Paketen, %
+\index{Paket!-zahl}%
+die uns zur Verfügung stehen, sind selbstverständlich auch ganz andere
+Szenarien umsetzbar.  Wir können hier nur die grundlegenden Verfahren
+beschreiben, mit denen Sie die zu den gewünschten Funktionalitäten
+passenden Pakete identifizieren und in das System integrieren.
+
+Im Falle von \cmd{apache} oder \cmd{mysql} mag dies intuitiv sein, da
+der Paketname mit dem Namen der Software korrespondiert. Wie aber
+findet man Pakete, wenn man allenfalls (grobe) Vorstellungen von den
+gewünschten Funktionen hat?
+
+Sicher können Suchmaschinen %
+\index{Suchmaschinen}%
+im Internet weiterhelfen; wir wollen uns hier jedoch mit den
+Bordmitteln, d.\,h. mit der Kommandozeile unseres Systems behelfen und
+auf die Suche nach geeigneten Paketen machen.
+
+
+\section{\label{emergesearch}emerge -{}-search}
+
+\index{Paket|-suche|(}%
+Nehmen wir an, der mit der Standardinstallation verfügbare Editor %
+\index{Editor}%
+\cmd{nano} %
+\index{nano (Programm)}%
+entspricht nicht unseren Vorstellungen und wir arbeiten lieber mit
+\cmd{vi} %
+\index{vi (Programm)}%
+oder \cmd{emacs}. %
+\index{emacs (Programm)}%
+Beide stecken in weit verbreiteten Paketen, so dass wir einfach
+versuchen, \cmd{emerge} die uns bekannten Namen mit auf den Weg zu
+geben.
+
+Bei \cmd{emacs} führt das tatsächlich zum Erfolg:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av emacs}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-editors/emacs-21.4-r4  USE="nls -X -Xaw3d -leim -les
+stif -motif -nosendmail" 19,925 kB 
+
+Total size of downloads: 19,925 kB
+
+Would you like to merge these packages? [Yes/No] 
+\end{ospcode}
+\index{emacs (Paket)}%
+
+Wir haben ausnahmsweise nicht die Kategorie (\cmd{app-editors}) %
+\index{app-editors (Kategorie)}%
+angegeben, da wir den Paketnamen ja nur "`raten"'.  Im Falle von
+\cmd{vi} scheitert der Versuch allerdings vollkommen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av vi}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies   
+emerge: there are no ebuilds to satisfy "vi".
+\end{ospcode}
+
+Aus den Angaben von \cmd{emerge} %
+\index{emerge (Programm)}%
+im Emacs-Beispiel %
+\index{Emacs}%
+wissen wir, dass der Editor %
+\index{Editor}%
+zur Kategorie \cmd{app-editors} %
+\index{app-editors (Kategorie)}%
+gehört. Die Vermutung liegt also nahe, dass sich \cmd{vi} %
+\index{vi (Programm)}%
+ebenfalls in dieser Kategorie befindet.  Folglich könnte man die
+Verzeichnisse dieser Kategorie im Portage-Baum %
+\index{Portage!Baum}%
+auf\/listen und die Ausgabe dadurch einschränken, dass nur solche
+Pakete erscheinen, die mit dem Buchstaben \cmd{v} beginnen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /usr/portage/app-editors | grep "^v"}
+vile
+vim
+vim-core
+\end{ospcode}
+
+Möglicherweise führt \cmd{emerge vim} %
+\index{vim (Paket)}%
+(für \emph{vi improved}) zum Ziel, was aber bedeutet dann der Eintrag
+\cmd{vim-core}? %
+\index{vim-core (Paket)}%
+Der Paketname allein, wie \cmd{ls} %
+\index{ls (Programm)}%
+ihn uns liefert, ist also nicht aussagekräftig genug.
+
+Versuchen wir es mit der Suchfunktion, die \cmd{emerge} %
+\index{emerge (Programm)!Suche}%
+selbst bereitstellt. Mit der Option \cmd{-{}-search} %
+\index{emerge (Programm)!search (Option)}%
+(bzw.\ \cmd{-s}) %
+%\index{emerge (Programm)!s (Option)|see{emerge (Programm), search    (Option)}}%
+lassen sich die Paketnamen ebenfalls nach Mustern durchsuchen,
+allerdings mit deutlich hilfreicheren Ergebnissen als \cmd{ls} %
+\index{ls (Programm)}%
+sie liefert. Suchen wir also auch hier in der Kategorie
+\cmd{app-editors} %
+\index{app-editors (Kategorie)}%
+nach Paketen, die mit dem Buchstaben \cmd{v} beginnen. Die zu
+durchsuchende Kategorie %
+\index{Paket|-suche!Kategorie}%
+wird mit dem Zeichen \cmd{@} markiert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --search "@app-editors/v"}
+Searching...   
+[ Results for search key : app-editors/v ]
+[ Applications found : 3 ]
+ 
+*  app-editors/vile
+      Latest version available: 9.4d
+      Latest version installed: [ Not Installed ]
+      Size of files: 1,618 kB
+      Homepage:      http://www.clark.net/pub/dickey/vile/vile.html
+      Description:   VI Like Emacs -- yet another full-featured vi clone
+      License:       GPL-2
+
+*  app-editors/vim
+      Latest version available: 7.0.174
+      Latest version installed: [ Not Installed ]
+      Size of files: 6,232 kB
+      Homepage:      http://www.vim.org/
+      Description:   Vim, an improved vi-style text editor
+      License:       vim
+
+*  app-editors/vim-core
+      Latest version available: 7.0.174
+      Latest version installed: [ Not Installed ]
+      Size of files: 6,232 kB
+      Homepage:      http://www.vim.org/
+      Description:   vim and gvim shared files
+      License:       vim
+
+\end{ospcode}
+
+Die drei bereits mit \cmd{ls} %
+\index{ls (Programm)}%
+ermittelten Pakete beschreibt \cmd{emerge} %
+\index{emerge (Programm)}%
+deutlich detaillierter, und insbesondere die \cmd{Description} liefert
+klare Aussagen über den Inhalt eines Pakets.% %
+\index{Paket!Beschreibung}%
+
+
+
+\section{\label{esearch}esearch}
+
+Gehen wir einen Schritt weiter und suchen ein Paket, dessen Namen wir
+-- anders als im \cmd{vim}-Beispiel %
+\index{vim (Programm)}%
+-- nicht einmal ungefähr kennen, beispielsweise eines, das die
+Funktionalität von \cmd{emerge -{}-search} %
+\index{emerge (Programm)!search (Option)|(}%
+bietet, aber schneller ist.
+
+Wir wollen dafür vorzugsweise die Beschreibung (also das
+\cmd{Description}-Feld) %
+\index{Paket!Beschreibung}%
+der Ebuilds durchsuchen.  \cmd{emerge} bietet diese Funktion über die
+Option \cmd{-{}-searchdesc} %
+\index{emerge (Programm)!searchdesc (Option)}%
+(bzw.\ \cmd{-S}); %
+%\index{emerge (Programm)!S (Option)|see{emerge (Programm), searchdesc    (Option)}}%
+das Problem bei dieser Operation liegt jedoch in der Geschwindigkeit, %
+\index{emerge (Programm)!Such-Geschwindigkeit}%
+denn \cmd{emerge -{}-searchdesc} ist wirklich langsam, so dass eine
+schnellere Alternative tatsächlich wünschenswert ist.
+
+Suchen wir also einen Ersatz für das Kommando \cmd{emerge
+  -{}-search}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -S "emerge --search"}
+Searching...   
+[ Results for search key : emerge --search ]
+[ Applications found : 1 ]
+ 
+*  app-portage/esearch
+      Latest version available: 0.7.1
+      Latest version installed: [ Not Installed ]
+      Size of files: 10 kB
+      Homepage:      http://david-peter.de/esearch.html
+      Description:   Replacement for 'emerge --search' with search-index
+      License:       GPL-2
+\end{ospcode}
+\index{emerge (Programm)!search (Option)|)}%
+
+Welch glücklicher -- zugegebenermaßen leicht konstruierter -- Zufall:
+Es gibt das Paket \cmd{esearch}, %
+\index{esearch (Programm)|(}%
+\index{esearch (Paket)}%
+%\index{app-portage Kategorie)!esearch (Paket)|see{esearch (Paket)}}%
+das auf diese Suchoperationen spezialisiert ist und deutlich schneller
+als Portage arbeitet. Installieren wir das Tool:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/esearch}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-portage/esearch-0.7.1  LINGUAS="-it" 11 kB 
+
+Total: 1 package (1 new), Size of downloads: 11 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+
+Damit stehen drei Kommandozeilen-Tools für die Paket-Suche zur
+Verfügung: \cmd{esearch}, %
+\index{esearch (Programm)}%
+\cmd{eupdatedb} %
+\index{eupdatedb (Programm)}%
+und \cmd{esync}. %
+\index{esync (Programm)}%
+Die Beschleunigung des Suchbefehls über \cmd{esearch} resultiert im
+Wesentlichen aus der Verwendung eines Suchindex. %
+\index{esync (Programm)!Suchindex}%
+\cmd{eupdatedb} %
+\index{eupdatedb (Programm)}%
+dient dessen Erstellung/Update. Der Vorgang dauert zwar eine gewisse
+Zeit, aber dafür sind die nachfolgenden Operationen umso schneller.
+
+Da ein Update der Datenbank nur erforderlich ist, wenn wir zuvor die
+Paketdefinitionen des Portage-Baums %
+\index{Portage!Baum}%
+mit \cmd{emerge -{}-sync} %
+\index{emerge (Programm)!sync (Option)}%
+auf den neuesten Stand gebracht haben, kombiniert der Aufruf
+\cmd{esync} %
+\index{esync (Programm)}%
+beide Operationen (\cmd{emerge -{}-sync} mit anschließendem
+\cmd{eupdatedb}). %
+\index{eupdatedb (Programm)}%
+Wie wir diesen Schritt automatisieren, beschreibt Kapitel
+\ref{dailysync} ab Seite \pageref{dailysync}.
+
+An dieser Stelle genügt uns das erstmalige Erstellen %
+\index{esync (Programm)!Index erstellen}%
+der Datenbank:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eupdatedb}
+ * indexing: 0 ebuilds to go    
+ * esearch-index generated in 6 minute(s) and 47 second(s)
+ * indexed 11562 ebuilds
+ * size of esearch-index: 1849 kB
+\end{ospcode}
+
+Wir ersetzen \cmd{emerge -S} durch \cmd{esearch -S} %
+\index{esearch (Programm)!S (Option)}%
+und erhalten das gleiche Ergebnis, aber deutlich schneller:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{esearch -S "emerge --search"}
+[ Results for search key : emerge --search ]
+[ Applications found : 1 ]
+
+*  app-portage/esearch
+      Latest version available: 0.7.1
+      Latest version installed: 0.7.1
+      Size of downloaded files: 30 kB
+      Homepage:    http://david-peter.de/esearch.html
+      Description: Replacement for 'emerge --search' with search-index
+      License:     GPL-2
+\end{ospcode}
+
+Der \cmd{esearch}-Befehl alleine ersetzt den Aufruf \cmd{emerge
+  -{}-search} und sucht ausschließlich in Paketnamen. Die Option
+\cmd{-{}-searchdesc} %
+\index{esearch (Programm)!searchdesc (Option)}%
+(bzw.\ \cmd{-S}), %
+%\index{esearch (Programm)!S (Option)|see{esearch (Programm), searchdesc    (Option)}}%
+die wir hier verwendet haben, entspricht \cmd{emerge -{}-searchdesc} %
+\index{emerge (Programm)!searchdesc (Option)}%
+und durchsucht die Paketbeschreibungen.
+
+Um die Kategorie anzugeben, haben wir bei \cmd{emerge -{}-search} das
+Zeichen \cmd{@} vorangestellt. Den gleichen Effekt erzielen wir bei
+\cmd{esearch} über die Option \cmd{-{}-fullname} %
+\index{esearch (Programm)!fullname (Option)}%
+(bzw.\ \cmd{-F}):% %
+%\index{esearch (Programm)!F (Option)|see{esearch (Programm), fullname (Option)}}%
+
+\label{esearchvim}
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{esearch -F "app-editors/v"}
+[ Results for search key : app-editors/v ]
+[ Applications found : 3 ]
+ 
+*  app-editors/vile
+      Latest version available: 9.4d
+      Latest version installed: [ Not Installed ]
+      Size of files: 1,618 kB
+      Homepage:      http://www.clark.net/pub/dickey/vile/vile.html
+      Description:   VI Like Emacs -- yet another full-featured vi
+      clone
+      License:       GPL-2
+
+*  app-editors/vim
+      Latest version available: 7.0.174
+      Latest version installed: [ Not Installed ]
+      Size of files: 6,232 kB
+      Homepage:      http://www.vim.org/
+      Description:   Vim, an improved vi-style text editor
+      License:       vim
+
+*  app-editors/vim-core
+      Latest version available: 7.0.174
+      Latest version installed: [ Not Installed ]
+      Size of files: 6,232 kB
+      Homepage:      http://www.vim.org/
+      Description:   vim and gvim shared files
+      License:       vim
+\end{ospcode}
+
+Bei der Suche mit \cmd{esearch} lassen sich auch reguläre %
+\index{Reguläre Ausdrücke}%
+Ausdrücke verwenden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{esearch "^vim\$"}
+[ Results for search key : app-editors/v ]
+[ Applications found : 1 ]
+ 
+*  app-editors/vim
+      Latest version available: 7.0.174
+      Latest version installed: [ Not Installed ]
+      Size of files: 6,232 kB
+      Homepage:      http://www.vim.org/
+      Description:   Vim, an improved vi-style text editor
+      License:       vim
+\end{ospcode}
+
+Hier suchen wir z.\,B.\ nach einem Paket, das genau \cmd{vim} %
+\index{vim (Paket)}%
+heißt.  Um die Suche auf bereits installierte Pakete zu reduzieren,
+dient die Option \cmd{-I} %
+%\index{esearch (Programm)!I (Option)|see{esearch (Programm), instonly    (Option)}}%
+(bzw.\ \cmd{-{}-instonly}).% %
+\index{esearch (Programm)!instonly (Option)}%
+
+\section{Fortgeschrittene Optionen für esearch}
+
+Auch das Ausgabeformat %
+\index{esearch (Programm)!Ausgabe}%
+von \cmd{esearch} lässt sich gut beeinflussen.
+Bei besonders zahlreichen Treffern hilft z.\,B.\ die Option
+\cmd{-{}-compact} %
+\index{esearch (Programm)!compact (Option)}%
+(bzw.\ \cmd{-c}) %
+%\index{esearch (Programm)!c (Option)|see{esearch (Programm), compact    (Option)}}%
+den Überblick zu bewahren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{esearch -c -F "app-editors/v"}
+[ N] app-editors/vile (9.4d):  VI Like Emacs -- yet another full-featured
+ vi clone
+[ N] app-editors/vim (7.1.042):  Vim, an improved vi-style text editor
+[ N] app-editors/vim-core (7.1.042):  vim and gvim shared files
+\end{ospcode}
+
+Über der Switch \cmd{-{}-verbose} %
+\index{esearch (Programm)!verbose (Option)}%
+(bzw.\ \cmd{-v}) %
+%\index{esearch (Programm)!v (Option)|see{esearch (Programm), verbose    (Option)}}%
+erhält man umgekehrt detailliertere Informationen über die gefundenen
+Pakete:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{esearch -v "^vim\$"}
+*  app-editors/vim
+      Latest version available: 7.1.042
+      Latest version installed: [ Not Installed ]
+      Unstable version:         7.1.087
+      Use Flags (stable):       -acl -bash-completion -cscope -gpm
+      -minimal -nls -perl -python -ruby -vim-pager -vim-with-x 
+      Size of downloaded files: [no/bad digest]
+      Homepage:    http://www.vim.org/
+      Description: Vim, an improved vi-style text editor
+      License:     vim
+\end{ospcode}
+
+Hier erfährt man beispielsweise etwas über die verfügbaren USE-Flags
+und eventuell instabile Versionen. \cmd{-{}-nocolor} %
+\index{esearch (Programm)!nocolor (Option)}%
+(bzw.\ \cmd{-n}) %
+%\index{esearch (Programm)!n (Option)|see{esearch (Programm), nocolor    (Option)}}%
+unterdrückt übrigens die Farbe in der Ausgabe.
+
+Eher für Entwickler interessant dürften die Optionen
+\cmd{-{}-ebuild} %
+\index{esearch (Programm)!ebuild (Option)}%
+und \cmd{-{}-own} %
+\index{esearch (Programm)!own (Option)}%
+sein: \cmd{-{}-ebuild} %
+\index{esearch (Programm)!ebuild (Option)}%
+(bzw.\ \cmd{-e}) %
+%\index{esearch (Programm)!e (Option)|see{esearch (Programm), ebuild    (Option)}}%
+zeigt die Ebuilds %
+\index{esearch (Programm)!Ebuild anzeigen}%
+der verfügbaren Paketversionen an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{esearch -e -F "editors/vim"}
+[ N] app-editors/vim (7.1.042):  Vim, an improved vi-style text editor
+ Portage [1] vim-6.4
+ Portage [2] vim-7.0.174
+ Portage [3] vim-7.0.235
+ Portage [4] vim-7.1
+ Portage [5] vim-7.1-r1
+ Portage [6] vim-7.1.002
+ Portage [7] vim-7.1.028
+ Portage [8] vim-7.1.042
+ Portage [9] vim-7.1.087
+
+[ N] app-editors/vim-core (7.1.042):  vim and gvim shared files
+ Portage [10] vim-core-6.4
+ Portage [11] vim-core-7.0.174
+ Portage [12] vim-core-7.0.235
+ Portage [13] vim-core-7.1
+ Portage [14] vim-core-7.1-r1
+ Portage [15] vim-core-7.1.002
+ Portage [16] vim-core-7.1.028
+ Portage [17] vim-core-7.1.042
+ Portage [18] vim-core-7.1.087
+
+Show Ebuild: 
+\end{ospcode}
+
+Den ausgewählten Ebuild öffnet \cmd{esearch} dann mit dem in
+\cmd{/etc/rc.conf} %
+\index{rc.conf (Datei)}%
+\index{etc@/etc!rc.conf}%
+gewählten Editor.% %
+\index{Editor}%
+
+Die Option \cmd{-{}-own} %
+\index{esearch (Programm)!own (Option)}%
+(bzw. \cmd{-o}) %
+%\index{esearch (Programm)!o (Option)|see{esearch (Programm), own    (Option)}}%
+gibt die Möglichkeit, die Ausgabe der Such\-ergebnisse zu
+"`formatieren"':
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{esearch -o "\%c/\%n{\textbackslash}n" -F "editors/vim"}
+app-editors/vim
+app-editors/vim-core
+\end{ospcode}
+
+Hier steht \cmd{\%c} für die Kategorie %
+\index{Paket!Kategorie}%
+\index{Paket!in Kategorie suchen}%
+des gefundenen Paketes, \cmd{\%n} für den Paketnamen. Über weitere
+Formatcodes gibt bei Bedarf die Man-Page Auskunft.% %
+\index{esearch (Programm)|)}%
+
+\section{\label{qsearch}Suchen mit qsearch und qgrep}
+
+\index{qsearch (Programm)|(}%
+Wer die Aktualisierung der \cmd{esearch}-Datenbank nach jeder
+Synchronisation des Portage-Baums %
+\index{Portage!Baum}%
+als zu umständlich empfindet, dem seien \cmd{qsearch} %
+\index{qsearch (Programm)}%
+und \cmd{qgrep} %
+\index{qgrep (Programm)}%
+aus dem Paket \cmd{app-portage/portage-utils} %
+\index{portage-utils (Paket)}%
+%\index{app-portage Kategorie)!portage-utils (Paket)|see{portage-utils    (Paket)}}%
+(siehe auch Kapitel \ref{portageutils}) empfohlen.  Beide sind nicht
+ganz so schnell wie \cmd{esearch}, %
+\index{esearch (Programm)}%
+aber immer noch deutlich schneller als \cmd{emerge -{}-search}, %
+\index{emerge (Programm)!search (Option)}%
+da sie in C %
+\index{C}%
+implementiert sind.
+
+\cmd{qsearch} beherrscht die Suche in Paketnamen und
+Paketbeschreibungen. Standardmäßig wird im Paketnamen gesucht:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qsearch esearch}
+app-portage/esearch Replacement for 'emerge --search' with search-index
+app-vim/multiplesearch vim plugin: allows multiple highlighted searches
+\end{ospcode}
+
+Die Ausgabe ist knapp gehalten und angenehm übersichtlich.  In der
+Beschreibung suchen wir wie bei \cmd{esearch} mit der Option
+\cmd{-{}-desc} %
+\index{qsearch (Programm)!desc (Option)}%
+(bzw. \cmd{-S}):% %
+%\index{qsearch (Programm)!S (Option)|see{qsearch (Programm), desc (Option)}}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qsearch -S "emerge --search"}
+app-portage/esearch Replacement for 'emerge --search' with search-index
+\end{ospcode}
+
+Bei der Ausgabe haben wir nicht ganz so viel Gestaltungsfreiheit wie
+bei \cmd{esearch}. Wir können die Anzeige der Paketbeschreibung mit
+der Option \cmd{-{}-name-only} %
+\index{qsearch (Programm)!name-only (Option)}%
+(bzw.\ \cmd{-N}) %
+%\index{qsearch (Programm)!N (Option)|see{qsearch (Programm), name-only    (Option)}}%
+entfernen und uns so auf den Paketnamen beschränken oder über
+\cmd{-{}-homepage} %
+\index{qsearch (Programm)!homepage (Option)}%
+(bzw.\ \cmd{-H}) %
+%\index{qsearch (Programm)!H (Option)|see{qsearch (Programm), homepage    (Option)}}%
+nur die Homepage %
+\index{Paket!Homepage}%
+des Projekts ausgeben lassen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qsearch -H -S "emerge --search"}
+app-portage/esearch http://david-peter.de/esearch.html
+\end{ospcode}
+\index{qsearch (Programm)|)}%
+
+\index{qgrep (Programm)|(}%
+Das zweite Suchwerkzeug aus \cmd{app-portage/portage-utils} %
+\index{portage-utils (Paket)}%
+%\index{app-portage Kategorie)!portage-utils (Paket)|see{portage-utils    (Paket)}}%
+heißt \cmd{qgrep} und ist auch eher ein Werkzeug für Entwickler --
+darum nur einige kurze Bemerkungen dazu.
+
+\cmd{qgrep} durchsucht nicht nur die Beschreibung der Ebuilds, sondern
+gleich die gesamt Ebuild-Datei:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qgrep -N " esearch"}
+app-portage/esearch-0.7.1-r2:doexe eupdatedb.py esearch.py esync.py comm
+on.py || die "doexe failed"
+app-portage/esearch-0.7.1-r3:doexe eupdatedb.py esearch.py esync.py comm
+on.py || die "doexe failed"
+app-portage/esearch-0.7.1-r4:doexe eupdatedb.py esearch.py esync.py comm
+on.py || die "doexe failed"
+app-portage/esearch-0.7.1:doexe eupdatedb.py esearch.py esync.py common.
+py || die "doexe failed"
+\end{ospcode}
+
+Wir haben hier z.\,B.\ nach \cmd{esearch} mit einem vorangestellten
+Leerzeichen gesucht. Die Option \cmd{-{}-with-name} %
+\index{qgrep (Programm)!with-name (Option)}%
+(bzw.\ \cmd{-N}) %
+%\index{qgrep (Programm)!N (Option)|see{qgrep (Programm), with-name    (Option)}}%
+liefert bei jedem Treffer den zugehörigen Paketnamen.  Das Resultat
+sind einige Zeilen aus den \cmd{esearch}-Ebuilds.
+
+In den meisten Fällen ist die Suche mit Hilfe von \cmd{qsearch} (oder
+\cmd{esearch}) effektiver. Aber wenn man das gewünschte
+Schlagwort eher im Code bzw.\ einer Kommentarzeile versteckt erwartet,
+empfiehlt sich \cmd{qgrep}.
+\index{qgrep (Programm)|)}%
+
+\section{\label{eix}Paketsuche mit eix}
+
+\index{eix (Programm)|(}%
+\cmd{eix} ist das Monster unter den Such-Programmen für Gentoo. Schon
+ein Blick in die Man-Page offenbart, dass man hier etwas mehr
+Funktionalität erwarten darf.
+
+Wir wollen uns hier nur mit den Grundfunktionen beschäftigen und die
+wichtigsten herausgreifen, um interessante Software für unser System
+zu finden.  Wir kommen auf das Werkzeug im nächsten Kapitel ab Seite
+\pageref{overlayseix} noch einmal zu sprechen, denn gerade im Bereich
+Overlays bietet es einige hilfreiche Eigenschaften.
+
+Installieren wir \cmd{eix} also zunächst einmal:% %
+\index{eix (Paket)}%
+%\index{app-portage Kategorie)!eix (Paket)|see{eix (Paket)}}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/eix}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-portage/eix-0.7.9  USE="-sqlite" 348 kB 
+
+Total: 1 package (1 new), Size of downloads: 348 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+
+\begin{netnote}
+  Sie benötigen eine funktionieren Netzwerkverbindung, um das Paket
+  hier zu installieren.
+\end{netnote}
+
+\cmd{eix} arbeitet, ebenso wie \cmd{esearch}, %
+\index{esearch (Programm)}%
+zur Beschleunigung mit einem Cache, %
+\index{eix (Programm)!Cache}%
+ohne den es auch gar nicht funktioniert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix}
+Can't open the database file /var/cache/eix for reading (mode = 'rb')
+Did you forget to create it with 'update-eix'?
+\end{ospcode}
+
+Den Cache erstellen wir erstmalig mit \cmd{update-eix}:% %
+\index{update-eix (Programm)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{update-eix}
+Reading Portage settings ..
+Building database (/var/cache/eix) ..
+[0] "gentoo" /usr/portage/ (cache: metadata)
+     Reading 100\%
+Applying masks ..
+Database contains 12804 packages in 151 categories.
+\end{ospcode}
+
+Danach lässt sich \cmd{eix} genauso wie \cmd{esearch} %
+\index{esearch (Programm)}%
+verwenden und liefert die gleichen Ergebnisse in einem etwas
+komplexeren Ausgabeformat:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix "^vim\$"}
+[U] app-editors/vim
+     Available versions:  6.4 7.0.235 7.1.042 7.1.123 ~7.1.164 ~7.1.213
+                          \{acl bash-completion cscope gpm minimal nls 
+                           perl python ruby vim-pager vim-with-x\}
+     Installed versions:  7.0.17(00:13:39 17.10.2006)
+                          (bash-completion perl -acl -cscope -gpm
+                           -minimal -mzscheme -nls -python -ruby
+                           -vim-pager -vim-with-x)
+     Homepage:            http://www.vim.org/
+     Description:         Vim, an improved vi-style text editor
+\end{ospcode}
+
+Das einleitende \cmd{U} zeigt an, wie von \cmd{emerge} %
+\index{emerge (Programm)}%
+gewohnt, dass wir das Paket aktualisieren könnten. Außerdem zeigt
+\cmd{eix} alle verfügbaren Versionen inklusive USE-Flags der
+aktuellsten Version an.  Instabile Versionsnummern sind mit einer
+führenden \cmd{\textasciitilde} versehen. Die aktuell installierte
+Version wird mit dem Installationszeitpunkt und den gewählten
+USE-Flags dargestellt.  Die übrigen Angaben entsprechen jenen von
+\cmd{esearch}.
+
+Mit der Option \cmd{-{}-installed} %
+\index{eix (Programm)!installed (Option)}%
+(bzw.\ \cmd{-I}) %
+%\index{eix (Programm)!I (Option)|see{eix (Programm), installed    (Option)}}%
+\index{Paket!installiert}%
+beschränken wir die Suche wie auch schon bei \cmd{esearch} auf die
+installierten Pakete. \cmd{-{}-compact} %
+\index{eix (Programm)!compact (Option)}%
+(bzw.\ \cmd{-c}) %
+%\index{eix (Programm)!c (Option)|see{eix (Programm), compact    (Option)}}%
+\index{eix (Programm)!Ausgabe}%
+liefert ein kompakteres Format:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix -I -c eix}
+[I] app-portage/eix (0.10.2@13.01.2008): Small utility for searching
+ebuilds with indexing for fast results
+\end{ospcode}
+
+Schauen wir uns nun noch einige Suchvarianten an: In den
+Beschreibungen %
+\index{Paket!Beschreibung}%
+suchen wir in gewohnter Weise mit der Option \cmd{-S} %
+%\index{eix (Programm)!S (Option)|see{eix (Programm), description    (Option)}}%
+(bzw.\ \cmd{-{}-description}):% %
+\index{eix (Programm)!description (Option)}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix -c -S "emerge --search"}
+[I] app-portage/esearch (0.7.1@17.12.2007): Replacement for 'emerge
+--search' with search-index
+\end{ospcode}
+
+Darüber hinaus bietet \cmd{eix} speziellere Suchmöglichkeiten, so
+z.\,B.\ die Suche im URL-Pfad der Projekt-Homepage. %
+\index{Paket!Homepage}%
+Die Option ist \cmd{-{}-homepage} %
+\index{eix (Programm)!homepage (Option)}%
+(bzw.\ \cmd{-H}):% %
+%\index{eix (Programm)!H (Option)|see{eix (Programm), homepage (Option)}}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix -H "eix"}
+[I] app-portage/eix
+     Available versions:  0.9.9 0.9.10 0.10.2 ~0.10.3 \{sqlite\}
+     Installed versions:  0.10.2(11:24:36 13.01.2008)(-sqlite)
+     Homepage:            http://eix.sourceforge.net
+     Description:         Small utility for searching ebuilds with
+                          indexing for fast results
+\end{ospcode}
+
+Nach Kategorie %
+\index{Paket!Kategorie}%
+lässt sich über die Option \cmd{-{}-category} %
+\index{eix (Programm)!category (Option)}%
+(bzw.\ \cmd{-C}) %
+%\index{eix (Programm)!C (Option)|see{eix (Programm), category    (Option)}}%
+suchen, hier demonstriert am Beispiel der Kategorie
+\cmd{app-antivirus}:% %
+\index{app-antivirus (Kategorie)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix -c -C antivirus}
+[N] app-antivirus/bitdefender-console (7.0.1-r1): BitDefender console
+    antivirus
+[N] app-antivirus/clamav (0.91.2-r1): Clam Anti-Virus Scanner
+[N] app-antivirus/f-prot (4.6.7): Frisk Software's f-prot virus
+    scanner
+[N] app-antivirus/klamav (0.41): KlamAV is a KDE frontend for the
+    ClamAV antivirus.
+\end{ospcode}
+
+Während \cmd{eix} standardmäßig nur im Namen des Paketes sucht, lässt
+sich die Suche mit \cmd{-{}-category-name} %
+\index{eix (Programm)!category-name (Option)}%
+(bzw.\ \cmd{-A}) %
+%\index{eix (Programm)!A (Option)|see{eix (Programm), category-name    (Option)}}%
+um den Namen der Kategorie erweitern. Mit \cmd{eix -A app-editors/v}
+würden wir also die gleiche Ausgabe erhalten wie mit dem Befehl
+\cmd{esearch -F "{}app-editors/v"{}}.
+
+Nützlich ist auch die Suche nach bestimmten USE-Flags, die wir mit der
+Option \cmd{-{}-use} %
+\index{eix (Programm)!use (Option)}%
+(bzw.\ \cmd{-U}) %
+%\index{eix (Programm)!U (Option)|see{eix (Programm), use (Option)}}%
+\index{Paket!USE-Flag}%
+aktivieren. Ähnliches vermag aber natürlich auch \cmd{euses}, %
+\index{euses (Programm)}%
+das wir schon auf Seite \pageref{euses} beschrieben haben.
+
+\cmd{eix} bietet eine ganze Reihe von Optionen und
+Variationsmöglichkeiten, die wir nicht alle darstellen können.  Wir
+kommen im nächsten Kapitel noch einmal auf einige Varianten im
+Zusammenhang mit Overlays zu sprechen und schließen hier mit einer
+letzten nützlichen Suchoption: \cmd{-{}-fuzzy} %
+\index{eix (Programm)!fuzzy (Option)}%
+(bzw.\ \cmd{-f}). %
+%\index{eix (Programm)!f (Option)|see{eix (Programm), fuzzy (Option)}}%
+\index{Paket!unscharf suchen}%
+Sie erlaubt eine unscharfe Suche, so dass Treffer möglich sind, auch
+wenn wir uns bei Paketnamen oder Schlagwort nicht ganz sicher sind:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eix -I -c -f 2 eiks}
+[I] app-portage/eix (0.10.2@13.01.2008): Small utility for searching
+ebuilds with indexing for fast results
+[I] www-client/elinks (0.11.3@10.12.2007): Advanced and
+well-established text-mode web browser
+Found 2 matches.
+\end{ospcode}
+
+Die Zahl hinter \cmd{-f} gibt an, wie viele Buchstaben im Suchstring
+falsch sein dürfen. Ohne Angabe akzeptiert \cmd{eix} zwei Fehler bei
+der Suche.
+\index{eix (Programm)|)}%
+
+\section{Weitere Möglichkeiten}
+
+Die vorgestellten Kommandozeilenwerkzeuge %
+\index{Paket!über Kommandozeile suchen}%
+sind, wie gesagt, nur eine Möglichkeit, Pakete aufzufinden. Wer eine
+webbasierte Alternative sucht, dem sei
+\cmd{http://packages.gentoo.org} empfohlen.  Diese Seite stellt die
+gefundenen Pakete deutlich ansprechender dar als die
+Kommandozeilen-Tools dies können.
+
+Häufig findet man über die Suche im Internet auch Software, die man
+zwar installieren möchte, nach der die genannten Werkzeuge jedoch
+vergeblich suchen; das bedeutet, dass Portage selbst kein
+entsprechendes Paket bereitstellt.  Das heißt aber nicht zwingend,
+dass es ein solches Paket nicht gibt, denn es ist durchaus möglich,
+dass irgendjemand schon eine Paketdefinition, also einen \emph{Ebuild}
+für diese Software geschrieben hat. 
+
+Folgende alternativen Schritte helfen, über den Portage-Baum %
+\index{Portage!Baum}%
+hinaus eine Paketdefinition zu finden:
+
+\begin{osplist}
+\item Suche in der Bug-Datenbank %
+  \index{Bug!Datenbank}%
+  \cmd{http://bugs.gentoo.org}. Diese fördert häufig Ebuilds %
+  \index{Paket!Ebuild suchen}%
+  zu Tage, die noch nicht im Portage-Baum enthalten sind. Wie sich
+  solche Ebuilds in das eigene System einbinden lassen, beleuchten wir
+  in den Kapiteln \ref{overlays} und \ref{writeebuilds}.
+
+\item In den unter \cmd{http://overlays.gentoo.org} gelisteten
+  Overlays %
+  \index{Overlay}%
+  finden sich zahlreiche experimentelle %
+  \index{Ebuild!experimentell}%
+  Ebuilds. Hier sei vor allem das Projekt \emph{Sunrise} %
+  \index{Sunrise}%
+  erwähnt.\footnote{\cmd{http://overlays.gentoo.org/proj/sunrise}}
+  Auch dazu mehr im nächsten Kapitel.
+
+\item Natürlich lässt sich auch das
+  Gentoo-Forum\footnote{\cmd{http://forums.gentoo.org}} %
+  \index{Forum}%
+  durchsuchen.  Es gibt eine eigene Sektion \menu{Unsupported
+    Software}, die sich Paketen außerhalb des Portage-Baums widmet.
+
+\item Weiß man wirklich gar nicht mehr weiter und benötigt kurzfristig
+  einen Hinweis ist auch IRC %
+  \index{IRC}%
+  (\emph{Internet Relay Chatting}) zu empfehlen.\footnote{Kanal
+    \cmd{\#gentoo} auf \cmd{irc.freenode.net}} Unter den Tipps gehen
+  wir ab Seite \pageref{IRC} etwas genauer darauf ein.
+\end{osplist}
+
+Eines sollte man bei diesen Maßnahmen allerdings nie vergessen: Wenn
+ein Paket im Portage-Baum %
+\index{Portage!Baum}%
+fehlt, dann bedingt das im Normalfall auch eine deutlich geringere
+Qualität %
+\index{Paket!Qualität}%
+der Paketdefinition. Mit solchen Ebuilds sollte man also vorsichtig
+sein. Aber auch auf diesen Aspekt gehen wir genauer im nächsten
+Kapitel ein.% %
+\index{Paket|-suche|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

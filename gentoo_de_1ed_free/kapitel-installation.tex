@@ -1,0 +1,2909 @@
+\chapter{\label{noxinstall}Installation}
+
+Ohne grafischen Installer hat eine Distribution heute schnell den Ruf
+der Antiquiertheit oder mangelnder Benutzerfreundlichkeit.
+Entsprechend bietet auch Gentoo seit einiger Zeit ein
+\index{Grafische!-r Installer}%
+\index{Installer, grafisch}%
+GUI-basiertes Installationsprogramm, das auf der beiliegenden LiveDVD
+auch 
+\index{LiveDVD!Installation}%
+die Standardinstallationsmethode ist.  Zwei gewichtige Gründe sprechen
+allerdings gegen dessen Einsatz:
+
+\begin{osplist}
+\item Die Installer-Software ist noch nicht ausreichend stabil, um
+  grundsätzlich eine reibungslose Installation zu gewährleisten.
+\item Der Installer kaschiert das Handling der
+  Gentoo-Basiskonfiguration, mit dem wir uns in diesem Buch explizit
+  auseinandersetzen wollen.
+\end{osplist}
+
+Insbesondere aus dem zweiten Grund widmen wir uns in diesem Kapitel
+der "`manuellen"' Installation. Dabei geht es weniger darum, alle
+Eventualitäten bei den ersten Schritten mit Gentoo abzudecken als den
+Installationsablauf dazu zu nutzen, einige grundlegende Konzepte der
+Distribution zu vermitteln und das System erst einmal ans Laufen zu
+bekommen. Den grafischen Installationsprozess beschreiben wir
+dann kurz im Anhang (ab
+Seite \pageref{xinstall}); er sollte jedoch nicht
+ohne das in diesem Kapitel vermittelte Grundwissen gewählt werden.
+
+Gentoo lässt sich auf einer Vielzahl Architekturen auf verschiedene
+Arten und Weisen installieren. Auch die Aufgaben des neuen Systems
+können die Vorgehensweise bei der Installation beeinflussen. Statt des
+zum Scheitern verurteilten Versuchs, alle denkbaren Varianten
+abzudecken, beschreiben wir im Folgenden, wie man konkret einen
+Webserver auf einem üblichen i686-System aufsetzt.
+
+Die eigentlichen Installationsanweisungen finden sich auch im
+Internet\footnote{\cmd{http://www.gentoo.org/doc/de/handbook/handbook-x86.xml?full=1}}
+\index{Installation!-sanweisungen}%
+\index{Gentoo!Handbuch}%
+und treten in der folgenden Beschreibung etwas in den Hintergrund.
+Hier geht es darüber hinaus um Hintergrundinformationen, die über
+einen langen Zeitraum gültig und hilfreich sind.
+
+
+\section{Das System per DVD zum Leben erwecken}
+
+Die beigelegte DVD enthält die Gentoo 2007.0 LiveDVD für
+i686-Systeme,
+\index{LiveDVD!Installation}%
+die ein bootfähiges System und alles Notwendige enthält, um
+Gentoo zu installieren. Sie lässt sich auf den meisten Rechnern
+problemlos starten. Als Mindestanforderung benötigt diese LiveDVD
+allerdings 256~MB Hauptspeicher. Wer  auf einem sehr kleinen
+System installieren möchte, sollte die Variante \cmd{Minimal Install}
+von einem der Gentoo-Mirror-Server
+herunterladen\footnote{\label{mirrorserver}\cmd{http://www.gentoo.org/main/en/mirrors.xml}}
+%\index{Download|see{Mirror}}%
+\index{Mirror!für die Stage Archive}%
+und auf CD brennen.  Auf den Mirror-Servern finden sich auch die
+Installationsmedien für andere Rechnerarchitekturen, wie z.\,B.\ die
+PowerPC-Prozessoren, die Sparc-Maschinen von Sun oder auch die
+Alpha-Plattform. Verwendet man ein anderes Installationsmedium als die
+hier beschriebene LiveDVD sollte man allerdings das entsprechende
+Gentoo-Handbuch zur Hand haben, da vor allem auf anderen
+Prozessorarchitekturen einige Handgriffe anders aussehen.
+
+\begin{64bitnote}
+  Auch für eine 64-Bit-Installation muss man sich von den
+  Mirror-Servern das entsprechende Image besorgen. Wir gehen hier zwar
+  von einer (noch) üblichen 32-Bit-Installation aus, werden aber an
+  geeigneten Stellen darauf hinweisen, was bei 64-Bit-Installationen
+  gegenüber x86-Systemen zu beachten ist.
+\end{64bitnote}
+
+Kurz nach dem Start des Rechners mit der im Laufwerk befindlichen DVD
+sollte die Eingabeaufforderung erscheinen:
+
+
+\begin{ospcode}
+boot:
+\end{ospcode}
+
+Wir könnten nun mit der Return-Taste bestätigen und würden automatisch
+in die grafische Benutzeroberfläche 
+\index{Grafische!Benutzeroberfläche}%
+des X-Servers gelangen.  
+\index{X-Server}%
+Wir gehen aber, wie schon erwähnt, einen anderen Weg und wählen den
+normalen Kernel (\cmd{gentoo}), aber mit der Option \cmd{nox}
+("`keinen X-Server starten"'), also:
+
+\begin{ospcode}
+boot: \textbf{gentoo nox}
+\end{ospcode}
+
+Sollte der Boot-Prozess nach Auswahl des Standardkernels im Startmenü
+aus unerklärlichen Gründen stoppen, kann man sich in der Hilfe über
+weitere verfügbare Start-Optionen informieren. Das Deaktivieren
+einzelner Prozesse zur Hardware-Erkennung kann bei Boot-Problemen
+nützlich sein. Die entsprechenden Informationen erreicht man über die
+Tasten \taste{F1} bis \taste{F7}.
+
+Probleme in diesem Stadium resultieren in den allermeisten Fällen
+daraus, dass der Kernel mit der Hardware der Maschine nicht zurecht
+kommt. Vielfach helfen die richtigen Kernel-Optionen an dieser
+Stelle weiter und schon ein einfaches 
+
+\begin{ospcode}
+acpi=off
+\end{ospcode}
+
+\index{ACPI}%
+kann über das Ausschalten der ACPI-Unterstützung
+(\emph{Advanced Configuration and Power Interface}) den Boot-Prozess
+plötzlich möglich machen.
+
+Ernsthafte Probleme sind durch die mittlerweile sehr breite
+Hardware"=Unterstützung des Linux-Kernels eher selten geworden, können
+aber, falls sie auftreten, ganz unterschiedliche Symptome zeigen, so
+dass wir sie hier nicht diskutieren können. Die schnellste Hilfe
+bietet in solchen Fällen das
+Gentoo-Forum.\footnote{\cmd{http://forums.gentoo.org/}} 
+\index{Forum}%
+Dort hat mit sehr hoher Wahrscheinlichkeit ein anderer schon einmal
+mit dem gleichen Mainboard, dem gleichen RAID-Controller oder der
+gleichen Grafikkarte dieselben Probleme gehabt und nennt die
+notwendigen Kernel-Optionen, die das System
+problemlos starten lassen.
+
+Verwendet man eine Maschine mit sehr neuer Hardware und gibt es schon
+ein aktuelleres Gentoo-Release als die hier behandelte Version
+2007.0, so sollte man dieses herunterladen und einsetzen.
+
+Gibt es keine Probleme, erscheint nach kurzer Zeit die Auswahl der
+\emph{Keymap},
+\label{bootkeymap}
+\index{Keymap}%
+\index{Tastatur}%
+über die man das verwendete Tastaturlayout einstellt.
+Für die deutsche Tastatur wählen Sie hier die \cmd{10}:
+
+\begin{ospcode}
+<< Load keymap (Enter for default): \textbf{10}
+\end{ospcode}
+% GW: Brauche diese beiden >> nur um font-lock unter Emacs zu
+% korrigieren. Sonst ist bei mir alles grün ;)
+
+Der Rest des Boot-Prozesses sollte automatisch ablaufen und Sie
+zuletzt auf die Kommandozeile der LiveDVD befördern:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}
+\end{ospcode}
+
+Sollten Sie am Anfang des Boot-Vorgangs die Eingabe der
+\cmd{nox}-Option vergessen haben und in die grafische
+Benutzeroberfläche gelangt sein, können Sie jederzeit mit der
+Tastenkombination \taste{Alt} + \taste{F1} auf die Kommandozeile springen
+(und mit \taste{Alt} + \taste{F7} wieder zurück zum Desktop).
+
+Haben Sie während des Boot-Vorgangs kein bzw.\ das falsche
+Tastaturlayout gewählt, können Sie es mit
+folgendem Befehl nachträglich auf das deutsche Layout setzen (siehe
+auch Seite \pageref{loadkeys}):
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{loadkeys de-latin1-nodeadkeys}
+Loading /usr/share/keymaps/i386/qwertz/de-latin1-nodeadkeys.map.gz
+\end{ospcode}
+\index{loadkeys (Programm)}
+
+Wenn man beim Booten keine Angabe gemacht hat, wählt das System 
+automatisch das US-amerikanische Tastaturlayout und für das oben 
+angegebene
+Kommando liegt dann das \cmd{y} auf der Taste \taste{z} und das Minus
+(\cmd{-}) findet sich als \taste{ß} wieder.
+
+\section{Netzwerk oder kein Netzwerk?}
+
+\index{Netzwerk|(}%
+\index{Netzwerk!für die LiveDVD|(}%
+Gentoo ist ein schnelllebiges System, das stark von einer
+Netzwerkanbindung profitiert. Prinzipiell kann man bei einer
+funktionierenden Verbindung in das Internet schon während der
+Installation aktuellere Pakete herunterladen und installieren.
+
+Das stellt uns aber für dieses Buch vor ein Problem: Wenn Sie Ihr
+System zum frühest möglichen Zeitpunkt auf den aktuellsten Stand
+bringen, werden sich Unterschiede zwischen den von uns angegebenen
+Schritten und der Situation auf dem System ergeben. In den meisten
+Fällen werden sich nur die Versionsnummern unterscheiden, aber in
+Einzelfällen können die notwendigen Kommandos abweichen. Damit lässt
+sich nicht mehr garantieren, dass Sie dieses Buch exakt nach unseren
+Angaben durcharbeiten können.
+
+Gentoo lässt sich aber mit der beigelegten DVD komplett ohne
+Netzwerkverbindung installieren, so dass Sie das hier Beschriebene
+ortsunabhängig testen und nachvollziehen können. Besonders für
+Gentoo-Anfänger halten wir es für sehr wichtig, dass dabei die hier
+angegebenen Kommandos eins zu eins umgesetzt werden können.  Wir gehen
+darum im Wesentlichen von einer netzwerklosen Installation aus, damit
+wir Sie problemlos durch das Buch geleiten können.
+
+Aber wir kommen natürlich nicht umhin, dass der Platz auf einer DVD
+begrenzt ist. Gentoo unterstützt derzeit über zehntausend verschiedene
+Softwarepakete, die beim besten Willen nicht alle auf der DVD Platz
+finden. Je nach Kontext werden wir also auch gelegentlich Pakete
+vorstellen, für deren Installation Sie die Verbindung ins Internet
+benötigen. Wir werden  an den entsprechenden Stellen darauf
+hinweisen und haben darauf geachtet, dass Sie diese Abschnitte in der
+Anfangsphase erst einmal überspringen können.
+
+Sobald Sie ein wenig mit dem System vertraut sind, es auf den neuesten
+Stand gebracht haben und sich für die zusätzlichen Pakete
+interessieren, können Sie diese später problemlos installieren
+und testen. Und keine Sorge: Auch wenn Sie am Anfang nicht gleich mit
+den allerneuesten Paketversionen starten, Sie werden am Ende über ein
+aktuelles System verfügen. Das ist bei Gentoo das geringste Problem.
+
+Falls Sie sich schon gut mit Gentoo auskennen oder sich nicht davon
+abschrecken lassen wollen, dass mal ein Befehl leicht abweichen kann,
+können Sie natürlich auch von Anfang an eine Netzwerkverbindung
+nutzen und mit einem aktuellen System starten.
+
+Wir hoffen, dass wir so allen Ansprüchen an dieses Buch
+gerecht werden, und kommen zum ersten Hinweis in Punkto
+Netzwerkverbindung:
+
+\begin{netnote}
+Im optimalen Fall erkennt der Kernel die Netzwerkverbindung beim Booten 
+automatisch.
+\index{Netzwerk!automatisch}%
+Ob schon eine Netzwerkverbindung besteht, sehen Sie über den Befehl
+\cmd{ifconfig}, der die Netzwerkkonfiguration anzeigt:
+
+\begin{ospcode}
+\label{ifconfig}
+\cdprompt{\textasciitilde}\textbf{ifconfig}
+eth0    Link encap:Ethernet  HWaddr 00:19:DB:A4:59:B9  
+        inet addr:192.168.178.21  Bcast:192.168.178.255
+        Mask:255.255.255.0
+        inet6 addr: fe80::219:dbff:fea4:59b9/64 Scope:Link
+        UP BROADCAST NOTRAILERS RUNNING MULTICAST  MTU:1500
+        Metric:1
+        RX packets:78 errors:0 dropped:0 overruns:0 frame:0
+        TX packets:72 errors:0 dropped:0 overruns:0 carrier:0
+        collisions:0 txqueuelen:1000 
+        RX bytes:10988 (10.7 Kb)  TX bytes:11771 (11.4 Kb)
+        Interrupt:21 Base address:0xa000 
+\ldots
+\end{ospcode}
+\index{ifconfig (Programm)}%
+\index{IP-Adresse!anzeigen}%
+
+Dem Netzwerkinterface \cmd{eth0} ist hier die Netzwerkadresse
+\cmd{192.168.""178.21} zugewiesen. Neben der Schnittstelle \cmd{eth0}
+\index{eth0 (Netzwerkschnittstelle)}%
+sollte \cmd{ifconfig} noch \cmd{lo}
+\index{lo (Netzwerkschnittstelle)}%
+anzeigen -- diese existiert auf jedem
+Linux-Rechner auch ohne funktionierendes Netzwerk und stellt eine
+Verbindung des Systems zu sich selbst dar.
+
+Hat der Kernel keine Netzwerkkarte automatisch erkannt, obwohl der Rechner
+Zugriff auf ein Netzwerk haben sollte, sei auf das Kapitel
+\ref{netconfig} ab Seite \pageref{netconfig} verwiesen, wenn man den
+Server unbedingt schon bei der Installation mit dem Netzwerk verbinden
+möchte.
+
+Auf der DVD finden sich unter \cmd{/mnt/cdrom/Getting\_Online.txt}
+\index{Getting\_Online.txt (Datei)}%
+%\index{mnt@/mnt!cdrom!Getting\_Online.txt|see{Getting\_Online.txt (Datei)}}%
+ebenfalls (allerdings englische) Instruktionen, um den Rechner mit
+dem Netzwerk zu verbinden. Diese lassen sich jederzeit mit \cmd{less} %
+\index{less (Programm)}%
+lesen:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{less /mnt/cdrom/Getting_Online.txt}
+\end{ospcode}
+
+Noch ein Tipp: Sollte das Netzwerk hier verfügbar sein, kann man an
+dieser Stelle auch den SSH-Server starten und die komplette
+Installation von einem anderen Rechner aus durchführen. Das ist die
+Variante, die ich persönlich bevorzuge. Dafür müssen wir nur den
+Dienst starten und über \cmd{passwd} ein Root-Passwort vergeben:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{/etc/init.d/sshd start}
+ * Generating Hostkey...
+Generating public/private rsa1 key pair.
+Your identification has been saved in /etc/ssh/ssh_host_key.
+Your public key has been saved in /etc/ssh/ssh_host_key.pub.
+The key fingerprint is:
+f5:3e:c9:e0:88:df:fd:3c:6f:3d:d1:17:d9:95:e3:dd root@livecd
+ * Generating DSA-Hostkey...
+Generating public/private dsa key pair.
+Your identification has been saved in /etc/ssh/ssh_host_dsa_key.
+Your public key has been saved in /etc/ssh/ssh_host_dsa_key.pub.
+The key fingerprint is:
+02:9b:1f:2c:20:4c:9d:6e:da:f5:49:a1:4f:0e:f9:91 root@livecd
+ * Generating RSA-Hostkey...
+Generating public/private rsa key pair.
+Your identification has been saved in /etc/ssh/ssh_host_rsa_key.
+Your public key has been saved in /etc/ssh/ssh_host_rsa_key.pub.
+The key fingerprint is:
+f5:8e:96:da:a9:fb:82:72:1f:7f:17:ad:ec:1f:07:53 root@livecd
+ * Starting sshd ...
+\cdprompt{\textasciitilde}\textbf{passwd}
+New UNIX password: \textbf{\cmdvar{geheimes_rootpasswort}}
+Retype new UNIX password: \textbf{\cmdvar{geheimes_rootpasswort}}
+passwd: password updated successfully
+\end{ospcode}
+\index{passwd (Programm)}
+\index{sshd (Init-Skript)}%
+\index{etc@/etc!init.d!sshd}%
+
+Wie wir einen Dienst mit den Skripten in \cmd{/etc/init.d} starten
+können, erklärt
+Kapitel \ref{initscripts} ab Seite \pageref{initscripts}
+ausführlicher. An dieser Stelle geht es uns zunächst einmal um die
+Möglichkeit, uns von einem entfernten Rechner aus zu verbinden, denn
+über SSH können wir uns nun von jedem anderen System aus mit dem
+festgelegten Passwort einloggen und die nachfolgenden Schritte von
+dort aus durchführen.
+
+Für die Verbindung verwenden wir die IP-Adresse, die \cmd{ifconfig}
+\index{ifconfig (Programm)}%
+oben (siehe Seite \pageref{ifconfig}) für den zu installierenden
+Rechner ausgespuckt hat:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{ssh root@192.168.178.21}
+The authenticity of host '192.168.178.21 (192.168.178.21)' can't be
+established.
+RSA key fingerprint is f5:8e:96:da:a9:fb:82:72:1f:7f:17:ad:ec:1f:07:53.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.178.21' (RSA) to the list of known
+hosts.
+Password: \textbf{\cmdvar{geheimes_rootpasswort}}
+\end{ospcode}
+\index{ssh (Programm)}
+
+\cmd{ssh} warnt uns davor, dass wir den Rechner derzeit nicht kennen,
+was aber unproblematisch ist, da wir die Maschine ja gerade erst
+einrichten. Als Passwort geben wir das Kennwort an, das wir kurz
+vorher auf der neuen Maschine angegeben haben.
+\end{netnote}
+\index{Installation!von einem entfernten System}%
+\index{Netzwerk!für die LiveDVD|)}%
+\index{Netzwerk|)}%
+
+\section{\label{partitions}Partitionen und Dateisysteme erstellen}
+
+In einem ersten Schritt bereitet man nun die Festplatte mit dem auch
+\index{fdisk (Programm)}%
+\index{Partition!-ierung}%
+von anderen Distributionen verwendeten Standard-Tool \cmd{fdisk} für
+die eigentliche Installation vor.  Wenn Sie noch nie mit \cmd{fdisk}
+gearbeitet haben, beschreibt das Gentoo-Installationshandbuch das Tool
+und die Partitionierung sehr ausführlich.
+
+\begin{netnote}
+Die aktuelle Version findet sich im Internet\footnote{\cmd{http://www.gentoo.org/doc/en/handbook/handbook-x86.xml?part=1\&chap=""4\#fdisk}}
+\index{Handbuch!englisch}%
+und kann abgerufen werden, wenn das frisch gebootete System über eine
+Verbindung zum Internet verfügt:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{links http://www.gentoo.org/doc/en/handbook/handbook-x86.xml?}
+\textbf{part=1&chap=4#fdisk}
+\end{ospcode}
+
+Auch eine deutsche Version\footnote{\cmd{http://www.gentoo.org/doc/de/handbook/handbook-x86.xml?part=1\&chap=""4\#fdisk}}
+\index{Handbuch!deutsch}%
+ist verfügbar, wobei die englische Variante in der Regel etwas
+aktueller ist.
+\end{netnote}
+
+Die Möglichkeiten der Partitionierung sind unbegrenzt, und so kann
+diese mehr oder minder kompliziert ausfallen. Wir
+gehen hier von der einfachsten denkbaren Lösung aus: Gentoo soll auf
+einer Festplatte aufgespielt werden, die als erster IDE-Master
+angeschlossen ist. Diese Festplatte werden wir zudem möglichst einfach
+partitionieren. Weiter unten (ab Seite \pageref{specialdirs}) finden
+sich dann Hinweise für komplexere Partitionierungsvarianten. Im Anhang
+\ref{dualboot} ab Seite \pageref{dualboot} beschreiben wir, wie sich
+Gentoo auf einer Windows-Maschine unterbringen lässt, ohne das schon
+bestehende System zu beeinträchtigen.
+
+Die als erster IDE-Master angeschlossene Platte wird entweder über
+\cmd{/dev/""hda} oder \cmd{/dev/sda} identifiziert. Wir gehen von
+\cmd{/dev/hda} aus und rufen \cmd{fdisk} entsprechend auf:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{fdisk /dev/hda}
+\ldots
+Command (m for help):
+\end{ospcode}
+\index{hda (Festplatte)}%
+%\index{dev@/dev!hda|see{hda (Festplatte)}}%
+
+Auf unserem Referenzsystem legen wir mit dem \cmd{fdisk}-Befehl \cmd{n}
+("`new"') eine kleine (20--50~MB) Boot-Partition vom Typ \cmd{83}
+(Linux), eine Swap"=Partition (Typ \cmd{82}) von 500--1000~MB und
+eine zweite, die restliche Festplatte umfassende Partition vom Typ
+\cmd{83} an.  
+
+Gehen wir zumindest kurz durch die notwendigen Tastaturkommandos, um
+die Festplatte nach dem oben angegebenen Schema zu partitionieren. Hat
+man \cmd{fdisk} gestartet, sollte man sich zuerst einmal alle
+vorhandenen Partitionen mit dem Befehl bzw. der Taste \cmd{p}
+\index{fdisk (Programm)!Partitionsschema anzeigen}%
+anzeigen lassen. Diese kann man nun jeweils über die Tastaturfolge
+\cmd{d} ("`delete"') und die Nummer der Partition löschen, bis keine
+Partitionen mehr auf der Platte definiert sind und die Anzeige mit
+\cmd{p} nichts zurück liefert. \cmd{fdisk} löscht die Partitionen an
+dieser Stelle
+noch nicht wirklich, und es entsteht kein Datenverlust, wenn wir
+das Programm später mit \cmd{q} ("`quit"')
+\index{fdisk (Programm)!verlassen}%
+beenden. Erst indem wir die neue oder veränderte Partitionierung mit
+\cmd{w}
+\index{fdisk (Programm)!Partitionsschema schreiben}%
+("`write"') ausdrücklich auf der Festplatte verewigen, sind die
+Angaben wirksam.
+
+Die Boot-Partition erstellen wir nun mit \cmd{n},
+\index{fdisk (Programm)!Partition erstellen}%
+gefolgt von dem Partitionstyp "`primär"', den wir mit der Taste
+\cmd{p} wählen.  Mit der \cmd{1} definieren wir den
+Festplattenabschnitt als erste Partition. Als Startpunkt wählen wir
+den ersten Zylinder aus, indem wir einfach mit der Return-Taste
+bestätigen. Die Größe geben wir jetzt am besten in Megabyte mit einem
+vorangestellten Pluszeichen an: \cmd{+50M}.
+
+Nun folgt die Swap-Partition, 
+\index{fdisk (Programm)!Swap-Partition erstellen}%
+die wir in der gleichen Weise mit 1000~MB ausstatten und der wir die
+Nummer 2 geben (\cmd{n}, \cmd{p}, \cmd{2}, \taste{Ret},
+\cmd{+1000M}). Um die Partition für das Swapping zu markieren, müssen
+wir den Typ \cmd{82} (Swap-Space) setzen, und zwar über das
+Kürzel \cmd{t} ("`type"'), gefolgt von der Partitionsnummer \cmd{2}
+und dem Partitionstyp \cmd{82}.
+\index{fdisk (Programm)!Partitiontyp festlegen}%
+\cmd{fdisk} sollte jetzt melden, dass der Partitionstyp auf \cmd{Linux
+  Swap} gesetzt wurde.
+
+Der letzten Partition spendieren wir den Rest der Platte und weisen
+die Partitionsnummer 3 zu (\cmd{n}, \cmd{p}, \cmd{3}, zweimal \taste{Ret}).
+
+Damit ergibt sich folgende Tabelle als Grundlage unseres
+Beispielsystems:
+
+
+\index{Partition!-sschema}%
+\label{Partitionsschema}
+\begin{ospcode}
+Command (m for help): \textbf{p}
+\ldots
+   Device Boot    Start        Ende      Blocks   Id  System
+/dev/hda1             1           7       56196+  83  Linux
+/dev/hda2             8         130      987997+  82  Linux Swap/Solaris
+/dev/hda3           131        1869    13968517   83  Linux
+\end{ospcode}
+
+Diese neue Partitionstabelle schreiben wir mit dem Befehl \cmd{w}
+endgültig auf die Platte.
+\index{fdisk (Programm)!Partitionsschema schreiben}%
+\cmd{fdisk} beendet sich anschließend auch automatisch und befördert uns auf
+die Kommandozeile zurück. Sollte man es
+sich anders überlegt haben, kann man \cmd{fdisk} jederzeit vorher über
+\cmd{q} 
+\index{fdisk (Programm)!verlassen}%
+beenden und damit alle Änderungen verwerfen. Nach dem \cmd{w} ist das
+nicht mehr möglich!
+
+Um auf den beiden Linux-Partitionen nun ein Ext3-Dateisystem
+\index{ext3 (Dateisystem)}%
+aufzubringen, nutzt man das Kommandozeilentool \cmd{mkfs.ext3}:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{mkfs.ext3 -L /boot /dev/hda1}
+mke2fs 1.38 (30-Jun-2005)
+Filesystem label=/boot
+OS type: Linux
+Block size=1024 (log=0)
+Fragment size=1024 (log=0)
+14056 inodes, 56196 blocks
+2809 blocks (5.00%) reserved for the super user
+First data block=1
+7 block groups
+8192 blocks per group, 8192 fragments per group
+2008 inodes per group
+Superblock backups stored on blocks: 
+8193, 24577, 40961
+
+Writing inode tables: done                            
+Creating journal (4096 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+This filesystem will be automatically checked every 30 mounts or
+180 days, whichever comes first.  Use tune2fs -c or -i to override.
+
+\cdprompt{\textasciitilde}\textbf{mkfs.ext3 -L / /dev/hda3}
+\ldots
+\end{ospcode}
+\index{mkfs.ext3 (Programm)}
+\index{hda1 (Partition)}
+%\index{dev@/dev!hda1|see{hda1 (Partition)}}
+\index{hda3 (Partition)}
+%\index{dev@/dev!hda3|see{hda3 (Partition)}}
+
+Die Option \cmd{-L} 
+\index{mkfs.ext3 (Programm)!L (Option)}%
+vergibt der Partition hierbei nur einen Namen
+(\emph{Label}) und assoziiert sie noch nicht mit den hier angegebenen
+Verzeichnissen \cmd{/boot} oder \cmd{/}. Diese Bezeichner helfen aber
+besonders, wenn wir mehr als die drei vorgeschlagenen Partitionen
+angelegen möchten, da sie von \cmd{fdisk} im Partitionsschema mit
+angezeigt werden.
+
+Die LiveDVD bietet Werkzeuge, um die bekanntesten Dateisysteme auf den
+Partitionen zu initialisieren. Wer z.\,B.\ Xfs bevorzugt
+verwendet den Befehl \cmd{mkfs.xfs}
+\index{mkfs.xfs (Programm)}%
+statt \cmd{mkfs.ext3}. Neben
+Ext3 und Xfs stehen  unter anderem 
+\index{ext2 (Dateisystem)}%
+Ext2 (\cmd{mkfs.ext2}),
+\index{mkfs.ext2 (Programm)}%
+\index{JFS}%
+JFS (\cmd{mkfs.jfs}),
+\index{mkfs.jfs (Programm)}%
+\index{ReiserFS}%
+ReiserFS (\cmd{mkfs.reiserfs})
+\index{mkfs.reiserfs (Programm)}%
+und verschiedene
+\index{NTFS}%
+\index{FAT}%
+Windows-Dateisysteme (\cmd{mkfs.ntfs},
+\index{mkfs.ntfs (Programm)}%
+\cmd{mkfs.msdos})
+\index{mkfs.msdos (Programm)}%
+zur Auswahl.
+
+Auch den Swap-Bereich
+\index{Swap}%
+erzeugt und aktiviert man mit Standard"=Werkzeugen, die auch auf
+anderen Distributionen nach der
+Installation zur Verfügung stehen:
+
+\osppagebreak
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{mkswap /dev/hda2}
+Setting up swapspace version 1, size = 1011703 kB
+no label, UUID=32f64d1d-237a-4f4c-8814-33dedf48333b
+\cdprompt{\textasciitilde}\textbf{swapon /dev/hda2}
+\end{ospcode}
+\index{mkswap (Programm)}
+\index{swapon (Programm)}
+\index{hda2 (Partition)}
+%\index{dev@/dev!hda2|see{hda2 (Partition)}}
+
+\subsection{\label{specialdirs}Gentoo-spezifische Verzeichnisse mit höherem Platzbedarf}
+
+Eine große Partition, die das gesamte Root-Verzeichnis mit Ausnahme
+des \cmd{/boot}-Verzeichnisses umfasst, wie wir sie hier nutzen,
+vermeidet unnötige Größenbeschränkungen bei den einzelnen
+Unterhierarchien und reicht für die meisten Anwendungsfälle aus.
+Entscheidet man sich für eine komplexere Partitionierung, gibt es
+allerdings einige Gentoo-spezifische Verzeichnisse, die derart wachsen
+können, dass man sie unbedingt in die Überlegungen zur Partitionierung
+einbeziehen sollte.  
+\index{Partition!-sschema}
+
+Das wäre zum einen die Hierarchie unter \cmd{/usr/portage}.
+\index{usr@/usr!portage}%
+\index{portage (Verzeichnis)}%
+\index{Portage!Verzeichnisse}%
+Hier lagert die komplette Paketdatenbank des Gentoo-Systems, zudem
+einige Verzeichnisse, die für die Funktionsweise des Paketmanagers
+Portage unerlässlich sind. Das Verzeichnis hat im Normalfall eine
+Größe von ca.\ einem halben GB.
+
+\label{spacedistfiles}
+Hier nicht eingerechnet sind zwei Ordner unterhalb von
+\cmd{/usr/portage}, die mit zunehmendem Alter des Systems deutlich
+anwachsen können: Das Verzeichnis \cmd{/usr/portage/distfiles}
+\index{usr@/usr!portage!distfiles}%
+\index{distfiles (Verzeichnis)}%
+enthält die Quellpakete aller installierten oder zu installierenden
+Software. Beim Einspielen eines neuen Pakets lädt Portage das
+entsprechende Quellpaket in dieses Verzeichnis herunter. So wächst
+dieser Ordner im Schnitt auf zwei bis drei GB. Wie sich hier das
+Wachstum im Zaum halten lässt, beschreiben wir in Kapitel \ref{eclean}
+ab Seite \pageref{eclean}.
+
+Das zweite Verzeichnis, \cmd{/usr/portage/packages},
+\index{usr@/usr!portage!packages}%
+\index{packages (Verzeichnis)}%
+beherbergt binäre Pakete, die Portage bei der Installation
+erstellt hat.
+Dies ist im Normalfall nur für so genannte Build-Hosts
+\index{Buildhost}%
+der Fall. Auch Binärpakete, die wir
+von bereits installierten Paketen erstellen (Kapitel 
+\ref{quickpkg}), finden sich hier
+wieder. Die Größe dieses Verzeichnisses ähnelt der von
+\cmd{/usr/portage/distfiles}.
+\index{distfiles (Verzeichnis)}%
+
+Damit benötigt der gesamte \cmd{/usr/portage}-Baum um die 3~GB für
+normale Systeme und um die 5~GB für Build-Hosts.
+
+Ein weiteres Verzeichnis, das aufgrund seiner Nutzung durch
+Portage stark wachsen kann, jedoch außerhalb der
+\cmd{/usr/portage}-Hierarchie liegt, ist das temporäre Verzeichnis
+\cmd{/var/tmp}.  
+\index{var@/var!tmp}%
+\index{tmp@/tmp}%
+Vor allem bei Desktop-Rechnern, auf denen Anwendungen wie KDE oder
+OpenOffice kompiliert werden, wächst dieses Verzeichnis während der
+Installation 
+auf gut und gern 3--4~GB.
+
+\section{Das Grundsystem aufspielen}
+
+Die erstellten Partitionen bindet man nun unterhalb von
+\cmd{/mnt/gentoo} 
+%\index{mnt@/mnt!gentoo|see{gentoo (Verzeichnis)}}%
+\index{gentoo (Verzeichnis)}%
+ins Installationssystem ein, um darauf das neue Gentoo-System
+einzurichten:
+
+\index{mount (Programm)}%
+\index{mkdir (Programm)}%
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{mount /dev/hda3 /mnt/gentoo}
+\cdprompt{\textasciitilde}\textbf{mkdir /mnt/gentoo/boot}
+\cdprompt{\textasciitilde}\textbf{mount /dev/hda1 /mnt/gentoo/boot}
+\end{ospcode}
+\index{hda1 (Partition)}%
+\index{hda3 (Partition)}%
+
+Es empfiehlt sich, das Datum und die Uhrzeit des
+Systems zu überprüfen und gegebenenfalls zu korrigieren. Dazu dient
+\index{date (Programm)}%
+%\index{Datum!setzen|see{date}}%
+%\index{Uhrzeit!setzen|see{date}}%
+%\index{Zeit!setzen|see{date}}%
+der Befehl \cmd{date}. 
+
+An dieser Stelle haben wir noch nicht die Zeitzone festgelegt, in der
+wir uns befinden. Das geschieht erst später (siehe Seite
+\pageref{timezone}), und derzeit rechnet die Maschine noch auf der Basis
+der Weltzeit (UTC). Für Deutschland wie für den übrigen
+mitteleuropäischen Raum gilt im Winter die Zeit UTC+1, und entsprechend
+ziehen wir gleich eine Stunde ab, wenn wir das Datum setzen. Während
+der Sommerzeit herrscht in Deutschland UTC+2, und es werden hier zwei
+Stunden abgezogen.
+
+Nehmen wir an, es sei der 3.~November 2007, 13:40~Uhr. Dann lässt
+sich die Uhr über \cmd{date \cmdvar{MMDDhhmmCCYY}} mit
+\cmd{\cmdvar{MM}} als Monat (hier: \cmd{11}), \cmd{\cmdvar{DD}} als
+Tag (\cmd{03}), \cmd{\cmdvar{hh}} als Stunde (\cmd{12} als
+\cmd{13\,--\,1}, womit wir auf UTC umrechnen), \cmd{\cmdvar{mm}}
+als Minuten
+(\cmd{40}) und \cmd{\cmdvar{CCYY}} als Jahr (\cmd{2007})
+folgendermaßen setzen:
+
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{date 110312402007}
+Sat Nov  3 12:40:00 UTC 2007
+\end{ospcode}
+
+\subsection{Die Stage}
+
+Nun spielen wir das Grundsystem über zwei spezielle Pakete
+ein: die so genannte \emph{Stage} und den Portage-Baum.
+\index{Portage!Baum}
+\index{Stage|(}%
+Die Stage enthält alles, was man für ein funktionierendes
+(Gentoo-)Linux-System braucht, also vor allem den Compiler und die
+üblichen Kommandozeilenwerkzeuge. Stages stellt das Gentoo-Projekt in
+regelmäßigen Abständen als neue Gentoo-Releases
+\index{Gentoo!Release}%
+\index{Gentoo!Version}%
+zur Verfügung. Die
+beigelegte DVD enthält ein Stage-Archiv des 2007.0-Release,
+\index{2007.0}%
+das wir im
+Folgenden verwenden werden, um an dieser Stelle nicht auf eine
+funktionierende Verbindung zum Internet angewiesen zu sein.
+
+\begin{netnote}
+Sollten allerdings schon neuere Releases verfügbar sein, kann man
+sich bei einer bestehenden Netzwerkverbindung auch das neueste Paket
+von den Gentoo-Servern herunterladen. Grundsätzlich empfehlen
+wir, an dieser Stelle erst auf die alte Version zu setzen und
+erst sehr spät, in Kapitel \ref{howtoupdate} wirklich auf die neueste
+Gentoo-Version zu wechseln. So  haben Sie den Vorteil, den Erläuterungen 
+im Buch exakt folgen zu können.
+\label{warnupdate}
+
+Wenn Sie sich trotzdem für ein neueres Release entscheiden, dann
+gelangen Sie mit dem Programm \cmd{links} auf die Liste der
+Download-Server:
+
+\label{uselinks}
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{links http://www.gentoo.org/main/en/mirrors.xml}
+\end{ospcode}
+\index{links (Programm)}
+
+Auf jedem
+Mirror-Server (Seite \pageref{mirrorserver})
+%\index{Download|see{Mirror}}%
+\index{Mirror!für die Stage Archive}%
+findet sich ein \cmd{releases}"=Unterverzeichnis, in dem, sortiert nach
+Prozessor-Architektur und Release-Datum, die Stages im Verzeichnis
+\cmd{stages} angeboten werden. Historisch bedingt finden sich dort im
+Normalfall drei verschiedene Typen mit entsprechender Nummerierung:
+
+\index{Stage!1}%
+\begin{ospdescription}
+\ospitem{Stage 1} ein absolutes Basissystem. Bei
+einer Installation auf Grundlage dieser Stage wird Portage alle Pakete des
+Systems während der Erstinstallation neu kompilieren.
+
+\index{Stage!2}%
+\ospitem{Stage 2} hier liegen einige der zentralen Pakete wie z.\,B.\
+\cmd{gcc} oder \cmd{glibc} bereits
+\index{Stage!3|(}%
+vorkompiliert vor.
+
+\ospitem{Stage 3} enthält alle Pakete eines Gentoo-Basissystems
+kompiliert.  Bei Installation eines Stage-3-Archivs gelangt
+man also deutlich schneller zu einem funktionierenden Gentoo-System.
+\end{ospdescription}
+
+
+\index{Optimieren|(}%
+Allerdings berücksichtigen die in der Stage 3 enthaltenen Binärpakete
+eventuelle Vorgaben des Benutzers in Bezug auf die Compiler-Optionen
+nicht. Bei einer Stage-1-Installation werden hingegen alle Pakete neu
+kompiliert und entsprechend auch die Benutzervorgaben berücksichtigt. Da
+liegt die Schlussfolgerung nahe, dass man für ein durchoptimiertes
+System von einem Stage-1-System starten sollte. Der Gewinn eines
+solchen Vorgehens ist jedoch so gering, dass Gentoo diese
+Installationsmethode nicht mehr unterstützt.
+
+Dies liegt vor allem daran, dass ein Gentoo-System veraltete Pakete
+bei einem Update ohnehin neu kompiliert. Der größte Teil der Pakete
+aus der Stage wird so in kürzester Zeit durch selbst kompilierte
+Pakete ersetzt, und das auf Stage-3-Basis installierte System
+unterscheidet sich dann in 
+\index{Stage!1}%
+keiner Weise von einer Stage-1-Installation.  Unter Berücksichtigung
+des Zeitgewinns, den Stage 3 bietet, und der Tatsache, dass aggressive
+Optimierung der Compiler-Optionen 
+\index{Optimieren!Compiler-Flags}%
+leicht zu Problemen führt, kommt man mit dem vorkompilierten
+Basissystem am besten weg.  \index{Stage!3|)} \index{Optimieren|)}
+
+Trotzdem bietet das \cmd{releases}-Verzeichnis der
+Mirror-Server alle drei Stages an. Das liegt vor allem daran,
+dass diese während des Release-Prozesses einer neuen Gentoo-Version
+ohnehin von den Entwicklern generiert werden. Außerdem gibt es Nutzer, die 
+trotz des
+Zeitverlusts die Stage-1-Installation bevorzugen.
+
+
+Wer sich hier eine Stage aus dem Internet herunterlädt, sollte diese
+auch, wie im nächsten Abschnitt auf Seite \pageref{integritycheck}
+beschrieben, mit \cmd{md5sum} und \cmd{gpg} auf ihre Integrität
+überprüfen.
+\end{netnote}
+
+\begin{64bitnote}
+  Für die Installation eines 64-bit-Systems benötigen Sie eine Stage
+  für die \cmd{amd64}-Architektur. Sie finden diese, wie oben
+  angegeben, im \cmd{releases}-Verzeichnis unter
+  \cmd{amd64}.
+\end{64bitnote}
+
+Doch zurück zur Stage der LiveDVD. Das dort verfügbare Archiv packt
+man einfach aus dem Archiv auf der DVD in die frisch formatierten
+Partitionen aus. Wer heruntergeladene, aktuellere Releases verwendet,
+muss den Dateinamen entsprechend anpassen.
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{cd /mnt/gentoo}
+\cdprompt{gentoo}\textbf{tar xjpvf /mnt/cdrom/stages/stage3-i686-2007.0.tar.bz2}
+\ldots
+\cdprompt{gentoo}\textbf{cd \textasciitilde}
+\cdprompt{\textasciitilde}
+\end{ospcode}
+\index{stage3-i686-2007.0.tar.bz2 (Datei)}%
+\index{Stage!Archiv}
+\index{tar (Programm)}
+
+\cmd{tar} entpackt mit der Option \cmd{x}
+\index{tar (Programm)!x (Option)}%
+das Stage-Archiv. \cmd{j}
+\index{tar (Programm)!j (Option)}%
+wählt das Format des Archivs (\cmd{bzip2}), \cmd{p}
+\index{tar (Programm)!p (Option)}%
+erhält die Dateirechte
+während des Extrahierens und \cmd{v}
+\index{tar (Programm)!v (Option)}%
+zeigt uns, welche Dateien
+\cmd{tar} extrahiert. Zu guter Letzt gibt \cmd{f}
+\index{tar (Programm)!f (Option)}%
+an, dass wir die Datei
+mit dem nachfolgenden Dateinamen extrahieren möchten.
+
+Mit \cmd{cd \textasciitilde} bewegen wir uns wieder zurück in unser
+ursprüngliches Verzeichnis (\cmd{/root}).
+\index{Stage|)}
+
+\subsection{Installieren der Gentoo-Paketdatenbank}
+
+\index{Portage!Snapshot|(}%
+Neben der Stage muss man außerdem die Gentoo-Paketdatenbank
+%\index{Portage!Paketdatenbank|see{Portage-Baum}}%
+%\index{Paketdatenbank|see{Portage-Baum}}%
+installieren, die wir hier auch von der DVD installieren werden.  
+Die Paketdatenbank wird häufig auch als \emph{Portage-Baum}
+bezeichnet.
+\index{Portage!Baum}
+
+\begin{netnote}
+Die Paketdatenbank veraltet naturgemäß recht schnell, weshalb man
+durchaus auch zu einer aktuellen Version greifen kann. Wieder gilt
+allerdings die schon weiter oben angegebene
+Warnung: Sie entfernen sich damit an einigen Stellen von der 
+folgenden Installationsanweisung.
+
+Eine
+Möglichkeit besteht darin, die aktuellste Version von einem der
+Mirror-Server herunterzuladen. Sie befindet sich als nächtlicher
+Snapshot unter \cmd{snapshots}, und wir können sie, wie auch schon
+oben für die Stage angegeben,
+mit \cmd{links}
+herunterladen.
+
+Verwendet man z.\,B.\ den Mirror der Ruhr-Universität Bochum, kann man
+sich auch mit folgenden \cmd{wget}-Befehlen den Snapshot und die
+notwendigen Prüfsummen herunterladen:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{wget http://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirro}
+\textbf{r/snapshots/portage-latest.tar.bz2}
+\cdprompt{\textasciitilde}\textbf{wget http://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirro}
+\textbf{r/snapshots/portage-latest.tar.bz2.md5sum}
+\cdprompt{\textasciitilde}\textbf{wget http://linux.rz.ruhr-uni-bochum.de/download/gentoo-mirro}
+\textbf{r/snapshots/portage-latest.tar.bz2.gpgsig}
+\end{ospcode}
+\index{wget (Programm)}
+
+Wir laden den neuesten Snapshot als Archiv
+\cmd{portage-latest.tar.bz2}
+\index{portage-latest.tar.bz2 (Datei)}%
+mit der zugehörigen MD5-Prüfsumme
+(\cmd{portage-latest.tar.bz2.md5sum}) herunter und spielen ihn dann
+ins neue Gentoo-System ein, sofern seine Checksumme mit denen in den
+Prüfsummendateien übereinstimmt:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{md5sum -c portage-latest.tar.bz2.md5sum}
+portage-latest.tar.bz2: OK
+\end{ospcode}
+\index{md5sum (Programm)}
+
+Sollte der \cmd{md5sum}-Test fehlschlagen, so wurden Daten beim
+Herunterladen beschädigt und man lädt das Paket nochmals \emph{von
+  einem anderen Mirror-Server} herunter.
+
+Damit haben wir die Integrität des Pakets getestet, aber noch nicht,
+ob das Paket wirklich vom Gentoo-Projekt stammt und ob es unverändert
+ist. Schließlich laden wir uns hier Daten herunter, bei denen es ein
+Leichtes wäre, sie so zu modifizieren, dass sie gleich unsere gesamte
+Festplatte löschen:
+
+\label{integritycheck}
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{gpg --recv-keys 7DDAD20D}
+gpg: keyring `/root/.gnupg/secring.gpg' created
+gpg: requesting key 7DDAD20D from hkp server subkeys.pgp.net
+gpg: /root/.gnupg/trustdb.gpg: trustdb created
+gpg: key 7DDAD20D: public key ``Gentoo Portage Snapshot Signing Key
+(Automated Signing Key)'' imported
+gpg: no ultimately trusted keys found
+gpg: Total number processed: 1
+gpg:               imported: 1
+\cdprompt{\textasciitilde}\textbf{gpg --verify \textbackslash}
+  \textbf{portage-latest.tar.bz2.gpgsig portage-latest.tar.bz2}
+gpg: Signature made Tue Jul 24 01:58:09 2007 UTC using DSA key ID
+7DDAD20D
+gpg: Good signature from ``Gentoo Portage Snapshot Signing Key
+(Automated Signing Key)''
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the
+owner.
+Primary key fingerprint: 4AC0 D5FE 8F92 96BA 6A06  0A2A BB1D 301B 7DDA
+D20D
+\end{ospcode}
+\index{gpg (Programm)}
+
+Wichtig ist die Meldung \cmd{Good signature from "{}Gentoo Portage
+  Snapshot\osplinebreak{} Signing Key (Automated Signing Key)"{}}. \cmd{gpg} warnt uns
+zwar noch, dass wir in Bezug auf die Identität des \cmd{Gentoo Portage
+  Snapshot Signing Key} nicht ganz sicher sein können, aber das ist an
+dieser Stelle vollkommen in Ordnung.
+
+Alternativ zum Herunterladen eines Snapshots kann man den Portage-Baum
+auch über das ab Seite \pageref{erstesupdate} beschriebene Verfahren
+aktualisieren. %
+\index{Aktualisieren}%
+Die Menge an übertragenen Daten dürfte im Vergleich zu dem
+heruntergeladenen Archiv etwas geringer sein, aber das Auspacken des
+Archivs ist im Normalfall schneller erledigt.
+\end{netnote}
+
+Wir verwenden aber hier ebenfalls ein Archiv von der
+LiveDVD, um weiterhin ohne Netzwerkverbindung zu arbeiten. Wer das
+neueste Archiv heruntergeladen hat, modifiziert
+\cmd{portage-2007.0.tar.bz2}
+\index{portage-2007.0.tar.bz2 (Datei)}%
+zu \cmd{portage-la\-test.tar.bz2}.
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{tar xvjf /mnt/cdrom/snapshots/portage-2007.0.tar.bz2 -C \textbackslash}
+\textbf{/mnt/gentoo/usr}
+\ldots
+\end{ospcode}
+\index{tar (Programm)}
+
+Diesmal entpacken wir das Archiv in das Verzeichnis
+\cmd{/mnt/gentoo/usr}, angegeben über die Option \cmd{-C}.
+\index{Portage!Snapshot|)}%
+
+Mit der Paketdatenbank haben wir unserem System einen notwendigen
+Baustein für die Installation neuer Pakete hinzugefügt. Ergänzend zu
+den eigentlichen Paketdefinitionen benötigt Portage aber natürlich
+auch den Quellcode,
+\index{Quellcode}%
+aus dem das Paketmanagementsystem die Software installieren wird. Jede
+Paketdefinition enthält einen Link, unter dem das Quellarchiv eines
+Pakets heruntergeladen werden kann. Portage kann das bei bestehender
+Netzwerkverbindung automatisch erledigen. Wir wollen uns hier aber die
+Option offen halten, auch ohne Netzwerk arbeiten zu können, und müssen
+deshalb auch noch die Quellarchive
+\index{Quellarchiv}%
+von der DVD kopieren:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{cp -r /mnt/cdrom/distfiles /mnt/gentoo/usr/portage/}
+\end{ospcode}
+\index{distfiles (Verzeichnis)}
+
+Die Option \cmd{-r} kopiert das Verzeichnis inklusive
+Inhalt.
+
+\section{Betreten der neuen Umgebung}
+
+Damit ist der Grundstein für unser neues System gelegt. Wir können es
+zwar noch nicht booten, aber es ist möglich, schon einmal aus dem
+System der LiveDVD in das neue System zu springen. Hierfür wechselt
+man über \cmd{chroot}
+\index{chroot (Programm)}%
+in das Verzeichnis \cmd{/mnt/gentoo}
+%\index{mnt@/mnt!gentoo|see{gentoo (Verzeichnis)}}%
+\index{gentoo (Verzeichnis)}%
+und blendet damit aus dem derzeitigen System in die
+Neuinstallation über. Im Wesentlichen wechselt dabei das
+Root-Verzeichnis von \cmd{/} auf \cmd{/mnt/gentoo} -- darum auch
+\cmd{chroot}  ("`change root"').
+
+Zuvor sind aber noch einige wenige Handgriffe notwendig, damit sich
+unsere neue Umgebung auch wirklich wie ein vollwertiges Linux-System
+verhält.
+
+
+
+\begin{netnote}
+Sollte sich unser System schon im Netz befinden, benötigen wir die
+Netzwerkinformationen auch im neuen System, um auch dort auf das
+Internet zugreifen zu können.  Darum kopiert man die
+Datei \cmd{/etc/resolv.conf}
+\index{resolv.conf (Datei)}%
+\index{etc@/etc!resolv.conf}%
+aus dem Installationssystem in die Neuinstallation:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{cp /etc/resolv.conf /mnt/gentoo/etc/}
+\end{ospcode}
+\end{netnote}
+
+Wir benötigen zwei spezielle, auf dem System der
+LiveDVD existierende Dateisysteme auch im neuen System: die Hierarchie
+der Gerätedateien und die Informationen aus dem
+\cmd{/proc}-Verzeichnis. Beide werden vom System bei einem normalen
+Boot-Vorgang
+automatisch eingebunden, aber da wir unser neues System ja noch nicht
+gebootet haben und nur mit \cmd{chroot} übergewechselt sind, fehlen
+diese noch.
+
+%\index{dev@/dev|see{dev (Verzeichnis)}}%
+\index{dev@/dev}%
+\index{Verzeichnis!Geräte}%
+\index{mount (Programm)}%
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{mount -o bind /dev /mnt/gentoo/dev}
+\end{ospcode}
+
+Über \cmd{-o bind} wird das Geräteverzeichnis \cmd{/dev}
+aus dem LiveDVD-System einfach in das neue System unter
+\cmd{/mnt/gentoo/dev} gespiegelt. Sobald wir mit \cmd{chroot} in die
+Umgebung \cmd{/mnt/gentoo} gewechselt haben, findet sich das
+Verzeichnis dann wie gewohnt als \cmd{/dev} in unserer Umgebung
+wieder.
+
+
+
+Ähnliches gilt für das \cmd{/proc}-Verzeichnis,
+%\index{proc@/proc|see{proc (Verzeichnis)}}%
+\index{proc@/proc}%
+über das die Prozesse im System mit dem Kernel interagieren können. Da
+\cmd{/proc} ein spezielles Dateisystem darstellt, müssen wir den Typ
+mit \cmd{-t proc} angeben und gleichzeitig mit \cmd{none} auf die
+Angabe einer Quelle verzichten.
+
+\index{mount (Programm)}%
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{mount -t proc none /mnt/gentoo/proc}
+\end{ospcode}
+
+So vorbereitet, können wir nun über \cmd{chroot}
+\index{chroot (Programm)}%
+in die neue Umgebung wechseln:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{chroot /mnt/gentoo /bin/bash}
+\cdprompt{/}
+\end{ospcode}
+
+Über \cmd{/bin/bash}
+\index{bash (Programm)}%
+\index{bash (Datei)}%
+%\index{bin@/bin!bash|see{bash (Datei)}}%
+geben wir hier an, dass wir in der neuen Umgebung
+auch die Bash als Kommandozeile verwenden wollen.
+
+Übrigens können wir die neue Umgebung jederzeit mit \cmd{exit} 
+\index{exit (Programm)}%
+verlassen und befinden uns anschließend wieder im System der LiveDVD.
+
+\index{Installation!fortsetzen}%
+Sollte es notwendig sein, die Arbeit zu unterbrechen, den Rechner
+abzuschalten und zu einem späteren Zeitpunkt erneut mit der LiveDVD zu
+starten, so kommt man jederzeit mit folgender Befehlsfolge wieder auf
+den alten Stand und kann fortsetzen, wo man stehen geblieben war:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{mount /dev/hda3 /mnt/gentoo}
+\cdprompt{\textasciitilde}\textbf{mount /dev/hda1 /mnt/gentoo/boot}
+\cdprompt{\textasciitilde}\textbf{swapon /dev/hda2}
+\cdprompt{\textasciitilde}\textbf{mount -o bind /dev /mnt/gentoo/dev}
+\cdprompt{\textasciitilde}\textbf{mount -t proc none /mnt/gentoo/proc}
+\cdprompt{\textasciitilde}\textbf{chroot /mnt/gentoo /bin/bash}
+\cdprompt{/}
+\end{ospcode}
+
+\subsection{Umgebungsvariablen setzen}
+
+Wir befinden uns aber nun in einer Bash des neuen Systems. Diese
+definiert wie jede andere Shell im Normalfall auch einen bestimmten,
+mit dem Befehl \cmd{export}
+\index{export (Programm)}%
+einsehbaren Satz an Umgebungsvariablen,
+\index{Umgebungsvariablen}%
+die das Standardverhalten diverser Kommandozeilentools beeinflussen.
+In dem neuen System müssen wir diesen Satz aber zunächst einmal
+aktualisieren.
+
+\label{envd}
+Neu installierte Pakete legen Variablendefinitionen, die die Bash für
+sie setzen soll, in Form kleiner Dateien in \cmd{/etc/env.d}
+\index{etc@/etc!env.d}%
+\index{env.d (Verzeichnis)}%
+ab. Genaueres zu diesem Verzeichnis findet sich in Abschnitt
+\ref{envdsection} ab Seite \pageref{envdsection}.
+Dieses Verzeichnis liest das Tool \cmd{env-update}
+\index{env-update (Programm)}%
+aus. Es schreibt die Informationen aus dem Verzeichnis in die Datei
+\cmd{/etc/profile.env}
+\index{profile.env (Datei)}%
+\index{etc@/etc!profile.env}%
+um.
+
+Deren Inhalt liest die systemweite
+Bash-Konfigurationsdatei
+\index{bsah (Programm)!Konfiguration}%
+\cmd{/etc/profile}
+\index{profile (Datei)}%
+\index{etc@/etc!profile}%
+per \cmd{source}-Befehl ein. 
+Dieses Skript wird beim Login in eine
+neue Bash-Session auf einem Gentoo-System automatisch
+ausgelesen.
+
+Im Normalfall ruft Portage \cmd{env-update}
+\index{env-update (Programm)}%
+automatisch nach der Installation neuer Pakete auf, aber beim
+Wechsel in das frische System müssen wir die Umgebungskonfiguration
+einmal per Hand aktualisieren:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{env-update}
+>>> Regenerating /etc/ld.so.cache...
+\cdprompt{/}\textbf{source /etc/profile}
+\end{ospcode}
+\index{Umgebungsvariablen!aktualisieren}
+
+Nun sind alle Vorbereitungen getroffen, um neue System entsprechend
+unseren Bedürfnissen zu konfigurieren.
+
+\section{Anpassungen der Portage-Konfiguration}
+
+Als eine der zentralen Konfigurationsdateien beeinflusst 
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+\cmd{/etc/make.conf} das Verhalten von Portage. Eine gut kommentierte
+Beispielkonfiguration findet sich in \cmd{/etc/make.conf.example}.
+\index{make.conf.example (Datei)}%
+\index{etc@/etc!make.conf.example}%
+Detailliertere Informationen zu  \cmd{make.conf} finden sich
+auch im Kapitel \ref{makeconf} ab Seite \pageref{makeconf}. Es reicht
+für den Anfang aber, sich mit einer Handvoll der darin aufgeführten
+Variablen zu beschäftigen.
+
+\subsection{\label{Compiler-Flags}Compiler-Flags festlegen}
+
+Schauen wir uns einmal die Standardwerte in dieser Datei an:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /etc/make.conf}
+# These settings were set by the catalyst build script that
+# automatically built this stage.
+# Please consult /etc/make.conf.example for a more detailed example.
+CFLAGS="-O2 -mtune=i686 -pipe"
+CXXFLAGS="\$\{CFLAGS\}"
+# This should not be changed unless you know exactly what you are doing.
+# You should probably be using a different stage, instead.
+CHOST="i686-pc-linux-gnu"
+\end{ospcode}
+\index{make.conf (Datei)}
+
+\index{CHOST (Variable)|(}%
+Manche Werte können abhängig von der ausgewählten Stage
+\index{Stage}%
+variieren. Bei einem \cmd{x86}-Stage3-Archiv
+\index{Stage!3}%
+ist der \cmd{CHOST}-Wert z.\,B.\ 
+auf \cmd{i486-pc-linux-gnu}
+\index{i486-pc-linux-gnu (Architektur)}%
+gesetzt, was auf jeden modernen Prozessor
+passen sollte. Bei neueren Maschinen sollte man aber gleich das
+entsprechende \cmd{i686}-Archiv wählen, so dass, wie auch durch die
+Stage der LiveDVD vorgegeben,
+\cmd{CHOST} auf \cmd{i686-pc-linux-gnu}
+\index{i686-pc-linux-gnu (Architektur)}%
+gesetzt ist.
+
+\begin{64bitnote}
+  Für eine 64-Bit-Installation auf \cmd{x86}-Systemen muss man ein
+  \cmd{amd64}"=Installationsmedium verwenden. Die \cmd{CHOST}-Variable
+  muss dann auf \cmd{x86\_64-pc-linux-gnu}
+  \index{x86\_64-pc-linux-gnu (Architektur)}%
+  gesetzt sein.
+\end{64bitnote}
+
+Den Wert für \cmd{CHOST} sollten wir auch nicht anders als von
+\cmd{i486} auf \cmd{i586} bzw. \cmd{i686} verändern. Hat man
+den Eindruck, dass der Wert nicht stimmt, so verwendet man vermutlich
+das falsche Stage-Archiv.
+\index{CHOST (Variable)|)}%
+
+Im einfachsten Fall belässt man auch die \cmd{CFLAGS}- %
+\index{CFLAGS (Variable)}%
+und
+\cmd{CXXFLAGS}-Werte
+\index{CXXFLAGS (Variable)}%
+ in der Datei beim Standard und verzichtet auf
+weitere Anpassungen. Aber gerade bei aktuelleren Prozessoren möchte
+man die neueren Eigenschaften der CPU natürlich auch nutzen, statt ein
+allgemein gültiges, aber langsameres System zu erhalten.
+
+Wer die Datei bearbeiten möchte nutzt dazu \cmd{nano}
+\index{nano (Programm)}%
+als
+Editor. Er ist in diesem Stadium der einzig verfügbare Editor.
+
+\begin{ospcode}
+\cdprompt{/}\textbf{nano /etc/make.conf}
+\end{ospcode}
+\index{make.conf (Datei)}
+
+Die Navigation im Text erfolgt mit den Cursor-Tasten. Die
+Tasten"=Kombination \taste{Strg} + \taste{O}
+\index{nano (Programm)!Datei speichern}%
+speichert Modifikationen an der Datei, während \taste{Strg} +
+\taste{X}
+\index{nano (Programm)!beenden}%
+\cmd{nano} beendet. Eine ausführlichere Beschreibung der verfügbaren
+Kommandos erhält man in der Hilfe, die man mit der Kombination
+\taste{Strg} + \taste{G} 
+\index{nano (Programm)!Hilfe}%
+aufruft.
+
+\index{Compiler-Flags|(}%
+Die Variablen \cmd{CHOST}, \cmd{CFLAGS} und
+\index{CHOST (Variable)}%
+\index{CFLAGS (Variable)}%
+\index{CXXFLAGS (Variable)}%
+\cmd{CXXFLAGS} beeinflussen das Verhalten des Compilers \cmd{gcc} und legen in Form
+von Compiler-Flags fest, welcher Maschinentyp das übersetzte
+Endresultat verarbeiten kann. Die korrekten Einstellungen hängen
+entsprechend stark vom verwendeten Prozessor ab.  Die Übersicht im Gentoo-Wiki\footnote{\cmd{http://gentoo-wiki.com/Safe\_Cflags}}
+\index{Compiler-Flags!sichere}%
+verrät, welche
+Variablenwerte für welche CPU passen.
+
+Welche CPU man genau verwendet, verrät 
+die Datei \cmd{/proc/cpuinfo}:
+\label{cpuinfo (Datei)}
+\index{CPU!des Rechners ermitteln}%
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /proc/cpuinfo}
+processor       : 0
+vendor_id       : AuthenticAMD
+cpu family      : 6
+model           : 8
+model name      : AMD Athlon(tm) XP 2000+
+stepping        : 0
+cpu MHz         : 1665.406
+cache size      : 256 KB
+fdiv_bug        : no
+hlt_bug         : no
+f00f_bug        : no
+coma_bug        : no
+fpu             : yes
+fpu_exception   : yes
+cpuid level     : 1
+wp              : yes
+flags           : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge
+mca cmov pat pse36 mmx fxsr sse syscall mmxext 3dnowext 3dnow up ts
+bogomips	: 3334.60
+\end{ospcode}
+
+\cmd{vendor\_id}, \cmd{cpu family}, \cmd{model}, \cmd{model name}
+enthalten hier die ausschlaggebenden Werte und finden sich so auch auf
+der oben angegebenen Wiki-Seite wieder.
+
+Auf \cmd{x86}-Systemen kann auch das Tool \cmd{x86info} hilfreich
+\index{x86info (Programm)}%
+sein. Wir beschreiben es im Kapitel \ref{x86info} ab Seite \pageref{x86info}.
+
+Im eigenen Interesse sollten nur sehr erfahrene Benutzer von den im Wiki
+\index{Compiler-Flags!sichere}%
+vorgeschlagenen
+Einstellungen abweichen,  denn der Einfluss der Compiler-Flags ist
+sehr komplex. Im einfachsten Fall führen inkompatible Einstellungen
+dazu, dass sich einzelne Pakete nicht kompilieren lassen und während
+der Installation abbrechen. In vielen Fällen wird allerdings "`nur"' die
+Lauf"|fähigkeit eines Programms in Mitleidenschaft gezogen: Man sieht
+sich mit Fehlern konfrontiert, die sich nicht sofort mit einer
+Fehlkonfiguration der \cmd{gcc}-Flags in Verbindung bringen lassen.
+
+\index{Gentoo!Vergleich zu anderen Distributionen|(}%
+Dass sich die Gentoo-Distribution nach dem schnellsten
+Schwimmer unter den Pinguinen nennt, begründet sich unter
+anderem mit der Möglichkeit, die Compiler-Flags so zu optimieren,
+\index{Compiler-Flags!optimieren}%
+\index{Optimieren!Compiler-Flags}%
+dass
+der Rechner ein Maximum an Geschwindigkeit erreicht. Allerdings suggeriert
+dies auch, dass Optimierung zu den durchaus üblichen
+Vorgängen bei einer Gentoo-Installation gehört. Das ist nicht der
+Fall.
+Der Geschwindigkeitsgewinn beim Kompilieren mit aggressiver
+\cmd{gcc}-Optimierung
+\index{gcc (Programm)}%
+liegt meist nur im unteren Prozent-Bereich und
+gleicht den Zeitverlust durch das Debuggen der verursachten Probleme
+nicht aus. 
+\index{Gentoo!Vergleich zu anderen Distributionen|)}%
+
+Wer zumindest bestimmte Pakete mit optimierten Flags kompilieren
+möchte, findet entsprechende Tipps in Kapitel \ref{cflagsperpackage} ab
+Seite \pageref{cflagsperpackage}.  Dieser Ansatz destabilisiert nicht
+gleich das komplette System, sondern erlaubt es, bestimmte
+Software einzeln zu optimieren. Das lohnt sich z.\,B.\ für
+besonders oft und intensiv verwendete Komponenten eines Servers.
+\index{Compiler-Flags|)}%
+
+Nach der Basis-Konfiguration für Portage könnte man nun, vorausgesetzt
+es besteht eine Netzwerkverbindung, den Portage-Baum
+aktualisieren. Wir raten mit der schon oben genannten Begründung
+(siehe Seite \pageref{warnupdate}) ab: Es würden nicht mehr alle
+Angaben mit dem Buch übereinstimmen, und es ist kein Problem, zu einem
+späteren Zeitpunkt auf den aktuellsten Stand zu wechseln. Dem
+Gentoo-Anfänger sei also geraten, das folgende Kapitel einstweilen zu
+überspringen.
+
+\begin{netnote}
+\label{erstesupdate}%
+Um hier schon auf das aktuellste System zu wechseln, kann man die eigene Kopie des
+Portage-Baums
+\index{Aktualisieren}%
+an dieser Stelle mit der von den \cmd{rsync}-Servern zu beziehenden Version
+abgleichen.
+
+Wer sich möglichst nah an den hier beschriebenen Anweisungen entlang
+arbeiten möchte, der verzichtet jedoch zunächst einmal auf die
+Aktualisierung und wechselt ab Kapitel \ref{howtoupdate} auf das
+neueste System.
+
+Der folgende Aufruf bringt den Portage-Baum auf den neuesten Stand:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge --sync}
+\end{ospcode}
+\index{emerge (Programm)!sync (Option)}
+
+Er gleicht den lokal gespeicherten Baum per \cmd{rsync}
+\index{rsync (Programm)}%
+mit der Version auf einem der regionalen Server ab.  Wen der
+\cmd{rsync} geschuldete übermäßige Output stört, erweitert den
+\cmd{emerge}-Befehl um den Switch \cmd{-{}-quiet}.
+\index{emerge (Programm)!quiet (Option)}
+
+Sollte eine neue Portage-Version verfügbar sein, so meldet sich
+\cmd{emerge} nach Abschluss des Synchronisationsvorgangs mit der
+Nachricht
+
+\label{updateportage}
+\begin{ospcode}
+ * An update to portage is available. It is _highly_ recommended
+ * that you update portage now, before any other packages are updated.
+ * Please run 'emerge portage' and then update ALL of your
+ * configuration files.
+ * To update portage, run 'emerge portage'.
+\end{ospcode}
+
+\index{Portage!aktualisieren}%
+Als zentralen Baustein des Gentoo-Systems sollte man Portage
+tatsächlich vorzugsweise in der aktuellsten Version benutzen. Das
+Update auf die in dieser Meldung angekündigte neue Ausgabe führt man
+ebenfalls mit \cmd{emerge} durch. In der Tat besteht die
+Hauptfunktionalität des Befehls im Installieren, Updaten und
+Deinstallieren von Software-Paketen.  Das \cmd{portage}-Paket selbst
+aktualisiert man mit dem kurzen Befehl:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge sys-apps/portage}
+\end{ospcode}
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+\end{netnote}
+
+\section{Was man über emerge wissen sollte}
+
+\index{emerge (Programm)|(}%
+Kommen wir zum zentralen Werkzeug des Portage-Systems: \cmd{emerge}.
+Ohne weitere Optionen, schlicht unter Angabe des betreffenden Pakets
+aufgerufen, stellt \cmd{emerge}
+\index{emerge (Programm)}%
+die einfachste Form der
+Gentoo-Paketinstallation und -aktualisierung dar.  Was man als
+Argument angibt, ist allerdings eine etwas komplexere Angelegenheit.
+
+\subsection{\label{packagenamebasics}Paketbezeichnung und -aufbau}
+
+\index{Portage!Paketnamen|(}%
+Die korrekte Bezeichnung eines Gentoo-Pakets setzt sich aus der
+Kategorie, dem Paketnamen, der Version und der Revision zusammen.  Die
+Kategorie
+\index{Kategorie}%
+%\index{Portage!Kategorie|see{Kategorie}}%
+sortiert die Pakete grob vor: Sie entspricht dem Namen eines Ordners
+unterhalb von \cmd{/usr/portage}
+\index{portage (Verzeichnis)}%
+\index{usr@/usr!portage}%
+(bzw.\ \cmd{PORTDIR},
+\index{PORTDIR (Variable)}%
+siehe Kapitel \ref{PORTDIR} auf Seite \pageref{PORTDIR}). Hier gibt es
+zum Beispiel die Kategorie
+\index{app-portage (Kategorie)}%
+\cmd{app-portage} mit \cmd{portage}-spezifischen Anwendungen,
+während der Ordner \cmd{net-www}
+\index{net-www (Kategorie)}%
+mit webbezogenen Applikationen oder \cmd{sys-apps}
+\index{sys-apps (Kategorie)}%
+mit wichtiger Systemsoftware bestückt ist. Die Bedeutung der
+Kategorien erschließt sich vielfach aus der
+Kurzbezeichnung, aber jede Kategorie enthält auch eine Datei
+\cmd{metadata.xml},
+\index{metadata.xml (Datei)}%
+die eine längere Beschreibung liefert. Hier
+z.\,B.\ ein Auszug aus \cmd{/usr/portage/""app-portage/metadata.xml}:
+\index{usr@/usr!portage!app-portage!metadata.xml}%
+
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /usr/portage/app-portage/metadata.xml}
+...
+<longdescription lang="de">
+Die Kategorie app-portage enthält Programme für das Arbeiten mit Portage
+oder Ebuilds.
+</longdescription>
+...
+\end{ospcode}
+
+Innerhalb einer Kategorie
+\index{Kategorie}%
+repräsentieren einzelne Verzeichnisse die
+Einzelpakete.
+\index{Paket!-verzeichnis}%
+Der Name des Verzeichnisses entspricht dem Paketnamen.
+Dieser muss innerhalb einer Kategorie eindeutig sein, nicht jedoch
+kategorienübergreifend. So beschwert sich der folgende
+\cmd{emerge}-Befehl
+\index{emerge (Programm)}%
+darüber, dass der Paketname \cmd{muse}
+\index{muse (Paket)}%
+(erlaubterweise) sowohl in der Kategorie \cmd{app-emacs}
+\index{app-emacs (Kategorie)}%
+%\index{app-emacs (Kategorie)!muse|see{muse (Paket)}}%
+als auch in \cmd{media-sound}
+\index{media-sound (Kategorie)}%
+%\index{media-sound (Kategorie)!muse|see{muse (Paket)}}%
+vorkommt:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge muse}
+Calculating dependencies   
+
+!!! The short ebuild name "muse" is ambiguous.  Please specify
+!!! one of the following fully-qualified ebuild names instead:
+
+    app-emacs/muse
+    media-sound/muse
+\end{ospcode}
+\index{muse (Paket)}
+
+Während für die meisten Pakete die
+Verwendung des einfachen Namens ausreicht, ist der Nutzer in diesem
+Fall gezwungen, die Kategorie
+\index{Paket!-kategorie}%
+des gewünschten Pakets, durch \cmd{/}
+getrennt, ebenfalls anzugeben: 
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge media-sound/muse}
+\end{ospcode}
+\index{muse (Paket)}
+%\index{media-sound (Kategorie)!muse|see{muse (Paket)}}
+
+Schaut man sich den Inhalt eines Paketverzeichnisses
+\index{Paket!-verzeichnis}%
+an, so gibt es
+dort nicht nur eine Datei: Es enthält vielmehr die Definitionen
+für verschiedene Paketversionen,
+\index{Paket!-version}%
+die so genannten \emph{Ebuilds}:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{ls -la /usr/portage/sys-apps/portage/}
+total 80
+drwxr-xr-x   3 root root  4096 Mar 12 14:41 .
+drwxr-xr-x 216 root root  4096 Apr 12 21:35 ..
+-rw-r--r--   1 root root 20867 Mar 12 14:41 ChangeLog
+-rw-r--r--   1 root root  6755 Mar 12 14:41 Manifest
+drwxr-xr-x   2 root root  4096 Mar 12 14:41 files
+-rw-r--r--   1 root root   282 Mar 12 14:41 metadata.xml
+-rw-r--r--   1 root root  5675 Mar 12 14:41 portage-2.0.51.22-r3.ebuild
+-rw-r--r--   1 root root  7206 Mar 12 14:41 portage-2.1.1-r2.ebuild
+-rw-r--r--   1 root root  6909 Mar 12 14:41 portage-2.1.2-r9.ebuild
+-rw-r--r--   1 root root  6935 Mar 12 14:41 portage-2.1.2.2.ebuild
+\end{ospcode}
+\index{portage (Verzeichnis)}
+\index{usr@/usr!portage!sys-apps!portage}
+
+Deren Namen setzen sich nach dem Schema
+
+\begin{ospcode}
+\cmdvar{paketname}\cmd{-}\cmdvar{version}\cmd{-}\cmdvar{revision}.ebuild
+\end{ospcode}
+
+zusammen.  Der Paketname
+\index{Paket!-name}%
+ist durch das Verzeichnis vorgegeben.
+Die Version entspricht im Normalfall der Versionsnummer der Software,
+so wie sie das entsprechende Software-Projekt zur Verfügung stellt.
+Ein Ebuild des Apache-Servers in der Version 2.0.54 heißt entsprechend
+\cmd{apache-2.0.54}.  
+\index{Paket!-version}
+%\index{Portage!Paketversion|see{Paket, -version}}
+
+Vielfach erfährt die Paketdefinition ebenfalls Verbesserungen, während
+das Software-Archiv selbst das gleiche bleibt. In diesen Fällen
+kennzeichnet man den Ebuild mit einer eigenen Revisionsnummer.
+\index{Paket!-revision}
+
+Der erste Ebuild eines Pakets trägt keine Revisionsnummer,
+darauf folgende Ebuild-Versionen, die das gleiche
+Ursprungsarchiv benutzen, bekommen die Markierung \cmd{-r1}, \cmd{-r2}
+etc. angehängt.
+\index{Paket!-revision}
+%\index{Portage!Paketrevision|see{Paket, -revision}}
+
+Der vollständige Name eines Pakets lautet also beispielsweise
+\cmd{sys-apps/""portage-2.0.51-r3}.
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+Dieses Paket lässt sich auf drei
+gleichwertige Weisen installieren:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge portage}
+\cdprompt{/}\textbf{emerge sys-apps/portage}
+\cdprompt{/}\textbf{emerge =sys-apps/portage-2.0.51-r3}
+\end{ospcode}
+
+Die erste Variante scheitert, wenn es mehrere Pakete mit gleichem
+Namen gibt. Dies ist aber selten der Fall.  Möchte man, wie im letzten
+Beispiel, eine konkrete Version installieren, muss man der
+Paketbezeichnung ein Präfix voranstellen (vgl.\ Kapitel
+\ref{paketpraefix} ab Seite \pageref{paketpraefix}).
+\index{Paket!-präfix}%
+%\index{Portage!Paketpräfix|see{Paket, -präfix}}%
+Das Gleichheitszeichen
+\index{Paket!-präfix, =}%
+sagt in diesem Fall, dass wir genau die angegebene Version
+installieren wollen.
+
+Wir werden in diesem Buch grundsätzlich die volle Paketbezeichnung
+(also \cmd{sys-apps/portage} statt \cmd{portage}) verwenden, um
+Zweideutigkeiten zu vermeiden und ein Gefühl dafür zu
+vermitteln, wie die verschiedenen Applikationen in die Kategorien des
+Portage-Baumes eingeordnet sind.
+\index{Portage!Paketnamen|)}
+
+\subsection{Generalprobe für die Installation}
+
+Zwei zentrale Switches verhindern bei Bedarf, dass \cmd{emerge}
+\index{emerge (Programm)}%
+ein
+Paket sofort installiert, stattdessen zeigt \cmd{emerge} bei ihrer
+Verwendung nur an, was passieren \emph{würde}:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge -av sys-apps/portage}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] sys-apps/portage-2.1.2.2  USE="-build -doc -epydoc (-se
+linux)" LINGUAS="-pl" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{No}
+\end{ospcode}
+
+Der Switch \cmd{-a} (auch: \cmd{-{}-ask})
+\index{emerge (Programm)!ask (Option)}%
+verhindert, dass die Software sofort installiert wird, während \cmd{-v} oder
+\cmd{-{}-verbose}
+\index{emerge (Programm)!verbose (Option)}%
+die Informationsdichte erhöht. Damit verrät \cmd{emerge},
+\index{emerge (Programm)}%
+welche
+Pakete Portage im Falle einer Installation noch einspielen würde, und
+vor allem, welche Features jedes dieser Pakete unterstützt. Nachdem
+\cmd{emerge} diese Informationen angezeigt hat, wartet das Programm
+nun, bis wir ihm mit \cmd{Yes} oder \cmd{No} mitgeteilt haben, ob wir
+die Pakete wirklich installieren möchten.
+
+Auf diese beiden Optionen von \cmd{emerge} gehen wir auf Seite
+\pageref{emergepretend} auch nochmal genauer ein, werden sie im
+folgenden aber erst einmal für jede Paket\-installation verwenden.
+\index{emerge (Programm)|)}
+
+\section{\label{selectprofile}Das Installationsprofil wählen}
+
+\index{Profil|(}%
+%\index{Portage!Profil|see{Profil}}%
+Die Grunddefinition eines zu installierenden Systems legt man bei
+Gentoo mit Hilfe so genannter \emph{Profile} fest. Sie definieren
+z.\,B., welche Pakete für das Funktionieren der Installation
+unverzichtbar sind, welche Software unter keinen Umständen installiert
+sein darf, welches Paket den Zuschlag erhält, wenn mehr als eines eine
+gewünschte Funktionalität bereitstellt, und sie geben gewisse Eigenschaften
+vor, die neu eingespielte Pakete aufweisen sollen.
+
+Bei der
+Wahl des eigenen Profils aus dem Angebot unter \cmd{/usr/portage/""profiles}
+\index{profiles (Verzeichnis)}%
+\index{usr@/usr!portage!profiles}%
+muss man die eigene Hardware-Architektur beachten.
+
+
+So finden sich unter
+\cmd{/usr/portage/profiles/default-linux}
+\index{default-linux (Profil)}%
+die von Gentoo unterstützten
+CPU-Typen mit ihren spezifischen Kürzeln wieder: \cmd{alpha},
+\cmd{amd64}, \cmd{arm}, \cmd{hppa}, \cmd{ia64}, \cmd{m68k},
+\cmd{mips}, \cmd{ppc}, \cmd{ppc64}, \cmd{s390}, \cmd{sparc} und
+\cmd{x86}.
+\index{Architektur}
+\index{alpha (Architektur)}
+\index{amd64 (Architektur)}
+\index{arm (Architektur)}
+\index{hppa (Architektur)}
+\index{ia64 (Architektur)}
+\index{m68k (Architektur)}
+\index{mips (Architektur)}
+\index{ppc (Architektur)}
+\index{ppc64 (Architektur)}
+\index{s390 (Architektur)}
+\index{sparc (Architektur)}
+\index{x86 (Architektur)}
+
+Für die überwiegende Zahl dieser Architekturen findet sich dann
+innerhalb des entsprechenden Verzeichnisses ein weiteres
+Verzeichnis mit dem Namen des aktuellsten Gentoo-Release, hier also
+\cmd{2007.0}.
+\index{2007.0 (Profil)}%
+Für die besonders verbreitete \cmd{x86}-Architektur
+finden sich neben dem eigentlichen Release-Profil noch spezielle
+Varianten, wie z.\,B.\ das \cmd{xbox}-Profil,
+\index{xbox (Profil)}%
+mit dem sich Gentoo auf der Xbox installieren lässt, oder auch das
+\cmd{vserver}-Profil,
+%\index{vserver|see{Virtueller Server}}%
+mit dem ein virtueller Server
+\index{Virtueller Server}%
+problemlos unter Gentoo läuft.
+
+Wer ein Gentoo-System ohne Linux-Kernel wünscht, findet auf der
+obersten Ebene \cmd{/usr/portage/profiles}
+\index{profiles (Verzeichnis)}%
+mit
+\cmd{default-bsd}
+\index{default-bsd (Profil)}%
+%\index{BSD|see{default-bsd (Profil)}}%
+ein Profil, das auf BSD-Basis
+arbeitet. Gentoo unterstützt derzeit allerdings nur die \cmd{x86}- und
+die \cmd{sparc}-Architektur.
+
+
+\index{Verknüpfung!symbolische|(}%
+Im Normalfall ist das Standard-Profil für die \cmd{x86}-Architektur
+voreingestellt, und zwar über einen symbolischen Link
+auf \cmd{/usr/portage/profiles/""default-linux/x86/2007.0} im
+\index{2007.0 (Profil)}%
+\index{usr@/usr!portage!profiles!default-linux!x86!2007.0}%
+\cmd{/etc}-Verzeichnis:
+\index{etc@/etc}
+\index{etc@/etc}
+
+\begin{ospcode}
+\cdprompt{/}\textbf{ls -g /etc/make.profile}
+lrwxrwxrwx 1 root 48 Jul  5 11:29 /etc/make.profile -> ../usr/portage/pr
+ofiles/default-linux/x86/2007.0
+\end{ospcode}
+\index{ls (Programm)}%
+\index{make.profile (Link)}%
+\index{etc@/etc!make.profile}
+
+Mit der Option \cmd{-g}
+\index{ls (Programm)!g (Option)}%
+für \cmd{ls} wird hier das Ziel der
+Verknüpfung angezeigt, nicht der Inhalt des Verzeichnisses, auf das
+verwiesen wird.
+
+Fehlt die oben angegebene Verknüpfung oder wünscht man ein anderes
+Profil, korrigiert man den Verweis entsprechend:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{ln -snf /usr/portage/profiles/default-linux/x86/2007.0 \textbackslash}
+\textbf{/etc/make.profile}
+\end{ospcode}
+\index{ln (Programm)}
+
+Beim Verknüpfen mit der Option \cmd{-s}
+\index{ln (Programm)!s (Option)}%
+erzeugt man einen symbolischen
+Verweis, und die Optionen \cmd{-n}
+\index{ln (Programm)!n (Option)}%
+und \cmd{-f} %
+\index{ln (Programm)!f (Option)}%
+sorgen dafür, dass \cmd{ln} die Verknüpfung
+\cmd{/etc/make.profile}
+\index{make.profile (Link)}%
+auch wirklich ersetzt und den Verweis nicht
+innerhalb des verwiesenen Verzeichnisses anlegt.
+
+\begin{64bitnote}
+  Das Profil für die 64-Bit-Installation lautet
+  \cmd{default-linux/amd64/2007.0}, und entsprechend muss der obige
+  Befehl folgendermaßen angepasst werden:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{ln -snf /usr/portage/profiles/default-linux/amd64/2007.0 \textbackslash}
+\textbf{/etc/make.profile}
+\end{ospcode}
+\index{ln (Programm)}
+\end{64bitnote}
+\index{Verknüpfung!symbolische|)}%
+\index{Profil|)}%
+
+\section{\label{Basic-USE-Flags}USE-Flags setzen}
+
+\index{make.conf (Datei)|(}%
+\index{etc@/etc!make.conf|(}%
+Die vorgegebenen Gentoo-Profile sind jedoch nicht so fein
+definiert, dass man sich hier z.\,B.\ bereits die Standardkonfiguration eines
+LAMP-Servers aussuchen könnte.
+Dafür setzen wir 
+einige Einstellungen, so genannte \emph{USE-Flags},
+\index{USE-Flag}%
+in der Datei
+\cmd{/etc/make.conf}, die dem Paketmanager vorgeben,
+dass er alle Programme, die bei entsprechender Vorkonfiguration durch
+\cmd{con\-figure}
+\index{configure (Programm)}%
+für unsere Zwecke passende Funktionalität liefern,
+entsprechend kompilieren soll.\footnote{Kapitel \ref{USE-Flags} beschäftigt sich
+mit diesem Thema ab Seite \pageref{USE-Flags} ausführlich.}
+
+Wie bereits erwähnt, stellt Gentoo in dieser frühen Phase der
+Installation nur \cmd{nano} als Editor 
+\index{nano (Programm)}%
+bereit; entsprechend rufen wir \cmd{nano /etc/make.conf} auf, um
+nachfolgende Zeile hinzuzufügen:
+
+\label{firstuseflags}
+\begin{ospcode}
+USE="-X apache2 ldap mysql xml"
+\end{ospcode}
+
+Da der Rechner als Webserver ohne X-Server
+\index{X-Server}%
+und grafische Desktop"=Anwendungen auskommt, deaktivieren wir mit dem
+Minus explizit das USE-Flag \cmd{X}.  
+\index{X (USE-Flag)}%
+%\index{USE-Flag!X|see{X (USE-Flag)}}%
+Das Setzen von \cmd{apache2} 
+\index{apache2 (USE-Flag)}%
+%\index{USE-Flag!apache2|see{apache2 (USE-Flag)}}%
+sorgt dagegen dafür, dass alle Pakete, die bei entsprechenden
+Einstellungen zur Compile-Zeit über Möglichkeiten verfügen, mit
+Apache~2 in irgendeiner Art und Weise zusammenzuarbeiten oder zu
+kommunizieren, dies auch können. Gleiches gilt für die Flags
+\cmd{ldap} 
+\index{ldap (USE-Flag)}%
+(OpenLDAP-Support) und \cmd{mysql} 
+\index{mysql (USE-Flag)}%
+%\index{USE-Flag!mysql|see{mysql (USE-Flag)}}%
+(MySQL-Unterstützung).  \cmd{xml} 
+\index{xml (USE-Flag)}%
+%\index{USE-Flag!xml|see{xml (USE-Flag)}}%
+aktiviert den Support für XML-Dateien, was bei einem Webserver-System
+sinnvoll ist. 
+\index{make.conf (Datei)|)}%
+\index{etc@/etc!make.conf|)}%
+
+Wer seine Maschine nicht als Webserver installieren möchte, trifft an
+dieser Stelle am besten noch keine konkrete Einstellung. Die vom
+Profil vorgegebene Standardkonfiguration ist in den meisten Fällen
+akzeptabel und lässt sich auch zu einem späteren Zeitpunkt noch
+jederzeit korrigieren. Dafür sollten wir dann allerdings ein tieferes
+Verständnis der USE-Flags erworben haben, was wir in Kapitel
+\ref{USE-Flags} tun werden.
+
+\section{\label{timezone}Zeitzone setzen}
+
+Damit der Rechner stets die korrekte lokale Uhrzeit anzeigt, wählt man
+eine passende Zeitzonendatei unterhalb von \cmd{/usr/share/zoneinfo}
+\index{zoneinfo (Verzeichnis)|)}%
+\index{usr@/usr!share!zoneinfo|)}%
+und kopiert sie nach \cmd{/etc/localtime},
+\index{localtime (Datei)}%
+\index{etc@/etc!localtime}%
+für Deutschland etwa:
+\index{Zeitzone}%
+
+\begin{ospcode}
+\cdprompt{/}\textbf{date}
+Sat Nov 3 13:10:00 Local time zone must be set--see zic manual page 2008
+\cdprompt{/}\textbf{cp /usr/share/zoneinfo/Europe/Berlin /etc/localtime}
+\cdprompt{/}\textbf{date}
+Sat Nov 3 13:10:05 CET 2007
+\end{ospcode}
+
+Beim ersten Aufruf von \cmd{date} beschwert sich der Befehl noch, weil
+keine \cmd{localtime}-Datei
+\index{localtime (Datei)}%
+zu finden ist. Beim zweiten Aufruf zeigt
+er dann die korrekte Zeit in CET (\emph{Central European
+  Time}). Sollte hier \cmd{CEST} angezeigt werden: Keine Sorge, das
+ist die Sommerzeit (\emph{Central European Summer Time}).
+
+\section{Kernel auswählen und kompilieren}
+
+\index{Kernel!erstellen|(}%
+Kommen wir zum Herzstück des Systems, dem Betriebssystemkern: 
+Gentoo bietet verschiedene Pakete auf Basis
+des Linux-Kernels an, die jeweils mit
+mehr oder minder vielen Patches versehen sind.
+
+Den Original-Kernel, wie er unter \cmd{http://www.kernel.org/}
+verfügbar ist, enthält das Paket \cmd{sys-kernel/vanilla-sources}.
+\index{vanilla-sources (Paket)}%
+%\index{sys-kernel (Kategorie)!vanilla-sources|see{vanilla-sources (Paket)}}%
+Standard unter Gentoo ist jedoch eine gepatchte Variante, die einige
+Bugs und Sicherheitsprobleme beseitigt. Das Paket befindet sich als
+\cmd{sys-kernel/gentoo-sources}
+\index{gentoo-sources (Paket)}%
+%\index{sys-kernel (Kategorie)!gentoo-sources|see{gentoo-sources (Paket)}}%
+im Portage-Baum. %
+\index{Portage!Baum}
+Für Nutzer mit erhöhtem Sicherheitsbedürfnis bzw. für Server bietet sich alternativ das Paket
+\cmd{sys-kernel/hardened-sources}
+\index{hardened-sources (Paket)}%
+%\index{sys-kernel (Kategorie)!hardened-sources|see{hardened-sources (Paket)}}%
+an.
+\index{sys-kernel (Kategorie)}%
+\index{Kernel!auswählen}%
+Einen genaueren Überblick über die in der \cmd{sys-kernel}-Kategorie
+verfügbaren Varianten liefert der \emph{Gentoo Kernel Guide},
+\index{Gentoo!Kernel Guide}%
+%\index{Handbuch!Gentoo-Kernel|see{Gentoo Kernel Guide}}%
+der sowohl auf
+Englisch\footnote{\cmd{http://www.gentoo.org/doc/en/gentoo-kernel.xml}}
+als auch auf
+Deutsch\footnote{\cmd{http://www.gentoo.org/doc/de/gentoo-kernel.xml}}
+zur Verfügung steht.
+
+Wir wollen an dieser Stelle zunächst einmal absolut sicher gehen, dass wir
+einen gut funktionierenden Kernel installieren. Wenn unsere Maschine
+erfolgreich von der LiveDVD gebootet hat, wissen wir bereits, dass der
+darauf enthaltene Kernel einwandfrei funktioniert. Der Kernel der
+LiveDVD entspricht dem Quellpaket \cmd{sys-kernel/gentoo-sources}, und
+folglich installieren wir dieses:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge -av sys-kernel/gentoo-sources}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-kernel/gentoo-sources-2.6.19-r5  USE="-build 
+-symlink" 0 kB
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+>>> sys-kernel/gentoo-sources-2.6.19-r5 merged.
+>>> Recording sys-kernel/gentoo-sources in ``world'' favorites file...
+
+>>> No packages selected for removal by clean
+>>> Auto-cleaning packages...
+
+>>> No outdated packages were found on your system.
+ * GNU info directory index is up-to-date.
+\end{ospcode}
+\index{gentoo-sources (Paket)}
+%\index{sys-kernel (Kategorie)!gentoo-sources|see{gentoo-sources (Paket)}}
+\index{emerge (Programm)}
+
+Wir haben im obigen Beispiel einmal den Abschluss einer erfolgreichen
+Installation mit aufgenommen. In der Hoffnung, dass \cmd{emerge} immer
+mit diesen Zeilen abschließt, werden wir darauf aber bei folgenden
+Paketinstallationen verzichten.
+
+Natürlich kann man den Linux-Kernel
+wunderbar konfigurieren und optimieren, aber da er sich 
+zu einem späteren Zeitpunkt einfach durch eine optimierte
+Variante austauschen lässt, ist bei einer Erstinstallation der einfachste
+Weg der beste.
+
+\subsection{\label{genkernelinstall}Automatisiertes Kernel-Bauen mit genkernel}
+
+\index{genkernel (Programm)|(}
+\index{Kernel!von der LiveDVD installieren|(}
+Am einfachsten kommt man über das Tool \cmd{genkernel} zu einem
+lauf"|fähigen Kernel für das neu zu installierende System. Es
+konfiguriert und kompiliert die Kernel-Quellen. Da es nicht per
+Default installiert ist, müssen wir es an dieser Stelle einspielen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge -av sys-kernel/genkernel}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-kernel/genkernel-3.4.8  USE="-bash-completion (-ibm)
+ (-selinux)" 0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+\index{genkernel (Paket)}%
+%\index{sys-kernel (Kategorie)!genkernel|see{genkernel (Paket)}}%
+
+Um nun wirklich den einfachsten Weg zu wählen, machen wir uns zu Nutze,
+dass der Kernel der LiveDVD
+auf dem gerade zu installierenden System funktioniert. Ließ sich der
+Rechner erfolgreich von der Boot-DVD starten,  muss die
+Konfiguration des Kernels auf der DVD für das entsprechende System
+passen. Entsprechend können wir 
+die Konfiguration des
+aktuell laufenden Kernels aus \cmd{/proc/config.gz}
+\index{config.gz (Datei)|)}%
+%\index{proc@/proc!config.gz|see{config.gz (Datei)}|)}%
+für \cmd{genkernel} unbesehen übernehmen
+und so die Tücken einer vollständigen Kernel-Konfiguration
+erst einmal umgehen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{zcat /proc/config.gz > \textbackslash}
+\textbf{/usr/share/genkernel/x86/kernel-config-2.6}
+\end{ospcode}
+\index{kernel-config-2.6 (Datei)|)}
+\index{usr@/usr!share!genkernel!x86!kernel-config-2.6|)}
+
+\begin{64bitnote}
+  Während Gentoo eine 64-Bit-Installation aus historischen Gründen mit
+  \cmd{amd64} bezeichnet (AMD war die erste Firma mit gemischten
+  32-Bit/64-Bit-Prozessoren), identifiziert der Kernel diese mit
+  \cmd{x86\_64}, und entsprechend muss die \cmd{genkernel}-Konfiguration
+  für eine 64-Bit-Maschine folgendermaßen angelegt werden:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{zcat /proc/config.gz > \textbackslash}
+\textbf{/usr/share/genkernel/x86_64/kernel-config-2.6}
+\end{ospcode}
+\index{kernel-config-2.6 (Datei)|)}
+\index{usr@/usr!share!genkernel!x86\_64!kernel-config-2.6|)}
+\end{64bitnote}
+
+Mit dieser Basiskonfiguration ist \cmd{genkernel} in der Lage, den
+Kernel automatisiert zu übersetzen
+\index{Kernel!übersetzen}%
+und zu installieren:
+\index{genkernel (Programm)!all (Option)}
+\index{Kernel!installieren}
+
+\begin{ospcode}
+\cdprompt{/}\textbf{genkernel all}
+* Gentoo Linux Genkernel; Version 3.4.8
+* Running with options: all
+
+* Linux Kernel 2.6.19-gentoo-r5 for x86...
+* kernel: >> Running mrproper...
+* config: Using config from /usr/share/genkernel/x86/kernel-config-2.6
+\ldots
+* Kernel compiled successfully!
+\ldots
+\end{ospcode}
+
+Folgt man diesem Ansatz, erhält man einen Kernel mit einer sehr breiten
+Hardware-Unterstützung. Für die meisten Systeme reicht ein deutlich
+schlankerer Kernel aus.
+
+Auch wenn Linux-Experten den Kernel sicherlich eigenhändig
+konfigurieren werden, kann \cmd{genkernel} dabei helfen,
+einen funktionierenden Kernel zu verschlanken.
+Entsprechende Hinweise finden Sie im Kapitel
+\ref{genkernel} ab Seite~\pageref{genkernel}.
+
+\index{Kernel!von der LiveDVD installieren|)}%
+\index{genkernel (Programm)|)}%
+\index{Kernel!erstellen|)}%
+
+\section{Dateibaum erstellen}
+
+\index{Dateibaum|(}%
+Wie unter Linux üblich, baut man auch bei Gentoo den Dateibaum mit
+Hilfe der Datei \cmd{/etc/fstab}
+\index{etc@/etc!fstab}%
+\index{fstab (Datei)}%
+auf. Das Handbuch vermittelt hierzu das notwendige Basiswissen, und da
+es keinen Unterschied zu anderen Distributionen gibt, beschränken wir
+uns hier darauf, die Root-Partition \cmd{/dev/hda3}
+\index{hda3 (Partition)}%
+unter \cmd{/} und die Boot-Partition \cmd{/dev/hda1}
+\index{hda1 (Partition)}%
+unter \cmd{/boot}
+\index{boot (Verzeichnis)}%
+einzuhängen, den Swap-Bereich zu aktivieren sowie
+das spezielle Dateisystem \cmd{shm}
+\index{shm (Verzeichnis)}%
+%\index{dev@/dev!shm|see{shm (Partition)}}%
+(für Speicherbereiche, die von mehreren Prozessen geteilt werden
+können) zu mounten.
+Außerdem binden wir auch noch das CD/DVD-Laufwerk
+\index{CD-Laufwerk}%
+ein und erlauben auch unprivilegierten Nutzern das Mounten einer CD
+oder DVD.
+
+Die Datei editieren wir wieder mit \cmd{nano}; sie sollte zuletzt wie
+folgt aussehen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /etc/fstab}
+/dev/hda1   /boot        ext3    noauto,noatime       0 2
+/dev/hda3   /            ext3    noatime              0 1
+/dev/hda2   none         swap    sw                   0 0
+
+shm         /dev/shm     tmpfs   nodev,nosuid,noexec  0 0
+
+/dev/cdrom  /mnt/cdrom   auto    noauto,user          0 0
+\end{ospcode}
+\index{boot (Verzeichnis)}%
+\index{cdrom (Datei)}%
+%\index{dev@/dev!cdrom|see{cdrom (Datei)}}
+
+Falls die eigene Partitionierung von dem in Abschnitt
+\ref{Partitionsschema} auf Seite \pageref{Partitionsschema}
+angegebenen Layout abweicht und/oder weitere Geräte im System
+vorhanden sind, sollte die Ausgabe natürlich entsprechend anders
+aussehen.
+
+Wir verknüpfen hier jeweils eine der eingerichteten Partitionen 
+(erste Spalte) mit
+einer bestimmten Position im Dateibaum (zweite Spalte). 
+So liefert \cmd{/dev/hda3}
+\index{hda3 (Partition)}%
+die
+Wurzel des Dateibaumes: \cmd{/}.
+%\index{/|see{Dateibaum, Wurzel}}%
+\index{Dateibaum!Wurzel}%
+In der dritten Spalte führen wir
+jeweils das Dateisystem der Partition an.
+
+In der vierten Spalten folgen ein paar Optionen für den
+\cmd{mount}-Befehl.
+\index{mount (Programm)}%
+Hier nur ein kurzer Überblick über die oben verwendeten
+Begriffe:
+
+\begin{ospdescription}
+  \ospitem{\cmd{noatime}} Das Dateisystem soll nicht aufzeichnen, wann auf
+  \index{mount (Programm)!noatime (Option)}
+  eine Datei zugegriffen wurde (Erstellungsdatum und Zeitpunkt der letzten
+  Modifikation werden dagegen protokolliert).
+
+  \label{mountnoauto}
+  \ospitem{\cmd{noauto}} Das System wird die Partition nicht beim Booten
+  \index{mount (Programm)!noauto (Option)}
+  einbinden, sondern nur wenn der Benutzer dies explizit mit \cmd{mount}
+  anfordert.
+
+  \ospitem{\cmd{sw}} Zeigt an, dass es sich um eine Swap-Partition handelt.
+  \index{mount (Programm)!sw (Option)}
+
+  \ospitem{\cmd{nodev}} Auf dieser Partition darf es keine Gerätedateien
+  geben.
+  \index{mount (Programm)!nodev (Option)}
+
+  \ospitem{\cmd{nosiud}} Auf dieser Partition darf es keine SetUID-Programme
+  geben.
+  \index{mount (Programm)!nosuid (Option)}
+
+  \ospitem{\cmd{noexec}} Auf dieser Partition darf es keine ausführbaren
+  Programme geben.
+  \index{mount (Programm)!noexec (Option)}
+
+  \ospitem{\cmd{user}} Die Partition darf auch von normalen Benutzern mit
+  Hilfe von \cmd{mount} in das System eingebunden werden.
+  \index{mount (Programm)!user (Option)}
+\end{ospdescription}
+
+Die fünfte Spalte spielt derzeit keine Rolle und wir können sie
+grundsätzlich auf \cmd{0} setzen.
+
+Über die sechste Spalte wird festgelegt, ob und wann die Integrität
+des Dateisystems mit dem Prüfprogramm \cmd{fsck}
+\index{fsck (Programm)}%
+überprüft werden soll. Für spezielle Dateisysteme wie
+\cmd{/dev/hda2} (Swap),
+\index{hda2 (Partition)}%
+\cmd{/dev/cdrom} oder \cmd{shm}
+ist eine solche Überprüfung nicht notwendig, und die sechste Spalte
+erhält den Wert \cmd{0}.
+
+Mit \cmd{1} versieht man dagegen das Root-Dateisystem (\cmd{/},
+\index{Dateibaum!Wurzel}%
+hier \cmd{/dev/hda3}).
+\index{hda3 (Partition)}%
+Diese Partition wird dann beim Boot-Vorgang als erste auf 
+Integrität geprüft. Alle anderen Partitionen erhalten die \cmd{2} und
+werden damit von \cmd{fsck} zuletzt überprüft.
+
+Es würde an dieser Stelle zu weit führen, weiter in Einzelheiten zu
+gehen. Die oben angegebenen Standardwerte sind grundsätzlich zu
+empfehlen. Hat man weitere Partitionen definiert, dann sollte man sich
+bei diesen, bis auf den Wert in der sechsten Spalte, an den Angaben
+der Root-Partition (\cmd{/}) orientieren.
+\index{Dateibaum!Wurzel}
+\index{Dateibaum|)}
+
+\section{Netzwerk einrichten}
+
+\index{Netzwerk|(}%
+\index{Netzwerk!-verbindung|(}%
+Unabhängig davon, ob das System der LiveDVD schon eine Verbindung zum
+Netzwerk hat oder nicht, ist das neu installierte System noch nicht
+für die Verbindung zum Internet konfiguriert.
+
+Hier sind nur wenige Schritte notwendig, damit auch das neue System in
+der gleichen Weise wie die LiveDVD das Netzwerk automatisch
+detektieren kann. Außerdem ist es sinnvoll, für die fertig
+eingerichtete Maschine den Hostnamen festzulegen. Für die
+komplizierteren Fälle der Netzwerkkonfiguration sei wieder auf das
+Kapitel \ref{netconfig} ab Seite \pageref{netconfig} verwiesen.  Wer
+seine Maschine nicht im Netzwerk betreiben möchte, kann den folgenden
+Abschnitt dagegen überspringen.
+
+
+\subsection{Rechnernamen festlegen}
+
+Um den Rechner in einem Netzwerk zu betreiben, muss man zumindest den
+Rechnernamen festlegen.
+\index{Host!-namen festlegen}%
+Dieser findet sich in der Datei
+\cmd{/etc/conf.d/""hostname}
+\label{confdhostname}%
+wieder. Wir bearbeiten diese mit \cmd{nano /etc/conf.d/hostname}
+und wählen hier den Namen \cmd{gentoo}, so dass der Inhalt der Datei
+schließlich so aussieht:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /etc/conf.d/hostname}
+HOSTNAME="gentoo"
+\end{ospcode}
+\index{HOSTNAME (Variable)}%
+\index{hostname (Datei)}%
+\index{etc@/etc!conf.d!hostname}%
+
+Vergibt ein DHCP-Server
+\index{DHCP!Server}%
+im internen Netzwerk die IP-Adressen, ist keine weitere Konfiguration
+notwendig, allerdings müssen wir den DHCP-Client
+\index{DHCP!Client}%
+nachinstallieren:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge -av net-misc/dhcpcd}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] net-misc/dhcpcd-2.0.5-r1  USE="-build -debug -static" 0 
+kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+\label{firstdhcpcinstall}
+\index{dhcpcd (Paket)}%
+%\index{net-misc (Kategorie)!dhcpcd|see{dhcpcd (Paket)}}%
+
+Portage sorgt in diesem Fall von sich aus dafür, dass er gleich beim
+Booten des Systems genutzt wird, um eine IP-Adresse zu beziehen.
+\index{IP-Adresse!beziehen}%
+
+Es empfiehlt sich jedoch, den Hostnamen (mit und ohne Domänenangabe)
+für \cmd{127.0.0.1} (eigene Adresse in \cmd{IPv4}) sowie
+\cmd{::1} (eigene Adresse in \cmd{IPv6}) in die Datei
+\cmd{/etc/hosts}
+\index{hosts (Datei)}%
+\index{etc@/etc!hosts}%
+einzutragen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{nano /etc/hosts}
+\end{ospcode}
+
+Nach der Bearbeitung sollte die Datei dann ungefähr so aussehen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /etc/hosts}
+127.0.0.1     gentoo.example.net gentoo localhost
+::1           gentoo.example.net gentoo localhost
+\end{ospcode}
+
+Auf diese Weise sind wir in der Lage, uns auch dann mit unserem eigenen
+System zu verbinden (z.\,B.\ um den Apache-Webserver zu testen), wenn uns
+kein richtiges Netzwerk und kein externer
+Nameserver zur Verfügung steht.
+
+
+\subsection{\label{Netzwerkinitialisierung}Netzwerkinitialisierung beim Booten}
+
+Die Skripte innerhalb des Verzeichnisses \cmd{/etc/init.d},
+\index{init.d (Verzeichnis)}%
+\index{etc@/etc!init.d}%
+die die Netzwerkverbindung beim Systemstart initialisieren, tragen per
+Konvention den Namen \cmd{/etc/init.d/net.\cmdvar{interface}}.
+\index{net.* (Datei)}%
+\index{etc@/etc!init.d!net.*}%
+Im Normalfall existieren  nur \cmd{/etc/""init.d/""net.lo}
+\index{net.lo (Datei)}%
+\index{etc@/etc!init.d!net.lo}%
+für das Loopback-Interface
+\index{Loopback-Interface}%
+und \cmd{/etc/init.d/net.eth0}
+\index{net.eth0 (Datei)}%
+\index{etc@/etc!init.d!net.eth0}%
+für das Standardnetzwerkinterface.
+\index{Netzwerk!Interface}%
+Während \cmd{/etc/init.d/net.lo} ein\osplinebreak{} echtes Bash-Skript ist, verweist
+\cmd{/etc/""init.d/net.eth0} als Link auf \cmd{/etc/""init.d/net.lo}. Die
+zuletzt genannte Datei dient als zentrales Skript für die
+Netzwerkbehandlung;
+\index{Netzwerk!-behandlung}%
+alle anderen Schnittstellen leiten sich von \cmd{net.lo} ab. Das zu
+behandelnde Interface entnimmt das Skript aus dem Namen des Links. Wir
+gehen auch im Kapitel \ref{netconfig} noch einmal detaillierter auf diese
+Mechanismen ein.
+
+Um eine Netzwerkschnittstelle (oder mehrere) -- sofern sie denn in
+unserem Rechner existiert -- beim Boot-Vorgang automatisch in Betrieb zu
+nehmen, fügt man sie mit Hilfe von \cmd{rc-update}
+\index{rc-update (Programm)}%
+und der Option \cmd{add}
+\index{rc-update (Programm)!add (Option)}%
+zur Start-Sequenz hinzu:
+
+\label{firstrcupdate}%
+\begin{ospcode}
+\cdprompt{/}\textbf{rc-update add net.eth0 default}
+ * net.eth0 added to runlevel default
+\end{ospcode}
+\index{Runlevel!default}%
+
+Die zweite Option \cmd{net.eth0} benennt das zu startende Skript, und
+\cmd{default} bezeichnet den Standard-Boot-Vorgang. Genauer
+beschäftigen wir uns mit \cmd{rc-update} und dem Init-System in
+Kapitel \ref{initsystem} ab Seite \pageref{initsystem}.
+\index{Netzwerk|)}%
+\index{Netzwerk!-verbindung|)}%
+
+\section{Administrator-Passwort setzen} 
+
+Die Installation nähert sich dem Ende -- höchste Zeit, das
+Root-Passwort
+\index{Root Passwort}%
+%\index{Administrator!Passwort|see{Root, Passwort}}%
+zu setzen. Hierzu nutzt man einfach das von
+Passwortänderungen auf anderen Distributionen bekannte   
+Programm \cmd{passwd}:
+\index{passwd (Programm)}%
+
+\begin{ospcode}
+\cdprompt{/}\textbf{passwd}
+New UNIX password: \textbf{\cmdvar{geheimes_rootpasswort}}
+Retype new UNIX password: \textbf{\cmdvar{geheimes_rootpasswort}}
+passwd: password updated successfully
+\end{ospcode}
+
+\section{/etc/rc.conf anpassen}
+
+\index{rc.conf (Datei)|(}%
+\index{etc@/etc!rc.conf}%
+Viel Konfiguration fehlt nun nicht mehr, bis wir unser neues System
+das erste Mal starten können. Einige allgemeine Einstellungen vor
+allem in der Datei \cmd{/etc/rc.conf} sind noch notwendig, bevor wir
+die letzten Pakete installieren und schließlich rebooten können.
+
+\subsection{Standardeditor wählen} 
+
+\index{EDITOR (Variable)|(}%
+Wenn Programme von sich aus einen externen Texteditor aufrufen,
+startet bei Gentoo standardmäßig \cmd{nano}.
+\index{nano (Programm)}%
+Nutzer, die eher \cmd{vim}
+\index{vim (Programm)}%
+oder \cmd{emacs} 
+\index{emacs (Programm)}%
+gewöhnt sind, wollen dieses Verhalten in der Regel ändern -- und zwar
+in der Datei \cmd{/etc/rc.conf}:
+
+\label{editorvar}
+\begin{ospcode}
+# Set EDITOR to your preferred editor.
+# You may use something other than what is listed here.
+
+EDITOR="/bin/nano"
+#EDITOR="/usr/bin/vim"
+#EDITOR="/usr/bin/emacs"
+\end{ospcode}
+
+Allerdings sind sowohl \cmd{vim} als auch \cmd{emacs} nicht
+standardmäßig installiert und müssen hier erst mit
+
+\begin{ospcode}
+\cdprompt{/}\textbf{USE="livecd" emerge -av app-editors/vim}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-util/ctags-5.5.4-r2  0 kB 
+[ebuild  N    ] app-admin/eselect-1.0.7  USE="-bash-completion -doc"  
+0 kB 
+[ebuild  N    ] app-admin/eselect-vi-1.1.4  0 kB 
+[ebuild  N    ] app-editors/vim-core-7.0.174  USE="acl livecd nls     
+-bash-completion" 0 kB 
+[ebuild  N    ] app-editors/vim-7.0.174  USE="acl gpm nls perl python 
+-bash-completion -cscope -minimal -ruby -vim-pager -vim-with-x" 0 kB 
+
+Total: 5 packages (5 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\ldots
+\end{ospcode}
+\index{vim (Paket)}%
+%\index{app-editors (Kategorie)!vim|see{vim (Paket)}}%
+
+oder
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge -av app-editors/emacs}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-editors/emacs-21.4-r4  USE="nls -X -Xaw3d -leim 
+-lesstif -motif -nosendmail" 0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\ldots
+\end{ospcode}
+\index{emacs (Paket)}%
+%\index{app-editors (Kategorie)!emacs|see{emacs (Paket)}}%
+
+nachinstalliert werden, bevor man sie in der Datei \cmd{/etc/rc.conf}
+aktiviert. Die Angabe \cmd{USE="{}livecd"{}}
+\index{livecd (USE-Flag)}%
+%\index{USE-Flag!livecd|see{livecd (USE-Flag)}}%
+bei der
+\cmd{vim}-Installation ist nur bei der netz\-werk\-losen Installation
+notwendig, da \cmd{emerge} ansonsten ein Quellarchiv aus dem Internet
+herunterladen muss.
+
+Wer sich hier schon seinen Lieblings-Editor installiert, kann
+natürlich im Folgenden diesen statt \cmd{nano} verwenden. Wir werden
+der Einfachheit halber aber weiterhin davon ausgehen, dass alle
+Dateien mit \cmd{nano} editiert werden.  
+\index{EDITOR (Variable)|)}
+
+\section{Lokalisierung}
+
+Für den deutschen Sprachraum empfiehlt es sich, wenn möglich Unicode
+zu verwenden. Für die Unterstützung von Unicode
+\index{Unicode}%
+auf der Kommandozeile
+\index{Kommandozeile!Zeichensatz}%
+ist die Konfiguration in der Datei
+\cmd{/etc/rc.conf} zuständig, die den Unicode-Support aber
+mittlerweile standardmäßig aktiviert:
+
+\label{unicodevar}%
+\begin{ospcode}
+# UNICODE specifies whether you want to have UNICODE support in the
+# console. If you set to yes, please make sure to set a UNICODE aware
+# CONSOLEFONT and KEYMAP in the /etc/conf.d/consolefont and
+# /etc/conf.d/keymaps config files.
+
+UNICODE="yes"
+\end{ospcode}
+\index{UNICODE (Variable)}%
+\index{rc.conf (Datei)|)}%
+
+\index{keymaps (Datei)|(}%
+Wer eine deutsche Tastatur
+\index{Tastatur!deutsche}%
+benutzt, die sich dem Tastenaufdruck entsprechend verhalten soll,
+greift wieder zum Editor \cmd{nano}, um den Eintrag \cmd{KEYMAP}
+in \cmd{/etc/conf.d/keymaps}
+\label{confdkeymaps}%
+\index{etc@/etc!conf.d!keymaps}%
+zu \cmd{de-latin1}
+\index{de-latin1 (Tastaturlayout)}%
+oder \cmd{de-latin1-nodeadkeys}
+\index{de-latin1-nodeadkeys (Tastaturlayout)}%
+zu korrigieren:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /etc/conf.d/keymaps}
+KEYMAP="de-latin1-nodeadkeys"
+SET_WINDOWKEYS="no"
+EXTENDED_KEYMAPS=""
+DUMPKEYS_CHARSET=""
+\end{ospcode}
+\index{KEYMAP (Variable)}%
+\index{SET\_WINDOWKEYS (Variable)}%
+\index{EXTENDED\_KEYMAPS (Variable)}%
+\index{DUMPKEYS\_CHARSET (Variable)}%
+%\index{keymaps (Datei)!KEYMAP (Variable)|see{KEYMAP (Variable)}}%
+%\index{keymaps (Datei)!SET\_WINDOWKEYS (Variable)|see{SET\_WINDOWKEYS (Variable)}}%
+%\index{keymaps (Datei)!EXTENDED\_KEYMAPS (Variable)|see{EXTENDED\_KEYMAPS (Variable)}}%
+%\index{keymaps (Datei)!DUMPKEYS\_CHARSET (Variable)|see{DUMPKEYS\_CHARSET (Variable)}}%
+
+Die zweite Möglichkeit (\cmd{de-latin1-nodeadkeys}) deaktiviert
+"`tote"' Tasten, bei denen ein
+Tastendruck erst in Kombination mit einer zweiten Taste zu einem
+Zeichen zusammengesetzt wird. Mit ihnen kann man z.\,B.\ \cmd{à} als
+Kombination aus \taste{`} und \taste{A} schreiben.
+
+Die anderen Einstellungen bedürfen für eine einfache Tastatur keine
+weitere Modifikation und werden im Abschnitt \ref{keymaps} ab Seite
+\pageref{keymaps} detaillierter erläutert.
+\index{keymaps (Datei)|)}%
+
+Um das System weiter an den eigenen Sprachraum
+\index{Sprach!-raum}%
+anzupassen, muss man einen für das dort verwendete Alphabet passenden
+Zeichensatz und die ergänzenden Formatinformationen auswählen. Als
+Lokalisierung
+\index{Lokalisierung}%
+bezeichnet man eben diese Kombination aus den Konventionen z.\,B.\ bei
+Zahl-, Datums- oder Währungsformaten mit einem passenden Zeichensatz.
+
+\label{localegen}Die vom System unterstützten Lokalisierungen bestimmt die Datei
+\cmd{/etc/""locale.gen}.
+\index{locale.gen (Datei)|)}%
+\index{etc@/etc!locale.gen|)}%
+ Sie enthält Kombinationen aus
+Formatdefinitionen und einem zugehörigen Zeichensatz.
+\index{Zeichensatz}%
+Für den
+deutschen Sprachraum eignen sich ISO-8859-1 (ohne Euro-Zeichen),
+ISO-8859-15 (mit Euro-Zeichen) und\osplinebreak{} UTF-8:
+
+\begin{ospcode}
+de_DE ISO-8859-1
+de_DE@euro ISO-8859-15
+de_DE.UTF-8 UTF-8
+en_US ISO-8859-1
+en_US.UTF-8 UTF-8
+\end{ospcode}
+
+Hier verknüpfen wir in jeder Zeile Lokalisierungsinformationen (z.\,B.\
+\cmd{de\_DE})
+\index{de\_DE (Lokalisierung)}%
+mit einem Zeichensatz (z.\,B.\ \cmd{UTF-8}).
+\index{UTF8 (Zeichensatz)}%
+Die möglichen Kombinationen, die man hier eintragen kann,
+finden sich in \cmd{/usr/share/i18n/SUPPORTED}.
+\index{SUPPORTED (Datei)|)}%
+\index{usr@/usr!share!i18n!SUPPORTED|)}%
+Wie aus
+dieser Datei ersichtlich, gibt es nochmals eigene
+Lokalisierungsinformationen sowohl für die Schweiz (\cmd{de\_CH})
+\index{de\_CH (Lokalisierung)}%
+als
+auch Österreich (\cmd{de\_AT}).
+\index{de\_AT (Lokalisierung)}%
+Genaueres hierzu findet sich aber auch
+noch einmal in einem eigenen Kapitel zur Lokalisierung ab Seite
+\pageref{locale}.
+
+
+Aufbauend auf dieser Datei, generiert der Befehl \cmd{locale-gen}
+\index{locale-gen (Programm)}%
+die notwendigen Zeichensätze
+\index{Zeichensatz!generieren}%
+für das System, und wir sollten das Skript, nachdem wir die fünf oben 
+angegebenen Zeilen mit \cmd{nano} hinzugefügt haben, jetzt einmal aufrufen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{locale-gen}
+ * Generating 5 locales (this might take a while) with 1 jobs
+ *  (1/5) Generating en_US.ISO-8859-1 ...              [ ok ]
+ *  (2/5) Generating en_US.UTF-8 ...                   [ ok ]
+ *  (3/5) Generating de_DE.ISO-8859-1 ...              [ ok ]
+ *  (4/5) Generating de_DE.ISO-8859-15@euro ...        [ ok ]
+ *  (5/5) Generating de_DE.UTF-8 ...                   [ ok ]
+ * Generation complete
+\end{ospcode}
+
+Damit nun auch alle Programme die Unicode-Kodierung verwenden, muss
+man die entsprechenden Umgebungsvariablen setzen. Diese kann man für
+die Lokalisierung in \cmd{/etc/env.d/02locale}
+\index{02locale (Datei)|)}%
+\index{etc@/etc!env.d!02locale|)}%
+ablegen. Die Datei existiert nicht und wir können sie mit \cmd{nano
+  /etc/env.d/02locale} anlegen. Sie sollte folgenden
+Inhalt haben:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /etc/env.d/02locale}
+LANG="de_DE.utf8"
+LC_ALL="de_DE.utf8"
+\end{ospcode}
+\index{LANG (Variable)}%
+\index{LC (Variable)}%
+
+Testet man an dieser Stelle einmal die Fehlermeldung, die man erhält,
+wenn man sich eine nicht existierende Datei ansehen will, merkt man,
+dass die Fehlermeldung noch in Englisch erscheint:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{ls /fehlt}
+ls: cannot access /fehlt: No such file or directory
+\end{ospcode}
+
+Wie bereits erwähnt, aktualisiert  \cmd{env-update}
+erst nach einer Veränderung an den Dateien unter \cmd{/etc/env.d}
+\index{env.d (Verzeichnis)}%
+\index{etc@/etc!env.d}%
+die Datei \cmd{/etc/profile},
+\index{profile (Datei)}%
+\index{etc@/etc!profile}%
+so dass die neuen Einstellungen in neu gestarteten Shells zur
+Verfügung stehen. Für die aktuelle Arbeitsshell muss man sie explizit
+über \cmd{source /etc/profile} nachladen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{env-update}
+\cdprompt{/}\textbf{source /etc/profile}
+\end{ospcode}
+\index{env-update (Programm)}%
+
+Jetzt redet das System auch bereitwillig in unserer Muttersprache
+mit uns:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{ls /fehlt}
+ls: Zugriff auf /fehlt nicht möglich: Datei oder Verzeichnis nicht 
+gefunden
+\end{ospcode}
+
+\section{Letzte Pakete einspielen}
+
+Einige wenige System-Werkzeuge fehlen an dieser Stelle noch, um nach 
+dem Booten ein voll funktionsfähiges System zu haben.
+Zum einen benötigen wir ein Tool für die Protokollierung von
+System-Nachrichten, den so genannten \emph{Logger}. 
+\index{System!-protokoll}%
+\index{Logger}%
+
+Hier hat man die Auswahl zwischen \cmd{app-admin/sysklogd},
+\index{sysklogd (Paket)}%
+%\index{app-admin (Kategorie)!sysklogd|see{sysklogd (Paket)}}%
+\cmd{app-admin/""syslog-ng}
+\index{syslog-ng (Paket)}%
+%\index{app-admin (Kategorie)!syslog-ng|see{syslog-ng (Paket)}}%
+und \cmd{app-admin/metalog}.
+\index{metalog (Paket)}%
+%\index{app-admin (Kategorie)!metalog|see{metalog (Paket)}}%
+Vom Standard \cmd{app-admin/syslog-""ng} abzuweichen empfiehlt sich im
+Wesentlichen jenen, die schon Erfahrung mit einem anderen Logger
+haben. Um \cmd{app-admin/syslog-ng} zu installieren und den Logger beim Starten
+des Systems zu initialisieren, sind folgende Befehle notwendig:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge -av app-admin/syslog-ng}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-libs/libol-0.3.18  0 kB 
+[ebuild  N    ] app-admin/syslog-ng-1.6.11-r1  USE="tcpd -hardened  
+(-selinux) -static" 0 kB 
+
+Total: 2 packages (2 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\cdprompt{/}\textbf{rc-update add syslog-ng default}
+ * syslog-ng added to runlevel default
+\end{ospcode}
+\index{rc-update (Programm)}%
+\index{Runlevel!default}%
+
+An dieser Stelle installieren wir außerdem ein \emph{Cron}-System,
+\index{cron}%
+%\index{Zeit!-abhängig Prozesse starten|see{Cron-System}}%
+mit dem sich zeitabhängig Prozesse anstoßen (z.\,B.\  System-Checks durchführen, Logdateien
+archivieren etc.) lassen. Wer sich sicher
+ist, es nicht zu benötigen, kann diesen Teil überspringen.
+
+Gentoo bietet wie bei den Loggern verschiedene
+Cron-Systeme an, die alle ähnliche Funktionalität liefern,
+\label{cronchoice} darunter \cmd{sys-process/dcron},
+\index{dcron (Paket)}%
+%\index{sys-process (Kategorie)!dcron|see{dcron (Paket)}}%
+\cmd{sys-pro\-cess/fcron}
+\index{fcron (Paket)}%
+%\index{sys-process (Kategorie)!fcron|see{fcron (Paket)}}%
+oder \cmd{sys-process/vixie-cron}.
+\index{vixie-cron (Paket)}%
+%\index{sys-process (Kategorie)!vixie-cron|see{vixie-cron (Paket)}}%
+Die unterschiedlichen Implementationen nehmen sich nicht viel;
+standardmäßig empfiehlt das Gen\-too-Projekt \cmd{vixie-cron}:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge -av sys-process/vixie-cron}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-mail/mailbase-1  USE="pam" 0 kB 
+[ebuild  N    ] sys-process/cronbase-0.3.2  0 kB 
+[ebuild  N    ] mail-mta/ssmtp-2.61-r2  USE="ipv6 ssl -mailwrapper 
+-md5sum" 0 kB 
+[ebuild  N    ] sys-process/vixie-cron-4.1-r10  USE="pam -debug    
+(-selinux)" 0 kB 
+
+Total: 4 packages (4 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\cdprompt{/}\textbf{rc-update add vixie-cron default}
+ * vixie-cron added to runlevel default
+\end{ospcode}
+\index{rc-update (Programm)}
+\index{Runlevel!default}%
+
+Auch der Cron-Daemon sollte beim Booten gestartet werden. Wie man ihn
+genau nutzt, beschreiben wir in Kapitel \ref{cron} ab Seite
+\pageref{cron}.
+
+Wer auf den Festplatten-Partitionen andere Dateisysteme als
+\cmd{ext2}
+\index{ext2 (Dateisystem)}%
+oder \cmd{ext3}
+\index{ext3 (Dateisystem)}%
+verwendet muss an dieser Stelle auch noch die entsprechenden
+Werkzeuge für diese Dateisysteme installieren. Die entsprechenden
+Pakete befinden sich in der Kategorie \cmd{sys-fs}.
+\index{sys-fs (Kategorie)}%
+So benötigt z.\,B.\ XFS das Paket \cmd{sys-fs/""xfsprogs}
+\index{xfs (Dateisystem)}%
+\index{xfsprogs (Paket)}%
+%\index{sys-fs (Kategorie)!xfsprogs|see{xfsprogs (Paket)}}%
+und JFS \cmd{sys-fs/jfsutils}.
+\index{jfs (Dateisystem)}%
+\index{jfsutils (Paket)}
+%\index{sys-fs (Kategorie)!jfsutils|see{jfsutils (Paket)}}
+
+Das Gentoo-Benutzerhandbuch beschreibt an dieser Stelle auch das
+Anlegen von Benutzern; wir wollen aber erst einmal als
+\cmd{root} weiter arbeiten und dieses allgemeine Thema der Linux-Administration nicht weiter ausführen.
+
+Dass wir hier weiterhin das Administrator-Konto
+\index{Administrator}%
+verwenden sollten Sie
+allerdings als Ausnahme werten: Bei normaler Nutzung des Systems
+sollte man sich grundsätzlich als normaler Benutzer einloggen. Für
+unsere weiteren Erklärungen wäre es allerdings zu umständlich, bei
+jedem Kommando gesondert anzugeben, dass Sie dafür 
+Administrator-Rechte benötigen. Schließlich wollen wir hier gerade die
+Administration des Systems erklären.
+
+\subsection{Fertig machen zum Booten}
+
+\index{grub (Programm)|(}%
+%\index{Boot!-loader|see{grub (Programm)}}%
+\index{Boot!Konfiguration|(}%
+\label{grub}
+Fehlt nur noch der Boot-Loader: Als Standard empfiehlt
+Gentoo GRUB, den wir wie folgt installieren:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{emerge -av sys-boot/grub}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-boot/grub-0.97-r3  USE="-custom-cflags -netboot  
+-static" 0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+\index{grub (Paket)}%
+%\index{sys-boot (Kategorie)!grub|see{grub (Paket)}}%
+
+Die Konfigurationsdatei legt man mit \cmd{nano} unter
+\cmd{/boot/grub/grub.conf}
+\index{grub.conf (Datei)}%
+%\index{boot@/boot!grub!grub.conf|see{grub.conf (Datei)}}%
+an, und sie sollte in der Minimalkonfiguration so aussehen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{cat /boot/grub/grub.conf}
+default 0
+timeout 30
+
+title=Gentoo Linux
+root (hd0,0)
+kernel /kernel-genkernel-x86-2.6.19-gentoo-r5 root=/dev/ram0 init=/linu\textbackslash
+xrc ramdisk=8192 real_root=/dev/hda3 udev
+initrd /initramfs-genkernel-x86-2.6.19-gentoo-r5
+\end{ospcode}
+\index{grub.conf (Datei)!root (Option)}%
+\index{grub.conf (Datei)!kernel (Option)}%
+
+
+Dabei muss die Kernel-Bezeichnung dem Namen der mit \cmd{genkernel}
+installierten Kernel-Datei entsprechen.  Um den korrekten Dateinamen
+herauszufinden, wirft man einen Blick ins Verzeichnis \cmd{/boot}:
+\index{boot (Verzeichnis)}%
+%\index{boot@/boot|see{boot (Verzeichnis)}}%
+
+\begin{ospcode}
+\cdprompt{/}\textbf{ls /boot}
+System.map-genkernel-x86-2.6.19-gentoo-r5
+initramfs-genkernel-x86-2.6.19-gentoo-r5
+grub
+kernel-genkernel-x86-2.6.19-gentoo-r5
+\end{ospcode}
+\index{kernel-* (Datei)}%
+%\index{boot@/boot!kernel-*|see{kernel-* (Datei)}}%
+\index{System.map-* (Datei)}%
+%\index{boot@/boot!System.map-*|see{System.map-* (Datei)}}%
+\index{initramfs-* (Datei)}%
+%\index{boot@/boot!initramfs-*|see{initramfs-* (Datei)}}%
+
+Die aufgezeigte Konfiguration orientiert sich am auf Seite
+\pageref{Partitionsschema} erstellten einfachen
+Partitionierungsschema, das \cmd{/dev/hda1}
+\index{hda1 (Partition)}%
+als \cmd{/boot} und \cmd{/dev/hda3}
+\index{hda3 (Partition)}%
+\index{boot (Verzeichnis)}%
+als Root-Partition verwendet. \cmd{/boot} machen wir mit \cmd{root
+  (hd0,0)}
+\index{hd0,0 (Partition)}%
+\index{grub.conf (Datei)!root (Option)}%
+zur Basispartition von GRUB und geben den Dateinamen des Kernels
+demnach relativ zu \cmd{/boot} an. Entsprechend heißt es \emph{nicht}
+\cmd{/boot/kernel-\cmdvar{version}}, sondern nur
+\cmd{/kernel-\cmdvar{version}}. Die Root-Partition übergeben wir dem
+Kernel beim Start als Parameter \cmd{real\_root=/dev/hda3}.
+\index{grub.conf (Datei)!kernel (Option)}%
+\index{Boot-Parameter}%
+
+Die übrigen Parameter für den Kernel (\cmd{root=/dev/ram0},
+\index{Boot-Parameter!root (Option)}%
+\cmd{init=/linuxrc},
+\index{Boot-Parameter!init (Option)}%
+\cmd{ramdisk=8192}
+\index{Boot-Parameter!ramdisk (Option)}%
+und \cmd{udev})
+\index{Boot-Parameter!udev (Option)}%
+erlauben es,
+sich über ein kleines Hilfssystem, die \emph{initiale Ramdisk},
+\index{Ramdisk}%
+in das
+eigentliche System zu hangeln. Die initiale Ramdisk liegt ebenfalls im
+Boot-Verzeichnis als \cmd{initramfs-genkernel-""x86-2.6.19-gentoo-r5}
+\index{initramfs-* (Datei)}%
+und
+wird mit der Option \cmd{initrd}
+\index{grub.conf (Datei)!initrd (Option)}%
+in der \cmd{grub.conf}
+\index{grub.conf (Datei)}%
+für den
+Boot-Prozess verfügbar gemacht und beim Booten in den Speicher geladen.
+
+Damit der Kernel die Datei auch wirklich verwendet, müssen wir ihm mit
+\cmd{root=/dev/ram0}
+\index{Boot-Parameter!root (Option)}%
+angeben, dass er zunächst auf Basis der Ramdisk
+booten soll. \cmd{ramdisk=8192}
+\index{Boot-Parameter!ramdisk (Option)}%
+bezeichnet dabei die Größe der
+Datei. Die Angabe \cmd{init=/linuxrc}
+\index{Boot-Parameter!init (Option)}%
+verweist auf eine in der Ramdisk
+abgelegte Datei, die sich um den Systemstart auf Basis der Ramdisk
+kümmert und dafür sorgt, dass zusätzliche Module für die
+Hardware-Unterstützung geladen werden. \cmd{udev}
+\index{Boot-Parameter!udev (Option)}%
+gibt darüber hinaus
+an, dass die Ramdisk auf Basis der dynamischen Geräteverwaltung
+\cmd{udev} arbeiten soll, so dass die Geräte des Systems wenn möglich
+automatisch erkannt werden.
+
+Diese hier angegebene einfache GRUB-Konfiguration aktiviert keine
+grafischen Features wie z.\,B. ein Hintergrundbild,
+\index{Boot!Hintergrundbild}%
+das das System beim Booten zeigt, die man auf Server-Systemen ohnehin
+nicht braucht.  Wir gehen im nächsten Kapitel unter \ref{splashscreen}
+ab Seite \pageref{splashscreen} kurz darauf ein, aber für komplexere
+Konfigurationen sollte man die GRUB-Dokumentation zu Rate
+ziehen.\footnote{Eine ausführliche Erklärung zur GRUB-Konfiguration
+  bietet auch Anke Börnig in ihrem ebenfalls bei Open Source Press
+  erschienenen Buch "`LPIC-2"', ISBN 978-3-937514-20-8.}
+
+Wer ein Dual-Boot-System mit Windows installieren möchte, muss an
+dieser Stelle an die im Anhang unter \ref{dualbootgrub} beschriebene
+zusätzliche GRUB-Konfiguration zurückkehren.
+
+GRUB erlaubt es, die angebotenen Boot-Varianten einfach über das
+Boot-Menü zu editieren. So kann man bei Bedarf die übergebenen
+Kernel"=Parameter oder auch den zu startenden Runlevel (siehe Kapitel
+\ref{initsystem} ab Seite \pageref{initsystem}) ändern, indem man über
+die Taste \taste{E} in den Editiermodus
+\index{grub (Programm)!Editiermodus}%
+wechselt. Das hilft einerseits bei Boot-Problemen, ebnet aber auch einem
+böswilligen Angreifer den Weg ins System. Wer sich hier
+absichern möchte, fügt im Kopf der GRUB-Konfiguration die
+\cmd{password}-Option hinzu:
+
+\begin{ospcode}
+password \cmdvar{mehrsicherheit}
+\end{ospcode}
+\index{grub.conf (Datei)!password (Option)}%
+
+\cmd{grub} wird das angegebene Passwort dann beim Wechsel in den
+Editiermodus abfragen.
+
+Damit bleibt abschließend nur noch, den neuen Boot-Sektor zu
+schreiben. Dafür muss GRUB wissen, welche Partitionen derzeit
+gemountet sind. Diese Information ist im Chroot-System nicht
+verfügbar, man kann sie aber problemlos zugänglich machen, indem man
+sie aus \cmd{/proc/mounts}
+\index{mounts (Datei)}%
+%\index{proc@/proc!mounts|see{mounts (Datei)}}%
+ausliest und in die Datei \cmd{/etc/mtab}
+\index{mtabs (Datei)}%
+\index{etc@/etc!mtabs}%
+schreibt:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{grep -v rootfs /proc/mounts > /etc/mtab}
+\end{ospcode}
+
+Den Boot-Sektor schreibt nun der folgende Befehl:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{grub-install --no-floppy /dev/hda}
+Probing devices to guess BIOS drives. This may take a long time.
+Installation finished. No error reported.
+This is the contents of the device map /boot/grub/device.map.
+Check if this is correct or not. If any of the lines is incorrect,
+fix it and re-run the script `grub-install'.
+
+(hd0)/dev/hda
+\end{ospcode}
+\index{grub-install (Programm)}%
+\index{hda (Festplatte)}%
+
+Hier hält die Option \cmd{-{}-no-floppy} den Befehl
+\index{grub-install (Programm)!no-floppy (Option)}%
+\cmd{grub-install} davon ab, Zeit für die Suche nach einem
+Diskettenlaufwerk zu verschwenden.
+
+Damit können wir die \cmd{chroot}-Umgebung verlassen; der neue
+Server sollte sich nun booten lassen:
+
+\begin{ospcode}
+\cdprompt{/}\textbf{exit}
+\cdprompt{\textasciitilde}\textbf{reboot}
+\end{ospcode}
+\index{exit (Programm)}%
+\index{reboot (Programm)}%
+\index{grub (Programm)|)}%
+\index{Boot!Konfiguration|)}%
+
+Vergessen Sie nicht, die LiveDVD aus dem Laufwerk zu nehmen, damit Ihr
+Rechner auch wirklich von der Festplatte bootet.
+
+\ospvacat
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 
+
+% LocalWords:  doc zoneinfo

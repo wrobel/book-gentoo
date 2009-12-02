@@ -1,0 +1,1383 @@
+\chapter{\label{netconfig}Die Netzwerkkonfiguration}
+
+\index{Netzwerk!-konfiguration|(}%
+%\index{Konfiguration!Netzwerk|see{Netzwerk, -konfiguration}}%
+Mit Gentoo dauerhaft ohne Netzwerkverbindung arbeiten zu wollen ist
+natürlich nicht empfehlenswert. Das liegt vor allem daran, dass 
+für die Installation neuer Pakete auch die Quellen %
+\index{Quellarchiv}%
+benötigt werden, und auf der LiveDVD %
+\index{LiveDVD}%
+ist nur eine begrenzte Auswahl enthalten. Insgesamt umfassen die
+Quellen für alle in der Gentoo-Distribution enthaltenen Pakete
+ca.~50~GB.
+
+Darüber hinaus verändert sich der Portage-Baum mit seinen
+Paket"=Definitionen kontinuierlich, und Updates gibt es im Abstand von
+Minuten. %
+\index{Portage!aktualisieren}%
+Wie bei dieser Frequenz eine vernünftige Strategie zur Aktualisierung
+aussieht, erläutern wir in Kapitel \ref{howtoupdate} ab Seite
+\pageref{howtoupdate}. Ohne Netzwerkverbindung können wir jedoch in keinem
+Fall von neueren Versionen profitieren.
+
+Also sollten wir an dieser Stelle zusehen, dass wir unseren frisch
+installierten Rechner mit einer Verbindung ins Internet ausstatten.
+Das Betriebssystem bemüht sich, wie bereits erwähnt, schon selbständig
+darum. Wer also schon zu diesem Zeitpunkt problemlos auf Seiten im Internet
+zugreifen kann sollte zum nächsten
+Kapitel springen und kann hierher zurückkehren, falls eine komplexere
+Konfiguration des Netzwerks ansteht.
+
+Für ein funktionierendes Netzwerk sind drei Komponenten
+korrekt zu konfigurieren:
+
+\begin{osplist}
+\item der Kernel
+\item die Init-Skripte in \cmd{/etc/init.d}
+\item die eigentliche Konfigurationsdatei \cmd{/etc/conf.d/net}
+\end{osplist}
+
+Mit dem Kernel haben wir uns schon im vorigen Kapitel auseinander
+gesetzt und  gehen  davon aus, dass er
+so konfiguriert ist, dass zumindest eine
+Netzwerkschnittstelle  unterstützt und korrekt angesprochen
+wird. Der Befehl \cmd{ifconfig -a} %
+\index{ifconfig (Programm)!a (Option)}%
+sollte also mindestens eine andere Schnittstelle als \cmd{lo} %
+\index{lo (Netzwerkschnittstelle)}%
+anzeigen (siehe auch Seite \pageref{ifconfig}). Die Option \cmd{-a}
+bringt \cmd{ifconfig} dazu, auch Schnittstellen anzuzeigen, die noch
+nicht konfiguriert wurden.
+
+Aber kümmern wir uns hier zunächst einmal um den zweiten
+Punkt: die Skripte in \cmd{/etc/init.d}, mit deren Hilfe wir
+eine Netzwerkschnittstelle starten bzw.\  stoppen.
+
+\section{Das Init-Skript einer Netzwerkschnittstelle}
+
+Unter \ref{Netzwerkinitialisierung} auf Seite
+\pageref{Netzwerkinitialisierung} haben wir erwähnt, dass
+\cmd{/etc/init.d/net.lo} %
+\index{net.lo (Datei)}%
+\index{etc@/etc!init.d!net.lo}%
+das zentrale Init-Skript ist, auf das letztlich jede
+Netzwerkschnittstelle %
+\index{Netzwerk!-schnittstelle}%
+zurückgreift. An der Benennung lässt sich schon erkennen, dass
+\cmd{net.lo} für die Initialisierung des Loopback-Interface %
+%\index{Loopback-Interface|see{lo (Netzwerk Interface)}}%
+\index{lo (Netzwerkschnittstelle)}%
+zuständig ist. Weitere Schnittstellen können wir nach dem
+Schema \cmd{/etc/init.d/net.\cmdvar{interface}} hinzufügen. Jedes neue
+Skript dieser Art ist eine symbolische Verknüpfung auf \cmd{net.lo}.
+\index{Verknüpfung!symbolische}%
+
+Nehmen wir an, es gibt eine zusätzliche Schnittstelle \cmd{eth1} im
+System, %
+\index{eth1 (Netzwerk Interface)}%
+so würden wir das zugehörige Skript folgendermaßen erstellen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cd /etc/init.d}
+\rprompt{init.d}\textbf{ln -s net.lo net.eth1}
+\rprompt{init.d}\textbf{ls -la net.*}
+lrwxrwxrwx 1 root root   6 22. Jan 11:08 /etc/init.d/net.eth0 -> net.lo
+lrwxrwxrwx 1 root root  18 25. Jan 10:28 /etc/init.d/net.eth1 -> /etc/i
+nit.d/net.lo
+-rwxr-xr-x 1 root root 30522  6. Apr 2007  /etc/init.d/net.lo
+\rprompt{init.d}\textbf{cd \textasciitilde}
+\rprompt{\textasciitilde}\textbf{}
+\end{ospcode}
+\index{ln (Programm)}%
+\index{init.d (Verzeichnis)}%
+\index{net.eth1 (Datei)}%
+\index{etc@/etc!init.d!net.eth1}%
+
+Mehr ist für das Init-Skript nicht zu tun. Es lässt sich nun mit den
+Kommandos \cmd{start}, \cmd{stop}, \cmd{restart} %
+\index{net.eth1 (Datei)!start (Option)}%
+\index{net.eth1 (Datei)!stop (Option)}%
+\index{net.eth1 (Datei)!restart (Option)}%
+etc. verwenden. Näheres dazu findet sich im Kapitel \ref{initsystem}
+ab Seite \pageref{initsystem}.
+
+Wollen wir die neue Schnittstelle beim Booten aktivieren, %
+\index{Boot!Netzwerkschnittstelle}%
+müssen wir sie zur Standard-Startsequenz hinzufügen (siehe Seite
+\pageref{firstrcupdate} und \pageref{initsystem}):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{rc-update add net.eth1 default}
+ * net.eth1 added to runlevel default
+\end{ospcode}
+\index{rc-update (Programm)}%
+\index{rc-update (Programm)!add (Option)}%
+\index{ln (Programm)}%
+\index{Runlevel!default}%
+
+Die eigentliche Konfiguration für die unter \cmd{init.d} %
+\index{init.d (Verzeichnis)}%
+angelegten Schnittstellen finden sich dann in den
+Konfigurationsdateien \cmd{/etc/conf.d/net} und
+\cmd{/etc/conf.d/wireless}.
+
+\section{Die automatisierte Konfiguration: net-setup}
+
+\index{net-setup (Programm)|(}%
+Schon auf der LiveDVD gibt es ein kleines Werkzeug namens
+\cmd{net-setup}, 
+mit dem sich eine sehr einfache Netzwerkkonfiguration
+automatisiert %
+\index{Netzwerk!automatisch konfigurieren}%
+erstellen lässt. Sein Funktionsumfang ist sehr
+begrenzt, aber wer davon ausgeht, dass sich der neue Rechner
+recht einfach in die Netzwerkumgebung einfügen müsste, und keine Lust
+hat, die Konfigurationsdateien zu editieren, der kann das Paket
+\cmd{app-misc/livecd-tools} %
+\index{livecd-tools (Paket)}%
+%\index{app-misc (Kategorie)!livecd-tools|see{livecd-tools (Paket)}}%
+nun installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-misc/livecd-tools}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-apps/pciutils-2.2.3-r2  0 kB 
+[ebuild  N    ] dev-util/dialog-1.0.20050206  USE="unicode" 0 kB 
+[ebuild  N    ] app-misc/livecd-tools-1.0.35-r1  USE="-X -opengl" 0 kB 
+
+Total: 3 packages (3 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+
+Damit lässt sich das Programm über \cmd{net-setup} aufrufen.
+Wir landen in einem rudimentären grafischen System, über das wir
+erkannte Netzwerkschnittstellen auswählen und konfigurieren. Wir
+entscheiden jeweils, ob diese  kabel- %
+\index{Netzwerk!LAN}%
+oder WLAN-basiert %
+\index{Netzwerk!WLAN}%
+ist und ob 
+sie eine IP-Adresse im Netzwerk per DHCP %
+\index{DHCP}%
+%\index{Netzwerk!DHCP|see{DHCP}}%
+bezieht.
+
+Je nach Auswahl müssen mehr oder weniger Parameter definiert werden,
+und \cmd{net-setup} erstellt auf dieser Grundlage im Anschluss
+automatisch die Datei \cmd{/etc/conf.d/net}, %
+\index{net (Datei)}%
+so dass wir uns nicht um das korrekte Format kümmern müssen.
+
+Wir wollen aber natürlich etwas tiefer in die Netzwerkkonfiguration
+einsteigen und es ermöglichen, den Rechner auch in einer eher
+ungewöhnlichen Netzwerkumgebung ans Netz zu bekommen.
+\index{net-setup (Programm)|)}%
+
+\section{/etc/conf.d/net\label{confdnet}}
+
+\index{net (Datei)|(}%
+\index{etc@/etc!conf.d!net}%
+Die Konfiguration für jedwede Netzwerkschnittstelle eines
+Gentoo-Systems befindet sich in \cmd{/etc/conf.d/net}. Im
+Ursprungszustand enthält diese Datei die folgenden Zeilen:
+
+\begin{ospcode}
+# This blank configuration will automatically use DHCP for any net.*
+# scripts in /etc/init.d.  To create a more complete configuration,
+# please review /etc/conf.d/net.example and save your configuration
+# in /etc/conf.d/net (this file :]!).
+\end{ospcode}
+\index{DHCP}%
+
+Gentoo versucht beim Aktivieren einer Netzwerkschnittstelle zunächst
+alle benötigten Informationen per DHCP (\emph{Dynamic Host
+  Configuration Protocol}) zu beziehen, wenn 
+\cmd{/etc/conf.d/net} keine anderen Anweisungen enthält. %
+\index{DHCP}%
+Im einfachsten Fall ist damit eine
+Schnittstelle %
+\index{Netzwerk!-konfiguration}%
+ordnungsgemäß zu konfigurieren und in Betrieb zu nehmen.
+
+Wir wollen hier nur die häufigsten Varianten der Netzwerkkonfiguration
+beschreiben, da die Szenarien in diesem Bereich vor allem unter
+Linux  sehr vielfältig sind. Für spezifischere Fragen bietet sich
+die Beispiel-Datei
+\cmd{/etc/conf.d/net.example} %
+\index{net.example (Datei)}%
+\index{etc@/etc!conf.d!net.example}%
+an, die einige Konfigurationsoptionen auflistet
+und knapp erklärt.
+
+\subsection{\label{netbasics}Grundlegendes}
+
+\index{Netzwerk!-konfiguration}%
+Die einzelnen Schnittstellen konfigurieren wir primär über die
+Variablen des Typs
+\cmd{config\_\cmdvar{Schnittstelle}}. Dieser
+kann sehr unterschiedliche Werte enthalten, und die
+Netzwerkschnittstellen lassen sich so entsprechend der Hardware korrekt
+initialisieren. Die folgenden Zeilen sind zum Beispiel gültige
+Einträge für \cmd{/etc/conf.d/net}.
+
+\begin{ospcode}
+config_eth0=( "dhcp" )
+config_eth1=( "192.168.178.2 netmask 255.255.255.0" )
+config_eth2=( "noop" "192.168.0.2/24" )
+\end{ospcode}
+\index{config\_eth0 (Variable)}%
+
+Ein weiterer, allgemein gültiger Mechanismus für die Beeinflussung
+der Netzwerkkonfiguration ist die Auswahl von Netzwerk-Modulen. Dies
+kann generell für alle Schnittstellen über die Variable \cmd{modules}
+geschehen oder spezifisch für eine Schnittstelle in der gleichen Art
+und Weise wie oben über \cmd{modules\_\cmdvar{Schnittstelle}}. %
+\index{Netzwerk!Modul}%
+
+\begin{ospcode}
+modules=( "dhcpclient" "!iwconfig" )
+modules_eth0=( "dhcpcd" )
+\end{ospcode}
+\index{modules (Variable)}%
+\index{modules\_eth0 (Variable)}%
+
+Alle weiteren notwendigen Parameter hängen dann von der spezifischen
+Konfigurationsvariante und den gewählten Modulen ab. Die
+gebräuchlichsten Varianten wollen wir im Folgenden beleuchten.
+
+\section{DHCP}
+
+\index{DHCP|(}%
+%\index{Netzwerk!DHCP|see{DHCP}}%
+Den Standardfall der Netzwerkkonfiguration stellt das \emph{Dynamic
+  Host Configuration Protocol} (DHCP) dar. Klinken wir unseren Rechner
+in ein Netzwerk ein, in dem es einen DHCP-Server %
+\index{DHCP!Server}%
+gibt, so ist das System in der Lage, über eine anfangs unkonfigurierte
+Netzwerkschnittstelle eine allgemeine Anfrage nach den korrekten
+Konfigurationswerten in das Netz zu
+senden. Der DHCP-Server ist im nächsten Schritt dafür zuständig,
+ die notwendigen Daten, wie z.\,B.\
+die IP-Adresse, %
+\index{IP-Adresse!per DHCP}%
+an unseren Rechner zurück zu schicken. Diese Angaben dienen
+unserem System dann zur vollautomatischen Konfiguration der
+Netzwerkverbindung.
+
+Wie bereits erwähnt, ist der Standardfall -- nämlich gar keine Angabe
+zur Konfiguration einer Schnittstelle in \cmd{/etc/conf.d/net} -- über
+DHCP abgedeckt. Wir können die Verwendung von DHCP aber auch explizit
+für eine Schnittstelle definieren bzw. anfordern:
+
+\begin{ospcode}
+config_eth0=( "dhcp" )
+\end{ospcode}
+\index{DHCP!auswählen}%
+\index{config\_eth0 (Variable)}%
+\index{eth0 (Netzwerk Interface)}%
+
+Ganz von alleine spricht Linux allerdings kein DHCP. Dafür ist ein
+spezifisches Programm notwendig, das mit dem DHCP-Protokoll umgehen
+kann. Standardmäßig haben wir in Kapitel \ref{firstdhcpcinstall} ab
+Seite \pageref{firstdhcpcinstall} das Paket \cmd{net-misc/""dhcpcd} als
+DHCP-Client installiert, %
+\index{dhcpcd (Paket)}%
+%\index{net-misc (Kategorie)!dhcpcd|see{dhcpcd (Paket)}}%
+das die Netzwerkskripte im Normalfall nutzen.
+Es gibt allerdings noch drei alternative Clients, und zwar
+\cmd{dhclient} (Paket \cmd{net-misc/dhcp}), %
+\index{dhcp (Paket)}%
+%\index{net-misc (Kategorie)!dhcp|see{dhcp (Paket)}}%
+\cmd{pump} (Paket \cmd{net-misc/pump}) %
+\index{pump (Paket)}%
+%\index{net-misc (Kategorie)!pump|see{pump (Paket)}}%
+und \cmd{udhcpc} (Paket \cmd{net-misc/udhcp}). %
+\index{udhcp (Paket)}%
+%\index{net-misc (Kategorie)!udhcp|see{udhcp (Paket)}}%
+
+Möchte man einem dieser drei Pakete den Vorzug geben,
+muss man es  über \cmd{emerge} installieren
+und gleichzeitig das zugehörige Netzwerk-Modul in
+\cmd{/etc/conf.d/net} aktivieren. Folgendes würde \cmd{dhclient}
+auswählen:
+
+\begin{ospcode}
+modules=( "dhclient" )
+\end{ospcode}
+\index{modules (Variable)}%
+\index{dhclient (Modul)}%
+
+Wir werden dieser Art, Module in \cmd{/etc/conf.d/net} zu
+aktivieren, noch einige Male begegnen. Wie bereits erwähnt,
+kann man diese Module auch schnittstellenspezifisch
+zuweisen:
+
+\begin{ospcode}
+modules_eth0=( "dhcpcd" )
+modules_eth1=( "dhclient" )
+\end{ospcode}
+
+\index{DHCP!Timeout|(}%
+Jeder Client besitzt eigene Optionen, %
+\index{DHCP!Optionen}%
+die sich ebenfalls in der Netzwerk-Konfigurationsdatei
+festlegen lassen. Häufig definiert wird z.\,B.\ der
+Parameter für den Timeout, bis zu dem der Client eine Antwort des
+DHCP-Servers erwartet. Bei \cmd{dhcpcd} %
+\index{dhclient (Programm)}%
+legen wir diese Zeitspanne mit der Option \cmd{-t} %
+\index{dhclient (Programm)!Timeout (Option)}%
+fest und spezifizieren dies in \cmd{/etc/conf.d/net} folgendermaßen:
+
+\begin{ospcode}
+dhcpcd_eth0="-t 10"
+\end{ospcode}
+\index{dhcpcd\_eth0 (Variable)}%
+
+Damit wird als Option für das \cmd{dhcpcd}-Modul beim Initialisieren
+der \cmd{eth0}-Schnittstelle der Timeout-Wert auf 10 Sekunden gesetzt.
+Erhält der Client nach 10 Sekunden keine Antwort vom Server,
+betrachtet er die automatische Konfiguration als fehlgeschlagen.
+Standardmäßig liegt dieser Wert bei 20 Sekunden, was den Boot-Vorgang
+verzögern kann, wenn kein Netzwerkkabel angeschlossen oder kein
+DHCP-Server zur Verfügung steht. %
+\index{DHCP!Antwort}%
+
+\subsection{DHCP-Timeout}
+
+\index{Netzwerk!nicht verfügbar}%
+Fehlt das Netzwerkkabel, hilft eine DHCP-Anfrage %
+\index{DHCP!Anfrage}%
+nicht weiter. Der DHCP-Client wird sein Signal vergeblich senden und
+mit Sicherheit keine Antwort erhalten. Sofern die Netzwerkkarte
+überhaupt nicht mit einem Kabel an einen Netzwerk-Hub %
+\index{Netzwerk!-kabel}%
+\index{Netzwerk!Hub}%
+angeschlossen ist, sollte man auf die entsprechende Anfrage ganz
+verzichten. Hier kommt das ab Seite \pageref{netplug}
+besprochene \cmd{netplug} %
+\index{netplug (Paket)}%
+ins Spiel.
+
+Ist ein Netzwerkkabel angeschlossen, aber kein DHCP-Server
+verfügbar, %
+\index{DHCP!Server fehlt}%
+lässt sich zwar die DHCP-Anfrage senden, aber auf Antwort wartet der
+Rechner ebenso vergeblich. Befindet sich unsere Maschine konstant im
+Netzwerk, vergeben wir die IP-Adressen %
+\index{IP-Adresse}%
+am besten statisch %
+\index{IP-Adresse!statisch}%
+nach der ab Seite \pageref{staticip} beschriebenen Methode.
+
+Laptops %
+\index{Laptop}%
+befinden sich gelegentlich in Netzen mit DHCP-Server, dann wieder in
+einer Umgebung, in der es dieses Hilfsmittel nicht gibt. Die notwendige
+Konfiguration beschreiben wir im Folgenden.
+
+\subsubsection{Fehlender DHCP-Server}
+
+Auch in einem Netz ohne DHCP-Server ist es sinnvoll, eine
+IP-Adresse %
+\index{IP-Adresse!statisch}%
+zu vergeben und den Rechner damit ansprechbar zu machen. Gerade mobile
+Geräte sollten also für den Bedarfsfall eine statische Adresse
+erhalten. Das lässt sich mit Hilfe einer \emph{Fallback}-Adresse %
+\index{IP-Adresse!Fallback}%
+\index{Netzwerk!ohne DHCP}%
+erreichen:
+
+\begin{ospcode}
+fallback_eth0=( "192.168.178.2 netmask 255.255.255.0" )
+fallback_route_eth0=( "default via 192.168.178.1" )
+\end{ospcode}
+\index{fallback\_eth0 (Variable)}%
+\index{fallback\_route\_eth0 (Variable)}%
+
+Das Format für diese Fallback-Adresse ist dasselbe wie für die Vergabe
+statischer Adressen, %
+\index{IP-Adresse!statisch}%
+und wir schauen es uns in Kapitel \ref{staticip} nochmals
+genauer an.
+
+Gibt es im Netz keinen DHCP-Server, versagt die automatische
+Konfiguration und die Netzwerkschnittstelle würde im Normallfall nicht
+initialisiert. Ist die Fallback-Adresse gesetzt, setzen die
+Netzwerkskripte nach dem Time\-out die festgelegte statische
+Konfiguration.
+
+\subsection{\label{netplug}netplug}
+
+\index{netplug (Paket)|(}%
+Fehlt die Verbindung zum Netzwerk %
+\index{Netzwerk!-kabel fehlt}%
+schon auf physikalischer Ebene, ist der Versuch, die
+Netzwerkschnittstelle zu konfigurieren bzw.\ DHCP-Anfragen %
+\index{DHCP!Anfrage}%
+in das Netz zu schicken, sinnlos. Bleibt die Frage, ob wir das
+Fehlen des Kabels detektieren können.
+
+Ethernet-Karten bauen auch im Ruhezustand ein Carrier-Signal %
+\index{Netzwerk!Carrier-Signal}%
+zum Hub %
+\index{Netzwerk!Hub}%
+auf, sobald ein Kabel %
+\index{Netzwerk!-kabel}%
+die beiden verbindet. Dieses Signal kann der Kernel erkennen,
+sofern die Treiber der Netzwerkkarte dies unterstützen. Das Paket
+\cmd{sys-apps/netplug} %
+\index{netplug (Paket)}%
+%\index{sys-apps (Kategorie)!netplug (Paket)|see{netplug (Paket)}}%
+liefert den \cmd{netplugd}-Service, %
+\index{netplugd (Programm)}%
+der die verfügbaren Netzwerkschnittstellen konstant überwacht und
+hochfährt, sobald der Kernel das Carrier-Signal erkennt. Eine Alternative zu
+\cmd{sys-apps/netplug} ist \cmd{sys-apps/ifplugd}. %
+\index{ifplugd (Paket)}%
+%\index{sys-apps (Kategorie)!ifplugd (Paket)|see{ifplugd (Paket)}}%
+
+
+Wir installieren hier \cmd{sys-apps/netplug}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-apps/netplug}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-apps/netplug-1.2.9-r3  0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+\index{netplug (Paket)}%
+
+Im Grunde brauchen wir keine weitere Konfiguration, %
+\index{netplugd (Programm)!Konfiguration}%
+denn die Netzwerk-Skripte erkennen das Paket und verwenden es
+automatisch. \cmd{netplugd} %
+\index{netplugd (Programm)}%
+funktioniert denkbar einfach: Sobald das Programm auf einer der
+überwachten Schnittstellen eine Veränderung des
+Carrier-Signals erkennt, startet bzw.\ stoppt es diese
+über das \cmd{/etc/init.d}-Skript. %
+\index{init.d (Verzeichnis)}%
+Sämtliche Konfigurationen in \cmd{/etc/conf.d/net}
+sind weiterhin gültig.
+
+Wer \cmd{netplugd} nicht einsetzen möchte, %
+\index{netplugd (Programm)!deaktivieren}%
+obwohl das Paket installiert ist, schließt das Modul in
+\cmd{/etc/conf.d/net} aus:
+
+\begin{ospcode}
+modules=( "!netplug" )
+\end{ospcode}
+\index{modules (Variable)}%
+
+Mit dieser Syntax lässt sich das Modul auch für
+einzelne Schnittstellen deaktivieren:
+
+\begin{ospcode}
+modules_eth0=( "!netplug" )
+\end{ospcode}
+\index{modules\_eth0 (Variable)}%
+
+Auch \cmd{ifplugd} %
+\index{ifplugd (Programm)}%
+verwendet diese Syntax; mit der allgemeinen Bezeichnung
+\cmd{plug} spricht man beide Module zugleich an:
+
+\begin{ospcode}
+modules=( "!plug" )
+\end{ospcode}
+\index{plug (Modul)}%
+
+Hier sind die Plug-Services für alle
+Netzwerkschnittstellen unterbunden.
+Sie können \cmd{netplugd} %
+\index{netplugd (Programm)}%
+auch nur für bestimmte Netzwerkschnittstellen verwenden,  indem Sie
+\cmd{/etc/netplug/netplugd.conf} %
+\index{netplugd.conf (Datei)}%
+\index{etc@/etc!netplug!netplugd.conf (Datei)}%
+modifizieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/netplug/netplugd.conf}
+eth*
+\end{ospcode}
+\index{netplugd.conf (Datei)}%
+
+Soll der Service nur für einzelne Schnittstellen aktiviert sein,
+listet man diese auf:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/netplug/netplugd.conf}
+eth0
+eth2
+\end{ospcode}
+\index{netplugd.conf (Datei)}%
+\index{netplug (Paket)|)}%
+\index{DHCP!Timeout|)}%
+\index{DHCP|)}%
+
+\section{\label{staticip}Statische IP}
+
+\index{IP-Adresse!statisch|(}%
+Wer im Netzwerk keinen DHCP-Server betreibt, kann einzelnen Rechnern
+Adressen auch statisch zuweisen; neben der IP-Adresse ist die Angabe
+der \emph{Netmask} %
+\index{Netzwerk!-maske}%
+\index{Subnetz}%
+%\index{Netmask|see{Netzwerk, -maske}}%
+notwendig. Diese zeigt an, für welche Bereiche des Netzwerks kein
+Routing notwendig ist.% %
+\index{Routing}%
+
+Nehmen wir an, wir wollen unserem Rechner die Adresse
+\cmd{192.168.178.2} geben und alle Rechner 
+\cmd{192.168.178.*} sind Teil des lokalen Netzwerks,
+so lautet der Eintrag:
+
+\begin{ospcode}
+config_eth0=( "192.168.178.2 netmask 255.255.255.0" )
+\end{ospcode}
+\index{config\_eth0 (Variable)}%
+
+Verkürzt lässt sich die IP-Adresse in Kombination mit der
+Netzwerkmaske\footnote{\cmd{http://de.wikipedia.org/wiki/Subnetz}} %
+%\index{Netmask|see{Netzwerkmaske}}%
+auch so darstellen:
+
+\begin{ospcode}
+config_eth0=( "192.168.178.2/24" )
+\end{ospcode}
+\index{config\_eth0 (Variable)}%
+
+Für IP-Adressen, die nicht mit \cmd{192.168.178} starten, wird der
+Rechner dann versuchen, einen Router %
+\index{Router}%
+\index{Routing}%
+anzusprechen. In der obigen Konfiguration fehlt aber noch die Angabe,
+wie dieser Router zu erreichen ist. Das erreichen wir mit einem Eintrag
+\cmd{routes\_\cmdvar{Schnittstelle}}.
+
+\begin{ospcode}
+routes_eth0=( "default via 192.168.178.1" )
+\end{ospcode}
+\index{routes\_eth0 (Variable)}%
+\index{Router!default}%
+
+Hier ist der Standard-Gateway in andere Bereiche des Internets der
+Rechner mit der IP \cmd{192.168.178.1}.
+
+Es spricht nichts dagegen, weitere Einträge für die
+Routing-Tabelle anzugeben. %
+\index{Routing!Tabelle}%
+
+\begin{ospcode}
+routes_eth0=( "default via 192.168.178.1"
+              "10.0.0.0/8 via 192.168.178.100" )
+\end{ospcode}
+\index{routes\_eth0 (Variable)}%
+
+Hier sprechen wir das Subnetz \cmd{10.*.*.*} %
+\index{Subnetz}%
+über den Rechner mit der IP \cmd{192.168.178.100} an. Alle anderen
+Verbindungen in die Außenwelt laufen über \cmd{192.168.178.1}.
+\index{IP-Adresse!statisch|)}%
+
+\section{Modem}
+
+\index{Modem|(}%
+\index{Modem!konfigurieren|(}%
+Zur Unterstützung eines analogen Modems muss das Paket
+\cmd{net-dialup/""ppp} %
+\index{ppp (Paket)}%
+installiert sein. Dieses liefert das Verbindungstool \cmd{pppd}, %
+\index{pppd (Programm)}%
+das die Kommunikation mit der Gegenstelle abwickelt.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av net-dialup/ppp}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-dialup/ppp-2.4.4-r4  USE="ipv6 pam -activefilter 
+-atm -dhcp -eap-tls -gtk -mppe-mppc -radius" 0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+\index{ppp (Paket)}%
+%\index{net-dialup (Kategorie)!ppp|see{ppp (Paket)}}%
+
+Außerdem sollte man überprüfen, ob der Kernel %
+\index{Kernel}%
+das \emph{Point-to-Point}"=Protokoll (PPP) %
+\index{point-to-point Protokoll (PPP)}%
+aktiviert hat; sehen wir uns dazu im Verzeichnis \cmd{/usr/src/linux} mit
+\cmd{make menuconfig} die Kerneloptionen an, und zwar unter
+\menu{Device Drivers\sm Network Device Support\sm PPP (point-to-point
+  protocol) support}. %
+\index{genkernel (Programm)}%
+\label{makemenuconfig}
+\index{linux (Verzeichnis)}%
+\index{usr@/usr/src/linux}%
+\index{Kernel!Konfiguration}%
+
+
+Müssen wir die Konfiguration ändern, %
+\index{Kernel!Modem aktivieren}%
+greifen wir wieder auf \cmd{genkernel} %
+\index{genkernel (Programm)}%
+zurück und kompilieren den Kernel neu:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{genkernel --menuconfig --kernname=ppp --no-clean all}
+\end{ospcode}
+
+Anschließend können wir das Modul \cmd{ppp} %
+\index{ppp (Modul)}%
+einer Netzwerkschnittstelle %
+\index{Netzwerk!Modem}%
+zuweisen, beispielsweise \cmd{ppp0}. %
+\index{ppp0 (Netzwerk Interface)}%
+In \cmd{/etc/conf.d/net} fügen wir folgende Zeile ein, damit die Kommunikation über diese Schnittstelle per
+PPP %
+\index{point-to-point Protokoll (PPP)}%
+erfolgt:
+
+\begin{ospcode}
+config_ppp0=( "ppp" )
+\end{ospcode}
+\index{config\_ppp0 (Variable)}%
+
+Gleichzeitig benötigen wir das Init-Skript für die Schnittstelle und
+erstellen den entsprechenden Link unter \cmd{/etc/init.d/}.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ln -s /etc/init.d/net.lo /etc/init.d/net.ppp0}
+\end{ospcode}
+\index{init.d (Verzeichnis)}%
+\index{net.lo (Datei)}%
+\index{net.ppp0 (Datei)}%
+\index{etc@/etc!init.d!net.ppp0}%
+\index{Modem!Schnittstelle erzeugen}%
+
+Da die meisten Modemzugänge in das Internet zeitbasiert abrechnen,
+wollen wir die Schnittstelle %
+\index{Netzwerk!-schnittstelle}%
+vermutlich nur bei Bedarf aktivieren und sie nicht über
+\cmd{rc-update} %
+\index{rc-update (Programm}%
+zum Boot-Vorgang hinzufügen.
+
+Nun fehlt noch die eigentliche Konfiguration für die Schnittstelle,
+\index{Netzwerk!-schnittstelle}%
+insbesondere der Gerätename für das Modem. \cmd{pppd} %
+\index{pppd (Programm)}%
+benötigt diesen für die Kommunikation mit der Gegenstelle. Er lautet
+meist \cmd{/dev/ttyS0} (für eine serielle Schnittstelle), und wir legen
+ihn über den Parameter \cmd{link\_\cmdvar{Schnittstelle}} fest.
+
+\begin{ospcode}
+link_ppp0=( "/dev/ttyS0" )
+\end{ospcode}
+\index{link\_ppp0 (Variable)}%
+\index{ttyS0 (Datei)}%
+%\index{dev@/dev!ttyS0|see{ttyS0 (Datei)}}%
+\index{Modem!Gerät wählen}%
+
+Darüber hinaus benötigen wir  die Telefonnummer des Providers
+sowie Benutzernamen und Passwort. Nehmen wir  an, wir
+wählen uns bei Arcor ein:
+
+\begin{ospcode}
+phone_number_ppp0=( "01920787" )
+username_ppp0="arcor"
+password_ppp0="internet"
+\end{ospcode}
+\index{phone\_number\_ppp0 (Variable)}%
+\index{username\_ppp0 (Variable)}%
+\index{password\_ppp0 (Variable)}%
+\index{Modem!Provider wählen}%
+
+Der \cmd{pppd}-Daemon %
+\index{pppd (Programm)}%
+akzeptiert zahlreiche Optionen, die über die
+Variable \cmd{pppd\_\cmdvar{Schnittstelle}} in der Datei
+\cmd{/etc/conf.d/net} für jede Modem-Verbindung separat
+definiert werden können.
+
+\begin{ospcode}
+pppd_ppp0=( 
+        "defaultroute"
+        "usepeerdns"
+        "debug"
+        "noauth"
+)
+\end{ospcode}
+\index{pppd\_ppp0 (Variable)}%
+\index{pppd (Programm)!Optionen}%
+
+\cmd{defaultroute} %
+\index{pppd (Programm)!defaultroute (Option)}%
+bestimmt die Modem-Verbindung als Standard-Gateway zur
+Außenwelt. 
+
+\cmd{usepeerdns} %
+\index{pppd (Programm)!usepeerdns (Option)}%
+sorgt dafür, dass \cmd{pppd} die DNS-Parameter vom Provider abfragt
+und in die Datei \cmd{/etc/resolv.conf} %
+\index{resolv.conf (Datei)}%
+schreibt. Die meisten Provider liefern die DNS-Konfiguration
+automatisiert, und darum sollte die Option üblicherweise
+aktiviert sein.
+
+\cmd{debug} %
+\index{pppd (Programm)!debug (Option)}%
+kann vor allem beim ersten Testen der Verbindung sinnvoll sein, um bei
+Problemen einen Hinweis auf die Ursache im System-Log %
+\index{System!Log} zu erhalten. %
+\index{Modem!debuggen}
+
+\cmd{noauth} %
+\index{pppd (Programm)!noauth (Option)}%
+verhindert, dass \cmd{pppd} vom Provider eine Authentifizierung
+verlangt, die ein allgemeiner Internetprovider auch nicht liefert.
+
+\index{Chat-Skript|(}%
+Zu guter Letzt fehlt noch ein so genanntes \emph{Chat-Skript}. %
+%\index{Modem!Chat-Skript|see{Chat-Skript}}%
+Dieses kümmert sich um den Ablauf der Kommunikation über die
+\cmd{pppd}-Verbindung %
+\index{pppd (Programm)}%
+und sieht folgendermaßen aus:
+
+\osppagebreak
+
+\begin{ospcode}
+chat_ppp0=(
+	'ABORT' 'BUSY'
+	'ABORT' 'ERROR'
+	'ABORT' 'NO ANSWER'
+	'ABORT' 'NO CARRIER'
+	'ABORT' 'NO DIALTONE'
+	'ABORT' 'Invalid Login'
+	'ABORT' 'Login incorrect'
+	'TIMEOUT' '5'
+	'' 'ATZ'
+	'OK' 'ATDT{\textbackslash}T'
+	'TIMEOUT' '60'
+	'CONNECT' ''
+	'TIMEOUT' '5'
+	'~--' ''
+)
+\end{ospcode}
+\index{chat\_ppp0 (Variable)}%
+\index{Chat-Skript|)}%
+\index{Modem!konfigurieren|)}%
+\index{Modem|)}%
+
+\section{WLAN}
+
+\index{WLAN!konfigurieren|(}%
+Den WLAN-Zugang unter Linux einzurichten war lange Zeit ein Abenteuer,
+weil Treiber  gar nicht oder nur im
+experimentellen Stadium zur Verfügung standen. Mittlerweile hat sich
+die Situation verbessert, aber manche  Geräte treiben Nutzer immer noch
+zur Verzweiflung. Sofern die Möglichkeit besteht, sollte man
+sich vor dem Kauf der Hardware nach verfügbaren Treibern umsehen. %
+\index{WLAN!Hardwareunterstützung}%
+\index{WLAN!Treiber}%
+Denn setzt man Hardware ein, die sich problemlos
+unter Linux ansprechen lässt, ist auch die Konfiguration meist
+leicht zu bewältigen.
+Hier wollen wir zunächst noch einmal kurz auf die Kernelkonfiguration
+zurückkommen.
+
+\subsection{WLAN-Treiber}
+
+\index{WLAN!Treiber|(}%
+Im einfachsten Fall ist ein Treiber in der \menu{Wireless}-Sektion der
+Kernel-Treiber verfügbar. Wie in \ref{makemenuconfig} beschrieben,
+schauen wir uns die entsprechende Sektion in der
+Kernel-Konfiguration %
+\index{Kernel!-konfiguration}%
+\index{linux (Verzeichnis)}%
+an: \menu{Device Drivers\sm Network Device Support\sm Wireless LAN
+  (non-hamradio)}.
+\index{Kernel!Konfiguration|(}%
+\index{Wireless LAN}%
+%\index{Kernel!Wireless LAN (Option)|see{Wireless LAN}}%
+\index{Kernel!Konfiguration|)}%
+
+Hier muss in jedem Fall die Option \menu{Wireless LAN
+  drivers} aktiviert sein, %
+\index{Kernel!WLAN aktivieren}%
+andernfalls ist die Treiberauswahl nicht verfügbar.  Mit den hier
+aufgelisteten Treibern hat man die höchsten Chancen, die eigene
+Hardware nervenschonend zum Laufen zu bringen.
+
+Passt jedoch keiner der gelisteten Treiber auf das eigene Modell,
+bleibt noch die Auswahl der Kernelmodule der Kategorie
+\cmd{net-wireless}. %
+\index{net-wireless (Kategorie)}%
+Wir suchen hier einmal mit \cmd{grep} %
+\index{grep (Programm)}%
+nach der Markierung \cmd{linux-mod} %
+\index{Kernel!externe Module}%
+in den Ebuilds. Damit identifizieren wir Pakete, die einen
+Kernel-Treiber bereitstellen. Aus der resultierenden Liste schneiden
+wir den Paketnamen mit \cmd{cut} %
+\index{cut (Programm)}%
+heraus und bemühen \cmd{uniq}, %
+\index{uniq (Programm)}%
+damit jeder Name wirklich nur einmal gelistet wird:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{grep linux-mod /usr/portage/net-wireless/**/*.ebuild | \textbackslash}
+> \textbf{cut -f 5 -d "/" | uniq}
+acx
+adm8211
+at76c503a
+fwlanusb
+hostap-driver
+ieee80211
+ipw2100
+ipw2200
+ipw3945
+linux-wlan-ng
+linux-wlan-ng-modules
+madwifi-ng
+madwifi-old
+mcs7780
+ndiswrapper
+orinoco
+prism54
+ralink-rt61
+rfswitch
+rt2400
+rt2500
+rt2570
+rt2x00
+rt61
+rtl8180
+rtl8187
+zd1201
+zd1211
+\end{ospcode}
+
+Diese Treiber weisen als externe Kernel-Module %
+\index{Kernel!externe Module}%
+in den meisten Fällen nicht die gleiche Stabilität wie die
+integrierten Treiber auf, und folglich ist hier eher mit Problemen zu
+rechnen.
+
+Verwendet man eines dieser Module, darf man nicht vergessen, in der oben
+angegebenen Kernel-Sektion die allgemeine Option \menu{Wireless LAN
+  drivers} zu aktivieren. Andernfalls unterstützt der Kernel kein WLAN
+und das externe Modul kann nicht korrekt arbeiten.
+
+Eine Sonderstellung nimmt das Paket
+\cmd{net-wireless/""ndiswrapper} %
+\index{ndiswrapper (Paket)}%
+%\index{net-wireless (Kategorie)!ndiswrapper (Paket)|see{ndiswrapper    (Paket)}}%
+ein. Es ist soz. der letzte Rettungsanker für die
+WLAN-Hardware-Unterstützung, wenn alle anderen Maßnahmen fehlschlagen.
+Dieses Modul erlaubt die Nutzung der für alle WLAN-Karten natürlich
+verfügbaren Windows-Treiber %
+\index{Windows!Treiber}%
+\index{WLAN!Windows-Treiber}%
+innerhalb des Linux-Kernels. Das klingt abenteuerlicher
+als es  ist, und dieses Verfahren der
+Hardware-Ansteuerung führt recht häufig zum Erfolg.
+Wir haben uns bereits im vorigen Kapitel auf Seite
+\pageref{ndiswrapper} mit dem Paket beschäftigt, als es um zusätzliche
+Kernel-Module ging. Hier wollen wir uns mit der Funktionalität des
+Paketes beschäftigen.
+
+\begin{netnote}
+  \label{lastchancendiswrapper}%
+  Leider ist der Quellcode zu \cmd{net-wireless/ndiswrapper} %
+  \index{ndiswrapper (Paket)}%
+  nicht auf der LiveDVD vorhanden, so dass Sie eine schon bestehende
+  Netzwerkverbindung für die Installation benötigen. Sollte die
+  WLAN-Karte der einzige Weg sein, die Maschine ins Netz zu
+  bekommen, sollten sie sich das
+  Quellpaket\footnote{\cmd{ndiswrapper-1.33.tar.gz} von
+    \cmd{http://ndiswrapper.sourceforge.net/}} einzeln herunterladen
+  und in \cmd{/usr/portage/distfiles} legen.
+\end{netnote}
+\index{WLAN!Treiber|)}%
+
+\subsubsection{net-wireless/ndiswrapper}
+
+\index{ndiswrapper (Paket)|(}%
+Der Windows-Treiber %
+\index{Windows!Treiber}%
+besteht aus einer \cmd{*.sys}- und einer \cmd{*.inf}-Datei, die wir
+gegebenenfalls noch entpacken und in einem Verzeichnis ablegen müssen.
+Anschließend stehen die Dateien \cmd{ndiswrapper} zur Verfügung.  Wir haben
+sie im folgenden Beispiel in \cmd{/tmp/wlan} platziert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{la /tmp/wlan}
+-rw-r--r--  1 wrobel users   8398 2007-02-27 00:27 PRISMA00.inf
+-rw-r--r--  1 wrobel users 380736 2007-02-27 00:27 PRISMA00.sys
+\rprompt{\textasciitilde}\textbf{ndiswrapper -i /tmp/wlan/PRISMA00.inf}
+\end{ospcode}
+\index{PRISMA00.inf (Datei)}%
+\index{PRISMA00.sys (Datei)}%
+
+Mit der Option \cmd{-i} %
+\index{ndiswrapper (Programm)!i (Option)}%
+installieren wir einen Windows-Treiber, der
+damit zur Verfügung steht, so dass \cmd{ndiswrapper}
+die Karte beim Startvorgang erkennt. Damit das Modul
+automatisch geladen wird, fügen wir es zu der Datei
+\cmd{/etc/modules.autoload.d/kernel-2.6} %
+\index{kernel-2.6 (Datei)}%
+hinzu (bzw. \cmd{kernel-2.4}, %
+\index{kernel-2.4 (Datei)}%
+wenn man einen älteren Kernel verwendet).
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo "ndiswrapper" >> /etc/modules.autoload.d/kernel-2.6}
+\end{ospcode}
+\index{kernel-2.6 (Datei)}%
+\index{ndiswrapper (Paket)|)}%
+
+\subsection{WLAN-Konfiguration: iwconfig oder wpa\_supplicant}
+
+Es gibt zwei Wege der WLAN-Konfiguration: über \cmd{iwconfig} oder mit
+Hilfe von \cmd{wpa\_supplicant}. Mit letzterem lassen sich auch
+WPA-verschlüsselte Netzwerke nutzen, und es ist aufgrund der
+Sicherheitsproblematik bei Funk\-netzwerken vorzuziehen.
+
+Die Konfiguration über \cmd{iwconfig} erfolgt in der bereits bekannten Datei
+\cmd{/etc/conf.d/net}, während \cmd{wpa\_supplicant} davon
+leider abweicht. Wir wollen hier beide Alternativen beschreiben.
+
+\subsubsection{iwconfig}
+
+\index{iwconfig (Programm)|(}%
+Das Programm \cmd{iwconfig} installieren wir über das Paket
+\cmd{net-wireless/""wireless-tools}. %
+\index{wireless-tools (Paket)}%
+%\index{net-wireless (Kategorie)!wireless-tools  (Paket)|see{wireless-tools (Paket)}}%
+Wer sich mit einem unverschlüsselten %
+\index{WLAN!unverschlüsselt}%
+oder über WEP (\emph{Wired Equivalent Privacy}) %
+%\index{WEP|see{WLAN, WEP}}%
+\index{WLAN!WEP}%
+verschlüsselten Netzwerk verbinden möchte, installiert das Paket hier:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av net-wireless/wireless-tools}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-wireless/wireless-tools-28  USE="nls -multicall" 0 k
+B 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\end{ospcode}
+
+\cmd{iwconfig} sollte in der Lage sein, vorhandene
+WLAN-Schnittstellen %
+\index{WLAN!Schnittstellen anzeigen}%
+anzuzeigen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{iwconfig}
+lo        no wireless extensions.
+
+eth0      no wireless extensions.
+
+wlan0     IEEE 802.11b/g  ESSID:""
+          Mode:Managed  Channel:0  Access Point: Not-Associated   
+          Encryption key:off
+          Link Quality:0  Signal level:0  Noise level:0
+          Rx invalid nwid:0  Rx invalid crypt:0  Rx invalid frag:0
+          Tx excessive retries:0  Invalid misc:0   Missed beacon:0
+\end{ospcode}
+
+Die Karte \cmd{wlan0} %
+\index{wlan0 (Netzwerkschnittstelle)}%
+\index{WLAN!Schnittstellen, wlan0}%
+ist noch nicht konfiguriert, und wir bearbeiten dazu wieder
+\cmd{/etc/conf.d/net}.  In den meisten Fällen ist die Konfiguration
+recht simpel, und wir werden hier auch nicht auf Sonderfälle eingehen,
+von denen viele in der Datei \cmd{/etc/conf.d/wireless.example} %
+\index{wireless.example (Datei)}%
+\index{etc@/etc!conf.d!wireless.example}%
+ausführlich diskutiert werden.
+
+Im einfachsten Fall genügt es, für die
+Netzwerkschnittstelle den Einsatz von \cmd{iwconfig} %
+\index{iwconfig (Modul)}%
+und für einen bestimmten WLAN-Netzwerk-Namen
+die SSID (\emph{Service Set Identifier}) sowie %
+%\index{SSID|see{WLAN, SSID}}%
+\index{WLAN!SSID}%
+einen Schlüssel %
+\index{WLAN!Schlüssel}%
+festzulegen:
+
+\begin{ospcode}
+modules=( "iwconfig" )
+key_GENTOO=( "s:\cmdvar{meingeheimerschlüssel}" )
+\end{ospcode}
+\index{modules (Variable)}%
+\index{key\_SSID (Variable)}%
+\index{iwconfig (Modul)}%
+
+Wie bereits ausgeführt, lassen sich diese Modulangaben bei Bedarf auch
+schnittstellenspezifisch treffen.
+
+In der zweiten Zeile definieren wir für das WLAN-Netzwerk mit der
+SSID %
+\index{WLAN!SSID}%
+\cmd{GENTOO} den Schlüssel. %
+\index{WLAN!Schlüssel}%
+Dieser ist hier als String %
+\index{WLAN!Schlüssel, String}%
+angegeben (daher das führende \cmd{s:}). Wir könnten den Schlüssel
+auch als Zahlenfolge in der Form
+\cmd{1234-1234-1234-1234-1234-1234-56} %
+\index{WLAN!Schlüssel, Zahlenfolge}%
+angeben.
+
+Bei kabelgebundenen Netzwerken handelt es sich vielfach um
+längerfristige Verbindungen. Die notwendigen Parameter (IP-Adresse, %
+\index{IP-Adresse}%
+DHCP etc.) %
+\index{DHCP}%
+sind oft abhängig von der jeweiligen Schnittstelle, weshalb wir
+den Parameter mit \cmd{config\_eth0} spezifizieren.
+
+Bei einer WLAN-Schnittstelle können das Netzwerk und die dafür
+notwendigen Parameter deutlich schneller wechseln, und es ist darum
+wenig sinnvoll, sich auf den Namen der Netzwerkschnittstelle zu
+beziehen.  Der Name des WLAN-Netzwerks verspricht da mehr Konstanz.
+Aus diesem Grunde lassen sich die bisher bekannten Variablen nicht nur
+mit dem Schnittstellennamen verknüpfen, sondern auch mit der SSID. %
+\index{WLAN!SSID}%
+
+Um also festzulegen, dass wir im Netzwerk \cmd{GENTOO} 
+DHCP %
+\index{DHCP}%
+\index{WLAN!DHCP}%
+einsetzen, schreiben wir:
+
+\begin{ospcode}
+config_GENTOO=( "dhcp" )
+\end{ospcode}
+\index{config\_SSID (Variable)}%
+
+Analog ist das Vorgehen bei anderen Parametern, die wir bei der
+Konfiguration einer Netzwerkschnittstelle bereits kennen gelernt
+haben.% %
+\index{iwconfig (Programm)|)}%
+
+\subsubsection{wpa\_supplicant}
+
+\index{wpa\_supplicant (Programm)|(}%
+Für WPA-verschlüsselte (\emph{Wi-Fi Protected Access}) %
+\index{WPA}%
+%\index{WLAN!WPA|see{WPA}}%
+Netzwerke benötigen wir das Paket \cmd{net-wireless/wpa\_supplicant} %
+\index{wpa\_supplicant (Paket)}%
+%\index{net-wireless (Kategorie)!wpa\_supplicant  (Paket)|see{wpa\_supplicant (Paket)}}%
+und installieren es  mit
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av net-wireless/wpa_supplicant}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-wireless/wpa_supplicant-0.5.7  USE="readline ssl 
+-dbus -gnutls -gsm -madwifi -qt3 -qt4" 0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+
+Nur ein kleiner Teil der notwendigen Konfiguration unseres Netzwerks
+gehört in die Datei \cmd{/etc/conf.d/net}:
+
+\begin{ospcode}
+modules=( "wpa_supplicant" )
+wpa_supplicant_wlan0="-Dwext"
+\end{ospcode}
+\index{modules (Variable)}%
+\index{wpa\_supplicant\_wlan0 (Variable)}%
+
+Mit der ersten Zeile bestimmen wir, dass der Zugriff auf ein WPA-gesichertes
+Netzwerk erfolgt.
+In der zweiten Zeile geben wir Optionen  mit
+auf den Weg, von denen jene für den Treiber-Typ (\cmd{-D}) die wichtigste ist. %
+\index{wpa\_supplicant (Programm)|D (Option)|(}%
+
+\index{net (Datei)|)}%
+
+\cmd{wpa\_supplicant} %
+\index{wpa\_supplicant (Programm)}%
+unterstützt nur eine begrenzte Zahl an Treiber-Typen. Die genaue Liste
+erhalten wir über die Hilfe des Programms:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{wpa_supplicant -h}
+\ldots
+
+drivers:
+  wext = Linux wireless extensions (generic)
+  hostap = Host AP driver (Intersil Prism2/2.5/3)
+  prism54 = Prism54.org driver (Intersil Prism GT/Duette/Indigo)
+  atmel = ATMEL AT76C5XXx (USB, PCMCIA)
+  ndiswrapper = Linux ndiswrapper
+  ipw = Intel ipw2100/2200 driver (old; use wext with Linux 2.6.13 or ne
+wer)
+  wired = wpa_supplicant wired Ethernet driver
+
+\ldots
+\end{ospcode}
+\index{wpa\_supplicant (Programm)!h (Option)}%
+
+Hier ein Beispiel aus der Praxis, in dem wir einen USB-WLAN-Stick testen, %
+\index{WLAN!USB}%
+der vom Treiber \cmd{net-wireless/fwlanusb} %
+\index{fwlanusb (Paket)}%
+%\index{net-wireless (Kategorie)!fwlanusb (Paket)|see{fwlanusb    (Paket)}}%
+unterstützt wird. Dieser wiederum beherrscht die \emph{Wireless
+  Extensions} %
+\index{Kernel!wireless extensions}%
+%\index{WLAN!wireless extensions|see{Kernel, wireless extensions}}%
+von Linux, so dass wir \cmd{wpa\_suppli\-cant}  die
+Option \cmd{-Dwext} %
+\index{wpa\_supplicant (Programm)|D (Option)!wext (Option)}%
+\index{WLAN!wext}%
+mit auf den Weg geben.
+Dass der WLAN-Stick %
+\index{WLAN!USB}%
+diesen Treiber %
+\index{WLAN!Treiber|(}%
+\index{Netzwerk!Treiber|(}%
+benötigt, haben wir zuvor der Dokumentation
+des Paketes \cmd{net-wire\-less/fwlanusb} %
+\index{fwlanusb (Paket)}%
+entnommen.
+
+Wenn der Kernel die WLAN-Karte aber nun eigenständig erkannt hat, so
+lässt sich die Frage, welcher Treiber denn die WLAN-Karte überhaupt
+bedient, nicht ganz so einfach beantworten. Hilfe bietet das Paket \cmd{sys-apps/""ethtool}: %
+\index{ethtool (Paket)}%
+%\index{sys-apps (Kategorie)!ethtool (Paket)|see{ethtool (Paket)}}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-apps/ethtool}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] sys-apps/ethtool-4  0 kB 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+
+Wir wollen uns hier nur eine Option des Programms \cmd{ethtool} %
+\index{ethtool (Programm)}%
+ansehen: \cmd{-{}-driver} %
+\index{ethtool (Programm)!driver (Option)}%
+(bzw.\ \cmd{-i}). %
+\index{ethtool (Programm)!i (Option)}%
+Diese liefert den Namen des Treibers zu unserer Netzwerkschnittstelle:
+\index{WLAN!prism54}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ethtool -i eth1}
+driver: prism54
+version: 1.2
+firmware-version: 
+bus-info: 
+\end{ospcode}
+
+Bei dieser Karte wäre also die Option \cmd{-Dprism54} %
+\index{wpa\_supplicant (Programm)|D (Option)!prism54 (Option)}%
+ für \cmd{wpa\_supplicant} die richtige Wahl.
+\index{wpa\_supplicant (Programm)|D (Option)|)}%
+\index{Netzwerk!Treiber|)}%
+\index{WLAN!Treiber|)}%
+
+\index{wpa\_supplicant (Programm)!Konfiguration|(}%
+Zwar sind die Vorarbeiten in
+\cmd{/etc/conf.d/net} abgeschlossen, aber der Hauptteil der
+Konfiguration erfolgt in
+\cmd{/etc/wpa\_supplicant/""wpa\_""sup\-plicant.conf}. %
+\index{wpa\_supplicant.conf (Datei)}%
+\index{etc@/etc!wpa\_supplicant!wpa\_supplicant.conf}%
+Leider gibt es recht viele Konfigurationsvarianten, die wir
+hier nicht alle besprechen können. Eine dokumentierte
+Beispieldatei findet sich unter
+\cmd{/usr/share/doc/wpa\_supplicant-0.5.7/wpa\_suppli\-cant.""conf.bz2} %
+\index{wpa\_supplicant.conf.bz2 (Datei)}%
+%\index{usr@usr!share!doc!wpa\_supplicant-0.5.7!wpa\_supplicant.conf.bz2|see{wpa\_supplicant.conf.bz2    (Datei)}}%
+(wenn die Version
+\cmd{net-wireless/wpa\_supplicant-0.5.7} installiert ist).
+
+Wir gehen hier nur beispielhaft auf eine mögliche Variante ein:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/wpa_supplicant/wpa_supplicant.conf}
+network=\{
+        ssid="GENTOO"
+        key_mgmt=WPA-PSK
+        proto=WPA2
+        pairwise=CCMP
+        group=CCMP
+        psk="1234567890123456"
+\}
+\end{ospcode}
+\index{wpa\_supplicant.conf (Datei)}%
+
+Das umschließende Statement \cmd{network=\{\ldots\}} %
+\index{wpa\_supplicant.conf (Datei)!network (Variable)}%
+zeigt an, dass es sich um den Zugang zu einem
+WLAN-System handelt. Wir können mehrere solcher Blocks
+definieren, und \cmd{wpa\_supplicant} geht sie der Reihe nach
+durch, bis das Programm ein Netzwerk findet, zu dem sich eine Verbindung
+aufbauen lässt.
+
+Den Netzwerknamen (die SSID) %
+\index{WLAN!SSID}%
+legen wir hier mit \cmd{ssid} %
+\index{wpa\_supplicant.conf (Datei)!ssid (Variable)}%
+fest. Die Angabe ist zwingend notwendig; in unserem Beispiel heißt
+das Netzwerk \cmd{GENTOO}.
+
+Der \cmd{key\_mgmt}-Eintrag %
+\index{wpa\_supplicant.conf (Datei)!key\_mgmt (Variable)}%
+legt die Schlüssel-Methode fest. Standardmäßig hat diese Option den
+Wert \cmd{WPA-PSK WPA-EAP} %
+\index{wpa\_supplicant.conf (Datei)!key\_mgmt (Variable), WPA-PSK (Option)}%
+\index{wpa\_supplicant.conf (Datei)!key\_mgmt (Variable), WPA-EAP (Option)}%
+und akzeptiert damit sowohl Pre-Shared-Key-Verfahren (PSK) %
+\index{WLAN!PSK}%
+%\index{Pre-Shared-Key|see{WLAN, PSK}}%
+als auch erweiterte Authentifizierungsprotokolle (\emph{Extensible
+  Authentication Protocol}, EAP). %
+\index{WLAN!EAP}%
+In den meisten Fällen kommt der Pre-Shared-Key %
+\index{WLAN!PSK}%
+zum Einsatz, und wir beschränken die Verbindung hier mit
+\cmd{key\_mgmt=WPA-PSK} %
+\index{wpa\_supplicant.conf (Datei)!key\_mgmt (Variable), WPA-PSK  (Option)}%
+auf dieses Verfahren. Wer \cmd{wpa\_suppli\-cant} für WEP-Verbindungen %
+\index{WLAN!WEP}%
+einsetzen möchte, muss \cmd{key\_mgmt} explizit auf \cmd{NONE} %
+\index{wpa\_supplicant.conf (Datei)!key\_mgmt (Variable), NONE  (Option)}%
+setzen.
+
+Im Beispiel bietet das WLAN-Netz WPA2-Verschlüsselung, %
+\index{WLAN!WPA2}%
+%\index{WPA2|see{WLAN, WPA2}}%
+und so akzeptieren wir dieses Protokoll in
+\cmd{proto}. %
+\index{wpa\_supplicant.conf (Datei)!proto (Variable)}%
+\index{wpa\_supplicant.conf (Datei)!proto (Variable), WPA2 (Option)}%
+WPA2 verschlüsselt über
+\cmd{CCMD}\footnote{\cmd{http://en.wikipedia.org/wiki/CCMP}}, %
+\index{WLAN!CCMP}%
+und darum müssen wir diese Methode sowohl für \cmd{pairwise}
+(\emph{Unicast}; Punkt-zu-Punkt-IP-Verkehr) %
+\index{wpa\_supplicant.conf (Datei)!pairwise (Variable)}%
+\index{wpa\_supplicant.conf (Datei)!pairwise (Variable), CCMD  (Option)}%
+als auch \cmd{group} (\emph{Broadcast}, \emph{Multicast};
+Punkt-zu-Gruppe-IP-Verkehr) %
+\index{wpa\_supplicant.conf (Datei)!group (Variable)}%
+\index{wpa\_supplicant.conf (Datei)!group (Variable), CCMD (Option)}%
+angeben. Das ältere WPA %
+\index{WLAN!WPA}%
+%\index{WPA|see{WLAN, WPA}}%
+setzt auf
+TKIP\footnote{\cmd{http://en.wikipedia.org/wiki/Temporal\_Key\_Integrity\_Protocol}} %
+\index{WLAN!TKIP}%
+als Verschlüsselungsverfahren, und die Einträge müssen für ein
+WPA-verschlüsseltes WLAN-Netzwerk wie folgt aussehen:
+
+\begin{ospcode}
+\ldots
+        key_mgmt=WPA-PSK
+        proto=WPA
+        pairwise=TKIP
+        group=TKIP
+\ldots
+\end{ospcode}
+\index{wpa\_supplicant.conf (Datei)}%
+\index{wpa\_supplicant.conf (Datei)!proto (Variable)}%
+\index{wpa\_supplicant.conf (Datei)!proto (Variable), WPA (Option)}%
+\index{wpa\_supplicant.conf (Datei)!pairwise (Variable)}%
+\index{wpa\_supplicant.conf (Datei)!pairwise (Variable), TKIP  (Option)}%
+\index{wpa\_supplicant.conf (Datei)!group (Variable)}%
+\index{wpa\_supplicant.conf (Datei)!group (Variable), TKIP (Option)}%
+
+Schließlich das Wichtigste: der Pre-Shared-Key %
+\index{WLAN!PSK}%
+\index{WLAN!Schlüssel}%
+in der Option \cmd{psk}. %
+\index{wpa\_supplicant.conf (Datei)!psk (Variable)}%
+
+Wir haben hier die meisten Werte explizit gesetzt, aber mit etwas
+Glück ist \cmd{wpa\_supplicant} auch in der Lage, Parameter
+selbständig zu ermitteln. Wir definieren dann lediglich den Netznamen und
+den Schlüssel. Das geht allerdings nur, wenn wir über WPA(2) %
+\index{WLAN!WPA}%
+\index{WLAN!WPA2}%
+verschlüsseln und nicht WEP:% %
+\index{WLAN!WEP}%
+
+\begin{ospcode}
+network=\{
+        ssid="gentoo"
+        psk="1234567890123456"
+\}
+\end{ospcode}
+\index{wpa\_supplicant.conf (Datei)!ssid (Variable)}%
+\index{wpa\_supplicant.conf (Datei)!psk (Variable)}%
+
+Damit bleibt nur zu hoffen, dass Ihr System spätestens jetzt
+erfolgreich mit dem Internet in Verbindung steht, so dass wir uns
+nun  mit den Dingen beschäftigen, die Gentoo eigentlich
+ausmachen.
+
+\index{wpa\_supplicant (Programm)!Konfiguration|)}%
+\index{wpa\_supplicant (Programm)|)}%
+\index{Netzwerk!-konfiguration|)}
+\index{WLAN!konfigurieren|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

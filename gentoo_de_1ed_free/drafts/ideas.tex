@@ -1,0 +1,116 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Ideen für evtl. neuauflage des projektes %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Mögliche weitere Themen:
+%  - buildhosts
+%  - paludis
+%  - lighttpd
+%  - virtualisierung
+
+% KAPITEL: tips
+
+% GW: FIXME: Do we want tenshi information?
+
+\subsection{\label{epm}Für RPM-Umsteiger: \cmd{app-portage/epm}}
+
+% GW: FIXME: Add app-portage/epm
+
+\subsection{\label{demerge}Snapshot des Systems: \cmd{app-portage/demerge}}
+
+% GW: FIXME: Add app-portage/demerge
+
+\section{\label{appportage}Werkzeuge aus der Kategorie \cmd{app-portage}}
+
+Wie der Name der Kategorie verrät, finden wir hier spezielle
+Werkzeuge, die etwas mit dem Paketmanagement-System von Gentoo zu tun
+haben.
+
+Einen nicht unerheblichen Teil der Pakete in dieser Klasse haben wir
+schon behandelt: \cmd{autounmask} (Kapitel \ref{}), \cmd{eix} (Kapitel
+\ref{}), \cmd{emerge-delta-webrsync} (Kapitel \ref{}), \cmd{esearch}
+(Kapitel \ref{}), \cmd{euses} (Kapitel \ref{}), \cmd{flagedit}
+(Kapitel \ref{}), \cmd{gentoolkit} (Kapitel \ref{}), \cmd{layman}
+(Kapitel \ref{}) und \cmd{portage-utils} (Kapitel \ref{}).
+
+Manche der restlichen Pakete sind eher auf die Gentoo-Entwickler
+zugeschnitten. Aber die Kategorie bietet noch einige kleine Juwelen,
+die in bestimmten Situationen sehr nützlich sein können.
+
+Wir wollen hier noch ein paar der Wichtigeren herausgreifen: \cmd{}
+(Kapitel \ref{}), \cmd{} (Kapitel \ref{}), \cmd{} (Kapitel \ref{}),
+\cmd{} (Kapitel \ref{}), \cmd{} (Kapitel \ref{})
+
+Grundsätzlich kann man jedem empfehlen die Kategorie einmal nach
+interessanten Werkzeugen zu durchsuchen.
+
+% KAPITEL: paludis
+
+\chapter{Paludis}
+
+Portage ist ein genialer Paket-Manager. Und Portage ist gleichzeitig
+eine grauenhafte Software. Um letzteren Standpunkt komme ich aus der
+Sicht eines Entwicklers nicht herum. Wer versucht den Python-Code
+dieser Applikation zu modifizieren wird sich schnell die Haare
+raufen. So gut Portage auch funktionieren mag, es ist eine gewachsene
+Software und schleppt einige strukturelle Probleme mit sich.
+
+Ich bin bei weitem nicht der erste Programmierer, dem das
+auffällt. Und entsprechend gibt es derzeit gleich zwei Projekte, die
+sich damit beschäftigen Portage zu ersetzen. Zum einen ist es das
+etwas Gentoo-nähere
+
+
+% ANHANG: rudimentäre Desktop-Konfiguration
+
+\subsection{Tatatureinstellung für den X-Server}
+
+Auch wenn es nicht darum geht eine Maschine mit grafischer Oberfläche
+einzurichten, sei doch an dieser Stelle kurz erwähnt, wie man den
+X-Server zur Zusammenarbeit mit einem deutschen Tastaturlayout bringt.
+
+Folgendes gehört minimal in die Konfigurationsdatei
+\cmd{/etc/X11/xorg.conf}, um den X-Server zur Zusammenarbeit mit einer
+deutschen Tastatur zu bewegen:
+
+\begin{ospcode}
+Section "InputDevice"
+
+    Identifier	"Keyboard0"
+    Driver	"kbd"
+    Option      "XkbModel"	"pc102"
+    Option      "XkbLayout"	"de"
+
+EndSection
+\end{ospcode}
+
+% ANHANG: Dualboot
+
+\appendixchapter{\label{dualboot}Eine Maschine mit Windows teilen}
+
+% GW: FIXME: Add information concerning the DVD boot options.
+
+% GW: FIXME: add information about the cfdisk partitioning tool.
+
+
+% ANHANG: Interaktiv
+
+% hinweise foren, bug db, irc, web seite, interessante feeds, side project, ...
+
+\section{\label{support}Unterstützung finden}
+
+%GW: FIXME: Write
+
+%GW: FIXME: Include emerge --info
+
+% FIXME: Add some comments on the Gentoo speed of development and
+% possible problems resulting for this book.
+
+% FIXME: Add some information on forum.gentoo.org, the mailing lists,
+% IRC, wiki, the gentoo site in general
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% coding: latin-1-unix
+%%% End: 

@@ -1,0 +1,1131 @@
+\chapter{\label{writeebuilds}Ebuilds schreiben}
+
+Trotz der hohen Anzahl an Paketen im Portage-Baum und trotz der
+Erweiterung durch Overlays wird es gelegentlich Situationen geben, in
+denen man einfach keine Paketdefinition %
+%\index{Paket!-definition|see{Ebuild}}%
+für eine Software findet.  Manchmal hilft dann nur noch die
+Gentoo-Bug-Datenbank, in die Nutzer ebenfalls Ebuilds hochladen
+können, wenn sie möchten, dass die Gentoo-Entwickler diese in den
+Portage-Baum aufnehmen.
+
+Lässt sich ein Ebuild %
+\index{Ebuild|(}%
+aber weder in einem der Overlays noch der Gentoo-Bug-Datenbank %
+\index{Bug!Datenbank}%
+finden, gibt es drei letzte Alternativen, die Software im eigenen
+System zu installieren: Abwarten, bis jemand einen Ebuild schreibt,
+die Software manuell installieren oder selbst einen Ebuild
+schreiben.% %
+\index{Ebuild!schreiben|(}%
+
+Abwarten ist in den seltensten Fällen eine Option; die manuelle
+Installation wird zwar meist funktionieren, hat aber den gravierenden
+Nachteil, dass man den gewohnten Rahmen des Paketmanagements verlässt.
+
+Bleibt also nur selbst einen Ebuild zu schreiben. Was für andere
+Distributionen wohl mehr als ungewöhnlich ist, liegt bei Gentoo
+durchaus nahe, denn es ist eher eine "`Entwickler-Distribution"':
+Seine Benutzer sind bereit, Software %
+\index{Software kompilieren}%
+zu kompilieren, und sie haben in der Regel keine Berührungsängste mit
+Source-Code.  Damit ist auch die Bereitschaft vorhanden, Hand an den
+Source-Code einer Paketdefinition anzulegen.
+
+Bei manchen Paketen ist das Schreiben des Ebuilds nahezu trivial und
+damit die Einstiegshürde für bestimmte Software-Kategorien sehr
+niedrig. Ein Beispiel werden wir uns gleich ansehen. Wohlgemerkt gilt
+diese Aussage wirklich nur für einen kleinen Teil aller Pakete. Die
+weitaus meisten Ebuilds sind durchaus  komplex und benötigen
+einiges Wissen über die zu installierende Software bzw.\
+Paketmanagement im Allgemeinen.
+
+\index{Gentoo!Vergleich zu anderen Distributionen|(}%
+Im Gegensatz zu der für binäre Distributionen typischen Trennung
+zwischen Paketdefinition und Paket zählt bei Gentoo einzig und allein
+der Ebuild; %
+\index{Ebuild!Diskussion}%
+er ist \emph{die} Grundlage für Austausch und Diskussion.  Vor allem
+für den Austausch liegen die Vorteile auf der Hand, denn meist
+reduziert sich der Ebuild %
+\index{Ebuild!Format}%
+ja auf eine kleine Textdatei. %
+\index{Textdatei}%
+Das ist auch einer der Gründe, warum sich viele experimentelle Pakete
+in der Gentoo-Bug-Datenbank %
+\index{Bug!Datenbank}%
+befinden.  Und da ein Projekt wie Gentoo von der regen Beteiligung der
+Nutzergemeinde abhängt, werden wir uns an einem möglichst einfachen
+Beispiel anschauen, was einen Ebuild eigentlich ausmacht.
+\index{Gentoo!Vergleich zu anderen Distributionen|)}%
+
+Keine Sorge, es geht nicht darum, Sie zum Gentoo-Entwickler
+auszubilden. Wir wollen Grundlagen %
+\index{Ebuild!Grundlagen}%
+vermitteln und Ihnen die Möglichkeit geben, bei einfachen
+Software-Installationen das Portage-System nicht zu verlassen. Zudem
+lassen sich auf diese Weise weitere Interna %
+\index{Portage!Interna}%
+des Portage-Systems besser darstellen und nachvollziehen.
+
+Selbst wenn Sie nicht die Absicht haben, eigene Pakete zu erstellen,
+finden Sie in diesem Kapitel hilfreiches Hintergrundwissen %
+\index{Portage!Hintergrundwissen}%
+zu Portage.
+
+\section{Ein einfacher Ebuild}
+
+Wir werden uns hier mit der Installation eines Python-Paketes %
+\index{Python!Paket}%
+beschäftigen. Warum das besonders einfach ist, werden wir gleich
+sehen. Wir bleiben im Web-Bereich und schreiben einen Ebuild für
+\cmd{web.py}, %
+\index{web.py}%
+das Web-Framework %
+\index{Web!Framework}%
+von Aaron Swartz.\footnote{\cmd{http://webpy.org}}
+
+Das Paket ist schon im Portage-Baum %
+\index{Portage!Baum}%
+verfügbar, aber auch nur, weil dieses Buch geschrieben wurde und es
+sinnvoll ist, den Ebuild gleich allgemein zur Verfügung zu
+stellen. Die einzelnen Schritte lassen sich trotzdem wie angegeben
+durchführen.  Schauen wir uns also an, wie der Ebuild erstellt wurde.
+
+\subsection{Den Ebuild schreiben}
+
+Zunächst brauchen wir einen Ort, an dem wir unseren neuen Ebuild
+bearbeiten, mit anderen Worten: unser erstes eigenes Overlay:% %
+\index{Overlay!erstellen}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mkdir -p /usr/portage/local/overlay}
+\end{ospcode}
+\index{overlay (Verzeichnis)}%
+\index{usr@/usr!portage!local!overlay}%
+
+Dieses fügen wir zu unseren definierten Overlays in
+\cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+hinzu:
+
+\label{ownoverlay}%
+\begin{ospcode}
+PORTDIR_OVERLAY="/usr/portage/local/overlay"
+\end{ospcode}
+\index{PORTDIR\_OVERLAY (Variable)}%
+%\index{make.conf (Datei)!PORTDIR\_OVERLAY|see{PORTDIR\_OVERLAY (Variable)}}%
+
+Das Overlay ist natürlich noch leer und enthält keine Kategorien. %
+\index{Kategorie}%
+Für unseren neuen Ebuild müssen wir uns also erst einmal für eine
+Kategorie entscheiden. Dabei orientieren wir uns an den bereits unter
+\cmd{/usr/portage} %
+\index{portage (Verzeichnis)}%
+\index{usr@/usr!portage}%
+vorhandenen.
+
+Für ein neues, eher entwicklerorientiertes Python-Paket kommt für
+\cmd{web.py} am ehesten \cmd{dev-python} %
+\index{dev-python (Kategorie)}%
+in Frage. Für ein Web-Framework wären zwar auch \cmd{net-www} %
+\index{net-www (Kategorie)}%
+oder \cmd{www-misc} %
+\index{www-misc (Kategorie)}%
+vorstellbar, allerdings liegt das vergleichbare \cmd{django}-Paket %
+\index{django (Paket)}%
+auch unter \cmd{dev-python}. %
+\index{dev-python (Kategorie)}%
+Man sollte sich also an bereits integrierten und von der
+Funktionalität her vergleichbaren Paketen orientieren.  Also erstellen
+wir \cmd{dev-python} %
+\index{dev-python (Kategorie)}%
+als erste Kategorie unseres Overlays:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mkdir -p /usr/portage/local/overlay/dev-python/webpy}
+\end{ospcode}
+\index{dev-python (Verzeichnis)}%
+
+Wir erzeugen hier gleich noch das Verzeichnis für unseren ersten
+Ebuild und nennen das Paket \cmd{webpy}. %
+\index{webpy (Paket)}%
+Den Punkt von \cmd{web.py} lassen wir weg, denn Sonderzeichen gehören
+in den seltensten Fällen in Paketnamen. %
+\index{Paket!-name}%
+Fehlt noch die Angabe der Versionsnummer: %
+\index{Paket!-version}%
+\cmd{web.py} wurde als Version 0.22 herausgegeben und entsprechend
+heißt unser erster Ebuild \cmd{webpy-0.22.ebuild}. %
+\index{webpy-0.22.ebuild (Datei)}%
+Damit ist es an der Zeit, den Ebuild selbst zu erstellen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{nano \textbackslash}
+> \textbf{/usr/portage/local/overlay/dev-python/webpy/webpy-0.22.ebuild}
+\end{ospcode}
+
+\index{Ebuild!Kopf|(}%
+%\index{Ebuild!Header|see{Ebuild, Kopf}}%
+Was gehört nun in den Ebuild hinein? Zunächst der allgemeine
+Kopfbereich, der standardmäßig bei Gentoo verwendet wird. Wer nicht
+vorhat, den Ebuild im Portage-Baum zu sehen, kann natürlich darauf
+verzichten.
+
+\begin{ospcode}
+# Copyright 1999-2008 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# \$Header:\$
+\end{ospcode}
+\index{Ebuild!Kopf|)}%
+
+Ein Ebuild %
+\index{Ebuild!Syntax}%
+verwendet Shell-Syntax. Viele Hintergrundprozesse, die für den
+Installationsprozess %
+\index{Installation!-sprozess}%
+wichtig sind, haben die Gentoo-Entwickler aber schon in einfach zu
+verwendende Funktionen gekapselt, so dass wir uns im Ebuild auf die
+spezifischen Eigenschaften der zu installierenden Software
+konzentrieren können. Damit reduziert sich der Aufwand erheblich.  Für
+kompliziertere Fälle steht aber dennoch die vollständige
+Funktionalität der Kommandozeile zur Verfügung.
+
+Jedes Paket verlangt einige Standard-Informationen. Damit
+Außenstehende wissen, wozu das Paket überhaupt dient, ergänzen wir
+zunächst eine knappe Beschreibung %
+\index{Ebuild!Beschreibung}%
+\index{Paket!Beschreibung}%
+in der Variablen \cmd{DESCRIPTION}.% %
+\index{DESCRIPTION (Variable)}%
+%\index{*.ebuild (Datei)!DESCRIPTION|see{DESCRIPTION (Variable)}}%
+
+\begin{ospcode}
+DESCRIPTION="A small and simple web framework for python"
+\end{ospcode}
+
+Der Hinweis auf die Homepage %
+\index{Ebuild!Homepage}%
+\index{Paket!Homepage}%
+des Paketes kann Nutzern sicher ebenfalls
+weiterhelfen:
+
+\begin{ospcode}
+HOMEPAGE="http://www.webpy.org"
+\end{ospcode}
+\index{HOMEPAGE (Variable)}%
+%\index{*.ebuild (Datei)!HOMEPAGE|see{HOMEPAGE (Variable)}}%
+
+Dann ist natürlich der Source-Code verfügbar zu machen, und zwar in
+Form einer URL, %
+\index{URL}%
+damit \cmd{emerge} weiß, wo es das Quellpaket %
+\index{Quellarchiv}%
+herunterladen kann. Den Link definieren wir in der Variablen
+\cmd{SRC\_URI}. %
+\index{SRC\_URI (Variable)}%
+%\index{*.ebuild (Datei)!SRC\_URI|see{SRC\_URI (Variable)}}%
+In unserem Beispiel lautet er:
+\cmd{http://www.webpy.org/static/web.py-0.22.tar.gz}.
+
+In weiser Vorausschau wollen wir berücksichtigen, dass irgendwann wohl
+\cmd{web.py-0.23} oder \cmd{web.py-0.3} %
+\index{Paket!-version}%
+\index{Ebuild!-version}%
+veröffentlicht und das Quellpaket dann unter
+\cmd{http://www.webpy.org/static/web.py-0.23.tar.gz} bzw.
+\cmd{web.\osplinebreak{}py-0.3.tar.gz} abrufbar sein wird. Die Version
+unseres Paketes ist schon im Namen des Ebuilds enthalten, und Portage
+stellt diese Versionsnummer innerhalb eines Ebuilds in der Variablen
+\cmd{\$\{PV\}} %
+\index{PV (Variable)}%
+%\index{*.ebuild (Datei)!PV|see{PV (Variable)}}%
+zur Verfügung.
+
+Wir können hier also die \cmd{0.22} im Quell-Link einfach durch
+\cmd{\$\{PV\}} %
+\index{PV (Variable)}%
+%\index{*.ebuild (Datei)!PV|see{PV (Variable)}}%
+ersetzen und werden so später den Ebuild vermutlich nur zu
+\cmd{webpy-0.23.ebuild} oder \cmd{webpy-0.3.ebuild} umbenennen müssen,
+und er wird trotzdem noch funktionieren.
+
+\begin{ospcode}
+SRC_URI="http://www.webpy.org/static/web.py-\$\{PV\}.tar.gz"
+\end{ospcode}
+\index{SRC\_URI (Variable)}%
+
+Nun fehlen noch einige Informationen, die in jeden Ebuild gehören,
+z.\,B. die Lizenz des Paketes, die die Variable \cmd{LICENSE} %
+\index{LICENSE (Variable)}%
+%\index{*.ebuild (Datei)!LICENSE|see{LICENSE (Variable)}}%
+\index{Paket!Lizenz}%
+\index{Ebuild!Lizenz}%
+enthält.  Entpackt man das Quellpaket, findet sich dort eine Datei
+\cmd{PKG-INFO}, %
+\index{PKG-INFO (Datei)}%
+in der \cmd{License: Public domain} angegeben ist. Bei Gentoo finden
+sich alle bisher bekannten Lizenzen unter
+\cmd{/usr/portage/licenses}.% %
+\index{licenses (Verzeichnis)}%
+\index{usr@/usr!portage!licenses}%
+
+Nur die Dateinamen der dort vorhandenen Textdateien dürfen wir
+innerhalb der Variable \cmd{LICENSE} %
+\index{LICENSE (Variable)}%
+%\index{*.ebuild (Datei)!LICENSE|see{LICENSE (Variable)}}%
+angeben. Schaut man sich die Liste der innerhalb dieses Verzeichnisses
+vorhandenen Lizenzen an, so findet sich auch \cmd{public-domain}
+wieder. Entsprechend lautet die Angabe für \cmd{web.py}:
+
+\begin{ospcode}
+LICENSE="public-domain"
+\end{ospcode}
+
+Das \cmd{webpy}-Paket %
+\index{webpy (Paket)}%
+soll nur einmal in unserem System installiert werden und normale
+Updates erfahren. Mit anderen Worten: Es verwendet keine Slots %
+\index{Slot}%
+(siehe Kapitel \ref{slots}) für die Installation, und \cmd{emerge} %
+\index{emerge (Programm)}%
+installiert es grundsätzlich in den Slot \cmd{0}. Das ist eine Angabe,
+die in jeden Ebuild hinein gehört:
+
+\begin{ospcode}
+SLOT="0"
+\end{ospcode}
+\index{Paket!Slot}%
+\index{Ebuild!Slot}%
+\index{SLOT (Variable)}%
+%\index{*.ebuild (Datei)!SLOT|see{SLOT (Variable)}}%
+
+Zudem sollten wir noch angeben, auf welchen Maschinen das Paket sicher
+funktioniert, also die verfügbaren Keywords festlegen. Unter der
+Annahme, dass wir diesen Ebuild auf einer \cmd{x86}-Maschine %
+\index{x86 (Keyword)}%
+entwickeln, fügen wir das entsprechende Keyword mit einer Tilde zu der
+Variablen \cmd{KEYWORDS} %
+\index{KEYWORDS (Variable)}%
+%\index{*.ebuild (Datei)!KEYWORDS|see{KEYWORDS (Variable)}}%
+\index{Paket!Keyword}%
+\index{Ebuild!Keyword}%
+hinzu. Die Tilde markiert den Ebuild als instabil, %
+\index{Paket!instabil}%
+\index{Ebuild!instabil}%
+was für einen neuen Ebuild zwingend erforderlich ist.
+
+\label{addkeyword}
+\begin{ospcode}
+KEYWORDS="{\textasciitilde}x86"
+\end{ospcode}
+
+Testet man den Ebuild auf mehreren Maschinen mit unterschiedlichen
+Architekturen, kann man mehrere Keywords %
+\index{Keyword}%
+durch Leerzeichen getrennt angeben.
+
+Nun stellt sich die Frage nach eventuellen USE-Flags. %
+\index{USE-Flag}%
+Diese würden wir mit der Variablen \cmd{IUSE} %
+\index{IUSE (Variable)}%
+%\index{*.ebuild (Datei)!IUSE|see{IUSE (Variable)}}%
+\index{Paket!USE-Flag}%
+\index{Ebuild!USE-Flag}%
+angeben.  Allerdings bietet \cmd{web.py} keine optionalen
+Eigenschaften, die wir bei der Installation aktivieren oder
+deaktivieren könnten, so dass wir auf USE-Flags verzichten und
+\cmd{IUSE} auf einen leeren Wert setzen:
+
+\begin{ospcode}
+IUSE=""
+\end{ospcode}
+\index{IUSE (Variable)}%
+%\index{*.ebuild (Datei)!IUSE|see{IUSE (Variable)}}%
+
+Grundsätzlich lassen sich USE-Flags in einer durch Leerzeichen
+getrennten Liste angeben.
+
+Damit bleiben noch zwei Variablen, die für einen Ebuild zwingend
+erforderlich sind: \cmd{DEPEND} %
+\index{DEPEND (Variable)}%
+%\index{*.ebuild (Datei)!DEPEND|see{DEPEND (Variable)}}%
+und \cmd{RDEPEND}. %
+\index{RDEPEND (Variable)}%
+%\index{*.ebuild (Datei)!RDEPEND|see{RDEPEND (Variable)}}%
+\cmd{DEPEND} gibt die Abhängigkeiten zur Installationszeit an,
+\cmd{RDEPEND} die Abhängigkeiten zur Laufzeit.
+
+\label{specialdeps}%
+In Kapitel \ref{dependencies} haben wir ganz allgemein von
+Abhängigkeiten %
+\index{Paket!-abhängigkeiten}%
+gesprochen und keine Unterscheidung zwischen verschiedenen Formen der
+Abhängigkeit getroffen.  Für den Benutzer ist eine solche
+Unterscheidung im Normalfall auch nicht relevant, da Portage die
+Abhängigkeiten automatisch auflöst und nichts über die Art der
+Abhängigkeit mitteilt. Hinter den Kulissen, also aus der Sicht des
+Ebuilds ist diese Unterscheidung aber zwingend notwendig.
+
+\index{Paket!-abhängigkeiten|(}%
+Unterschieden wird also zwischen \emph{Build Time Dependencies} %
+\index{Build Time Dependencies}%
+und \emph{Run Time Dependencies}. %
+\index{Run Time Dependencies}%
+Build Time Dependencies sind solche, die für das Kompilieren %
+\index{Kompilieren}%
+bzw. die Installation eines Paketes bestehen. So brauchen wir z.\,B.\
+für ein in C %
+\index{C}%
+geschriebenes Programm einen Compiler (im Normalfall \cmd{gcc}), %
+\index{gcc (Programm)}%
+damit wir es kompilieren und installieren können.
+
+Nach der Installation können wir das Programm dann aber jederzeit
+aufrufen, ohne dass wir \cmd{gcc} %
+\index{gcc (Programm)}%
+dazu benötigen. Der Compiler ist also eine klare Build Time
+Dependency.
+
+Run Time Dependencies umfassen alle Elemente, die im System
+installiert sein müssen, damit wir das Programm \emph{ausführen}
+können. Das gilt z.\,B.\ für alle Bibliotheken, die ein Programm
+verwendet. Haben wir den Apache-Server %
+\index{Apache!Server}%
+z.\,B.\ mit SSL-Unterstützung %
+\index{SSL}%
+kompiliert, muss die \cmd{openssl}-Bibliothek %
+\index{openssl (Paket)}%
+zur Laufzeit im System verfügbar sein. Das ist mit dem Beispiel
+vergleichbar, das wir in \ref{revdeprebuild} konstruierten haben, um
+\cmd{revdep-rebuild} %
+\index{revdep-rebuild (Programm)}%
+genauer zu erläutern.
+
+Die beiden Arten der Abhängigkeit schließen sich übrigens nicht
+gegenseitig aus. Im Gegenteil gelten die meisten Abhängigkeiten sowohl
+für die Installationsphase als auch die Laufzeit. Die SSL-Bibliothek %
+\index{Bibliothek}%
+\index{SSL}%
+für den Apache muss eben auch schon beim Kompilieren des Apache
+vorhanden sein. Andernfalls lässt sich der Server nicht erfolgreich
+zusammenbauen.
+\index{Paket!-abhängigkeiten|)}%
+
+Zurück zu \cmd{web.py}: Welche Software wird also benötigt, um
+\cmd{web.py} zu installieren? Wie die meisten Python-Pakete %
+\index{Python!Paket}%
+besitzt auch \cmd{web.py} ein Installationsskript \cmd{setup.py}, das
+auf dem \cmd{distutils}-Modul %
+\index{Python!distutils (Modul)}%
+von Python aufbaut. Diese Kombination benötigt keine Software außer
+Python %
+\index{Python}%
+selbst für die Installation. Also legen wir die Abhängigkeiten
+folgendermaßen fest:
+
+\begin{ospcode}
+DEPEND="dev-lang/python"
+\end{ospcode}
+\index{python (Paket)}%
+%\index{dev-lang Kategorie)!python (Paket)|see{python (Paket)}}%
+\index{DEPEND (Variable)}%
+%\index{*.ebuild (Datei)!DEPEND|see{DEPEND (Variable)}}%
+
+
+Um \cmd{web.py} zu verwenden, brauchen wir natürlich auch wieder
+Python %
+\index{Python}%
+als Grundlage. Leider geht aus den Installationsanweisungen des
+Paketes \cmd{web.py} nicht eindeutig hervor, welche Python-Version %
+\index{Python!Version}%
+mindestens benötigt wird. Wir sind an dieser Stelle einmal vorsichtig
+und nehmen an, dass es \cmd{python-2.3} voraussetzt. Sollten Nutzer
+später den Betrieb unter 2.1 oder 2.2 wünschen und zeigen können, dass
+es funktioniert, lassen sich die Abhängigkeiten %
+\index{Paket!-abhängigkeiten}%
+auch nachträglich korrigieren. Um uns die Definition der
+Abhängigkeiten zu vereinfachen, geben wir auch für die Installation
+die Version 2.3 als Minimum an. Die Variablen sehen dann so aus:
+
+\begin{ospcode}
+DEPEND=">=dev-lang/python-2.3"
+RDEPEND="\$\{DEPEND\}"
+\end{ospcode}
+\index{RDEPEND (Variable)}%
+%\index{*.ebuild (Datei)!RDEPEND|see{RDEPEND (Variable)}}%
+\index{DEPEND (Variable)}%
+%\index{*.ebuild (Datei)!DEPEND|see{DEPEND (Variable)}}%
+
+Damit liegen alle notwendigen Grundinformationen für einen Ebuild vor
+und wir können uns nun der eigentlichen Installation zuwenden.  Bei
+der Installation gibt es drei Hauptphasen, die \cmd{emerge} %
+\index{emerge (Programm)}%
+durchläuft:
+
+\begin{osplist}
+\item Entpacken des Quellarchivs
+\item Kompilieren der Software
+\item Installation des Paketes
+\end{osplist}
+
+Jede dieser Phasen korrespondiert mit einer Funktion im Ebuild:
+
+\begin{osplist}
+\item \cmd{src\_unpack} %
+\index{src\_unpack (Funktion)}%
+\item \cmd{src\_compile} %
+\index{src\_compile (Funktion)}%
+\item \cmd{src\_install} %
+\index{src\_install (Funktion)}%
+\end{osplist}
+
+\cmd{src\_unpack} %
+\index{src\_unpack (Funktion)}%
+ist meist gar nicht anzugeben, da Portage die meisten
+Standard"=Archivformate %
+\index{Archiv!-format}%
+problemlos entpackt. Die Funktion kann dann einfach fehlen. Bleiben
+das Kompilieren %
+\index{Kompilieren}%
+und das Installieren. %
+\index{Installation}%
+
+Ein Python-Paket, %
+\index{Python!Paket}%
+das \cmd{distutils} %
+\index{Python!distutils (Modul)}%
+und das zugehörige Skript \cmd{setup.py} %
+\index{setup.py (Datei)}%
+für die Installation verwendet, lässt sich im Normalfall mit folgender
+Kombination installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{python setup.py build}
+\rprompt{\textasciitilde}\textbf{python setup.py install}
+\end{ospcode}
+
+\cmd{build} %
+\index{setup.py (Datei)!build (Option)}%
+leitet das Kompilieren ein, während \cmd{install} %
+\index{setup.py (Datei)!install (Option)}%
+sich um die Installation kümmert.  Wir könnten also unseren Ebuild
+jetzt um folgende zwei Funktionen erweitern:
+
+\begin{ospcode}
+src_compile() \{
+	python setup.py build
+\}
+
+src_install() \{
+	python setup.py install
+\}
+\end{ospcode}
+\index{src\_compile (Funktion)}%
+\index{src\_install (Funktion)}%
+
+Abgesehen davon, dass wir die Funktionen hier zu sehr vereinfacht
+haben, ist es wenig sinnvoll, in jedem Ebuild für ein Python-Modul %
+\index{Python!Modul}%
+diese oder ähnliche Zeilen anzugeben, da der
+\cmd{distutils}-Mechanismus %
+\index{Python!distutils (Modul)}%
+unter Python-Paketen weit verbreitet ist.  Wenn mehrere Ebuilds nach
+einem vereinheitlichten Schema installieren, findet sich in der Regel
+eine sogenannte \emph{Eclass}, %
+\index{Eclass}%
+\label{eclass}%
+die den Installationsprozess für diese Pakete zentral definiert, so
+dass die eigentliche Paketdefinition nur noch ein Minimum an Aufwand
+kostet.
+
+Die Grunddefinitionen einer Eclass %
+\index{Eclass}%
+bindet man im Ebuild über den Befehl \cmd{inherit} %
+\index{inherit (Funktion)}%
+%\index{*.ebuild (Datei)!inherit|see{inherit (Funktion)}}%
+ein. Und für \cmd{distutils}-Pakete gibt es die passende Eclass unter
+\cmd{/usr/portage/eclasses/distutils.eclass}. %
+\index{distutils.eclass (Datei)}%
+\index{usr@/usr!portage!eclasses!distutils.eclass}%
+Diese liefert die notwendigen Definitionen für \cmd{src\_compile} und
+\cmd{src\_install}.
+\index{src\_compile (Funktion)}%
+\index{src\_install (Funktion)}%
+
+In unserem Ebuild fügen wir also nur die folgende Zeile ein und können
+darauf verzichten, \cmd{src\_compile} und \cmd{src\_install} separat zu
+definieren:
+
+\begin{ospcode}
+inherit distutils
+\end{ospcode}
+\index{distutils.eclass (Datei)}%
+
+Eigentlich sind wir damit fertig. Das Einbinden der
+\cmd{distutils}-Eclass %
+\index{Eclass}%
+gibt alle Aktionen für das Entpacken, %
+\index{Entpacken}%
+Erstellen und Installieren des Paketes vor, und da wir hier ein
+Standard-Paket %
+\index{Paket!Standard}%
+vor uns haben, sind keine weiteren Modifikationen notwendig.
+
+Nur eine Kleinigkeit fehlt noch: Wir haben uns anfangs dazu
+entschlossen, das Paket selbst nicht \cmd{web.py}, sondern \cmd{webpy}
+zu nennen, um keine Sonderzeichen im Paketnamen %
+\index{Paket!-name}%
+zu haben. Nun geht die \cmd{distutils}-Eclass aber davon aus, dass
+unser Quellpaket im Namen der Paketbezeichnung entspricht. Zwar ist
+Portage in der Lage, anhand des Links zum Quellarchiv %
+\index{Quellarchiv}%
+zu erkennen, dass unser Quellpaket %
+\index{Quellarchiv}%
+eben \cmd{web.py-0.22.tar.gz} heißt, und würde entsprechend auch
+dieses Archiv %
+\index{Archiv}%
+auspacken. Allerdings erwartet Portage im folgenden Schritt, dass
+innerhalb des Archivs ein Quellverzeichnis mit dem Namen
+\cmd{webpy-0.22}, eben unserem Paketnamen, liegt. Dies ist nicht der
+Fall, denn das Quellverzeichnis %
+\index{Quellverzeichnis}%
+wurde von den Entwicklern einfach nur \cmd{webpy} genannt.
+
+Den Namen des entpackten Verzeichnisses legen wir über die Variable
+\cmd{\$\{S\}} %
+\index{S (Variable)}%
+%\index{*.ebuild (Datei)!S|see{S (Variable)}}%
+fest. Der Standardwert ist
+\cmd{\$\{WORKDIR\}/\$\{PN\}-\$\{PV\}}. \cmd{\$\{WORKDIR\}} %
+\index{WORKDIR (Variable)}%
+%\index{*.ebuild (Datei)!WORKDIR|see{WORKDIR (Variable)}}%
+legt das Arbeitsverzeichnis %
+\index{Ebuild!Arbeitsverzeichnis}%
+fest und verweist auf ein temporäres Verzeichnis %
+\index{Verzeichnis!temporär}%
+unter \cmd{/var/tmp/portage}. \cmd{\$\{PV\}} %
+\index{PV (Variable)}%
+%\index{*.ebuild (Datei)!PV|see{PV (Variable)}}%
+steht, wie bereits erwähnt, für die Paketversion und \cmd{\$\{PN\}} %
+\index{PN (Variable)}%
+%\index{*.ebuild (Datei)!PN|see{PN (Variable)}}%
+ist der Paketname. Diesen leitet Portage bei der Installation
+automatisch vom Ebuild-Namen %
+\index{Ebuild!Name}%
+ab, und er wird hier auf \cmd{webpy} gesetzt. Damit korrigieren wir
+\cmd{\$\{S\}}, %
+\index{S (Variable)}%
+%\index{*.ebuild (Datei)!S|see{S (Variable)}}%
+indem wir einfach die Paketversion %
+\index{Paket!-version}%
+entfernen:
+
+\begin{ospcode}
+S="\$\{WORKDIR\}/\$\{PN\}"
+\end{ospcode}
+
+Damit haben wir unseren ersten Ebuild vollständig definiert, und er
+sollte nun wie folgt aussehen:
+
+\begin{ospcode}
+# Copyright 1999-2008 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# \$Header:\$
+
+inherit distutils
+
+DESCRIPTION="A small and simple web framework for python"
+HOMEPAGE="http://www.webpy.org"
+SRC_URI="http://www.webpy.org/static/web.py-\$\{PV\}.tar.gz"
+
+LICENSE="public-domain"
+SLOT="0"
+KEYWORDS="{\textasciitilde}x86"
+IUSE=""
+
+DEPEND=">=dev-lang/python-2.3"
+RDEPEND="\$\{DEPEND\}"
+
+S="\$\{WORKDIR\}/\$\{PN\}"
+\end{ospcode}
+
+Die Reihenfolge unterscheidet sich etwas von der Reihenfolge der
+Erläuterung, da am Anfang des Ebuilds die \cmd{inherit}-Direktive %
+\index{inherit (Funktion)}%
+stehen sollte.
+
+\subsection{\label{ebuildtool}Den Ebuild zu einem Paket umwandeln}
+
+Noch sind wir aber nicht so weit, dass wir über \cmd{emerge webpy} %
+\index{emerge (Programm)}%
+die Installation anstoßen könnten. Zu einem vollständigen Paket
+gehören noch die Prüfsummen, %
+\index{Ebuild!Prüfsummen}%
+die es Portage erlauben, alle Elemente eines Paketes auf den korrekten
+Inhalt zu überprüfen. Der Entwickler signiert damit praktisch die
+Einzelteile des Paketes, und der Nutzer kann somit davon ausgehen,
+dass der Ebuild genau die vom Entwickler vorgegebenen Aktionen
+durchführt -- wenn alle Prüfsummen übereinstimmen. Andernfalls wird
+Portage den Installationsvorgang abbrechen.
+
+Das Signieren des Paketes %
+\index{Paket!signieren}%
+erstellt einen sogenannten \emph{Digest} %
+\index{Digest}%
+der Paket-Einzelteile. Dafür brauchen wir das Kommando \cmd{ebuild} %
+\index{ebuild (Programm)}%
+aus dem \cmd{portage}-Paket:% %
+\index{portage (Paket)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cd /usr/portage/local/overlay/dev-python/webpy}
+\rprompt{webpy}\textbf{ebuild webpy-0.22.ebuild digest}
+\end{ospcode}
+
+Das Tool lädt nun das Quellpaket in \cmd{/usr/portage/distfiles} %
+\index{distfiles (Verzeichnis)}%
+\index{usr@/usr!portage!distfiles}%
+und endet dann mit folgender Nachricht:
+
+\begin{ospcode}
+>>> Creating Manifest for /usr/portage/local/overlay/dev-python/webpy
+\end{ospcode}
+
+Der Inhalt unseres Paket-Verzeichnisses hat sich etwas erweitert:
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{ls -la}
+insgesamt 20
+drwxr-xr-x 3 root root 4096  1. Feb 13:39 .
+drwxr-xr-x 3 root root 4096  1. Feb 13:37 ..
+drwxr-xr-x 2 root root 4096  1. Feb 13:39 files
+-rw-r--r-- 1 root root  855  1. Feb 13:39 Manifest
+-rw-r--r-- 1 root root  440  1. Feb 13:38 webpy-0.22.ebuild
+\end{ospcode}
+
+Im \cmd{files}-Unterverzeichnis %
+\index{files (Verzeichnis)}%
+befindet sich nur der Digest des Quell\-archivs:
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{cat files/digest-webpy-0.22}
+MD5 2e7b5b6759a507d6480fa18d6e87a636 web.py-0.22.tar.gz 52697
+RMD160 ae00772c79928722a3627fdb958f1b7378917f3b web.py-0.22.tar.gz 52697
+SHA256 f2359c8a711660c4d7b910d22c770058dc548c3bab7a8fec0cba4f99758a379c 
+web.py-0.22.tar.gz 52697
+\end{ospcode}
+
+Portage verwendet hier drei verschiedene Prüfsummen mit
+unterschiedlichem Sicherheitsniveau. Ähnliche Informationen finden
+sich im neu erstellten \cmd{Manifest} %
+\index{Manifest (Datei)}%
+des Paketes wieder.
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{cat Manifest}
+DIST web.py-0.22.tar.gz 52697 RMD160 ae00772c79928722a3627fdb958f1b73789
+17f3b SHA1 ee8910ee2992f6212780f24c611fb479c8cee206 SHA256 f2359c8a71166
+0c4d7b910d22c770058dc548c3bab7a8fec0cba4f99758a379c
+EBUILD webpy-0.22.ebuild 440 RMD160 0a5baf74c86970d55546954a2e01fcb76a66
+b765 SHA1 c7b400b96171f6764e066e1f50f0e0d3fa502a26 SHA256 1a380c3c839cf7
+53e1bcf639b5e470a7188739c050440f63498f522828890544
+MD5 ced82b80a5d5554b59e39f6aec31e4b5 webpy-0.22.ebuild 440
+RMD160 0a5baf74c86970d55546954a2e01fcb76a66b765 webpy-0.22.ebuild 440
+SHA256 1a380c3c839cf753e1bcf639b5e470a7188739c050440f63498f522828890544 
+webpy-0.22.ebuild 440
+MD5 ba3bc8cd592f617d9f30654c76521c2e files/digest-webpy-0.22 232
+RMD160 d44173553e140341e64acfcfff854ec27d017195 files/digest-webpy-0.22 
+232
+SHA256 6e66c9d880d00273931721c07f5abd7f02b508d5cf02ce9547f0147401b3f896 
+files/digest-webpy-0.22 232
+\end{ospcode}
+
+Hier sind nun alle Dateien des Paketes aufgeführt, und auf dieser
+Basis kann Portage vollständig verifizieren, dass der Ebuild beim
+Nutzer die "`originalen"' Quellen %
+\index{Quellarchiv!verifizieren}%
+verwendet. Dies ist wichtig, um das Einschleusen von Schadcode %
+\index{Schadcode}%
+zu verhindern.
+
+Nun sind wir so weit, den Ebuild %
+\index{Ebuild!installieren}%
+erstmals zu installieren:
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{emerge -pv webpy}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies   
+!!! All ebuilds that could satisfy "webpy" have been masked.
+!!! One of the following masked packages is required to complete your re
+quest:
+- dev-python/webpy-0.22 (masked by: ~x86 keyword)
+
+For more information, see MASKED PACKAGES section in the emerge man page
+ or 
+refer to the Gentoo Handbook.
+\end{ospcode}
+
+Portage verweigert die Installation, da wir den Ebuild mit
+\cmd{{\textasciitilde}x86} als instabil %
+\index{Paket!instabil}%
+markiert haben. Natürlich vertrauen wir unserem eigenen Ebuild und
+akzeptieren das instabile Keyword. Dafür hängen wir das benötigte
+\cmd{dev-py\-thon/webpy {\textasciitilde}x86} an die Datei
+\cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei)}%
+\index{etc@/etc!portage!package.keywords}%
+an,\osplinebreak{} bevor wir es noch einmal probieren:
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{flagedit dev-python/webpy -- {\textasciitilde}x86}
+\rprompt{webpy}\textbf{emerge -pv webpy}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-python/webpy-0.22  0 kB [1] 
+
+Total size of downloads: 0 kB
+Portage overlays:
+ [1] /usr/portage/local/overlay
+\rprompt{webpy}\textbf{cd \textasciitilde}
+\rprompt{\textasciitilde}\textbf{}
+\end{ospcode}
+
+Portage zeigt nun korrekt an, dass wir die neueste Version 0.22
+installieren würden, das Quellarchiv %
+\index{Quellarchiv}%
+nicht mehr herunterladen müssen und der Ebuild aus einem Overlay, %
+\index{Overlay}%
+eben \cmd{/usr/portage/local/overlay}, %
+\index{overlay (Verzeichnis)}%
+\index{usr@/usr!portage!local!overlay}%
+stammt.
+
+\section{\label{ebuildcmd}Der ebuild-Befehl}
+
+Wir haben den Befehl \cmd{ebuild} %
+\index{ebuild (Programm)|(}%
+bereits kennen gelernt und damit den Digest für unseren Ebuild
+erstellt.  Das \cmd{ebuild}-Kommando zählt generell zu den
+Entwickler-Werkzeugen und eignet sich recht gut, um die eigentliche
+Struktur eines Ebuilds %
+\index{Ebuild!Struktur}%
+zu verdeutlichen.
+
+Wir haben im letzten Abschnitt zwar einen Ebuild erstellt, aber im
+Grunde nur einige allgemeine Informationen über unser Paket in
+Variablen festgehalten. Aus diesen Informationen ist kaum zu ersehen,
+wie das Paket eigentlich heruntergeladen, ausgepackt, kompiliert und
+installiert wird.
+
+Diese Einzelschritte führt \cmd{emerge} %
+\index{emerge (Programm)!Einzelschritte}%
+bei einer Paket-Installation hintereinander aus. Sie lassen sich über
+den \cmd{ebuild}-Befehl in einzelne Teile herunterbrechen.
+
+Der erste Schritt einer Installation über \cmd{emerge} besteht aus dem
+Herunterladen des Quellarchivs und dem Überprüfen der Digests. Diese
+Aktion können wir separat mit Hilfe von \cmd{ebuild} und dem Kommando
+\cmd{fetch} %
+\index{ebuild (Programm)!fetch (Option)}%
+durchführen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cd /usr/portage/local/overlay/dev-python/webpy}
+\rprompt{webpy}\textbf{ebuild webpy-0.22.ebuild fetch}
+ * web.py-0.22.tar.gz MD5 ;-) ...                               [ ok ]
+ * web.py-0.22.tar.gz RMD160 ;-) ...                            [ ok ]
+ * web.py-0.22.tar.gz SHA1 ;-) ...                              [ ok ]
+ * web.py-0.22.tar.gz SHA256 ;-) ...                            [ ok ]
+ * web.py-0.22.tar.gz size ;-) ...                              [ ok ]
+ * checking ebuild checksums ;-) ...                            [ ok ]
+ * checking auxfile checksums ;-) ...                           [ ok ]
+ * checking miscfile checksums ;-) ...                          [ ok ]
+ * checking web.py-0.22.tar.gz ;-) ...                          [ ok ]
+\end{ospcode}
+
+Wir sehen hier die bekannten ersten Zeilen des normalen
+\cmd{emerge}-Prozesses. %
+\index{emerge (Programm)}%
+Es fehlt nur das Herunterladen des Quellcodes, da wir das Quellarchiv
+ja schon nach \cmd{/usr/portage/distfiles} %
+\index{distfiles (Verzeichnis)}%
+\index{usr@/usr!portage!distfiles}%
+heruntergeladen haben. Wir sehen, dass alle Prüfsummen %
+\index{Prüfsummen}%
+dieses Archivs als korrekt erkannt werden, was zu erwarten war, da wir
+auf Basis des gleichen Quellarchivs den Digest überhaupt erst erstellt
+haben. Dieser Check ergibt natürlich erst auf der Nutzer-Seite
+Sinn. Auch die Prüfsummen des Ebuilds und anderer Dateien überprüft
+\cmd{ebuild} hier erfolgreich.
+
+Wurde das Paket erfolgreich heruntergeladen und überprüft, ist es an
+der Zeit, die Quellen zu extrahieren und die eigentlichen
+Vorbereitungen für die Installation zu treffen. Dieser Prozess lässt
+sich wieder über \cmd{ebuild} abbilden, diesmal mit dem Kommando
+\cmd{unpack}:% %
+\index{ebuild (Programm)!unpack (Option)}%
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{ebuild webpy-0.22.ebuild unpack}
+\ldots
+ * checking web.py-0.22.tar.gz ;-) ...                       [ ok ]
+>>> Unpacking source...
+>>> Unpacking web.py-0.22.tar.gz to /var/tmp/portage/webpy-0.22/work
+>>> Source unpacked.
+\end{ospcode}
+
+Diese Aktion prüft die Digests nochmals und packt das Archiv dann
+aus. %
+\index{Entpacken}%
+\index{Paket!Entpacken}%
+\index{Ebuild!Entpacken}%
+Portage gibt auch den Ort an, wo es die Quellen temporär
+speichert: \cmd{/var/""tmp/portage/webpy-0.22/work}. %
+\index{work (Verzeichnis)}%
+\index{var@/var!tmp!portage!webpy-0.22!work}%
+Dieser Pfad entspricht der Variable\osplinebreak{}
+\cmd{\$\{WORKDIR\}}.% %
+\index{WORKDIR (Variable)}%
+%\index{*.ebuild (Datei)!WORKDIR|see{WORKDIR (Variable)}}%
+
+Schauen wir uns den Inhalt dieses temporären Verzeichnisses %
+\index{Verzeichnis!temporär}%
+an, finden wir dort das einzelne Verzeichnis, das im Quellarchiv
+enthalten war:
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{ls -la  /var/tmp/portage/dev-python/webpy-0.22/work}
+insgesamt 12
+drwx------ 3 root    root    4096  1. Feb 13:46 .
+drwxrwxr-x 6 portage portage 4096  1. Feb 13:46 ..
+drwxr-xr-x 4 root    root    4096 23. Aug 07:04 webpy
+\end{ospcode}
+
+Sind die Quellen ausgepackt, gilt es, das Paket zu kompilieren %
+\index{Kompilieren}%
+\index{Paket!Kompilieren}%
+\index{Ebuild!Kompilieren}%
+und damit installierbare Dateien zu erstellen. Hier hilft die Aktion
+\cmd{compile}:% %
+\index{ebuild (Programm)!compile (Option)}%
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{ebuild webpy-0.22.ebuild compile}
+\ldots
+>>> WORKDIR is up-to-date, keeping...
+>>> Compiling source in /var/tmp/portage/webpy-0.22/work/web.py-0.22 ...
+running build
+running build_py
+creating build
+creating build/lib
+creating build/lib/web
+copying web/wsgi.py -> build/lib/web
+copying web/cheetah.py -> build/lib/web
+copying web/db.py -> build/lib/web
+copying web/template.py -> build/lib/web
+copying web/form.py -> build/lib/web
+copying web/net.py -> build/lib/web
+copying web/request.py -> build/lib/web
+copying web/httpserver.py -> build/lib/web
+copying web/debugerror.py -> build/lib/web
+copying web/http.py -> build/lib/web
+copying web/__init__.py -> build/lib/web
+copying web/webapi.py -> build/lib/web
+copying web/utils.py -> build/lib/web
+>>> Source compiled.
+\end{ospcode}
+
+Wieder überprüft \cmd{ebuild} die Digests, stellt fest, ob das
+\cmd{\$\{WORKDIR\}} %
+\index{WORKDIR (Variable)}%
+%\index{*.ebuild (Datei)!WORKDIR|see{WORKDIR (Variable)}}%
+noch aktuell ist, und kompiliert dann die Quellen. Für ein
+\cmd{distutils}-Paket führt Portage den Befehl \cmd{python setup.py
+  build} aus. Dieser stammt erwartungsgemäß aus der Eclass %
+\index{Eclass}%
+\cmd{distutils}.% %
+\index{distutils (Eclass)}%
+
+Eine Aktion, die an dieser Stelle stehen könnte, jedoch von unserem
+derzeitigen Ebuild nicht unterstützt wird, ist das automatische
+Testen %
+\index{Testen}%
+des Paketes. Manche Software bringt Test-Skripte oder so genannte
+Unit-Tests %
+\index{Unit-Tests}%
+mit, die helfen, die Funktionalität der Software automatisiert zu
+überprüfen. Python-Module %
+\index{Python!Modul}%
+liefern vielfach in der Dokumentation versteckte Tests
+(\emph{Doctests}) %
+\index{Doctests}%
+mit, und auch innerhalb von \cmd{web.py} finden sich einige.  Vor
+allem auf den weniger verbreiteten Architekturen finden diese Tests
+häufig noch überraschende Inkompatibilitäten.
+
+Wir wollen unseren Ebuild also um diese Tests erweitern. Tests deckt
+die \cmd{distutils}-Eclass %
+\index{distutils (Eclass)}%
+nicht automatisch ab, und so brauchen wir unsere erste wirkliche
+Shell-Funktion, die \cmd{src\_test} %
+\index{src\_test (Funktion)}%
+heißen muss:
+
+\begin{ospcode}
+src_test() \{
+        # Diese Dateien enthalten automatische doctests
+	TESTS="db template net http utils"
+
+        # Wir wechseln an dieser Stelle in das Arbeitsverzeichnis
+	cd \$\{S\}
+
+        # Nun durchlaufen wir jede der oben genannten Dateien die
+        # doctests enthalten
+	for TEST in \$\{TESTS\}
+	do
+                # Für jeden der zu testenden Dateien rufen wir die
+                # entsprechende Datei mit dem Python-Interpreter auf
+                # Das führt zum Durchlaufen der doctests.
+                # Sollte einer der doctests scheitern, wird der Ebuild
+                # abbrechen.
+		\$\{python\} web/\$\{TEST\}.py || die "Doctest failed!"
+	done
+\}
+\end{ospcode}
+
+Die Test-Funktion ist recht kurz gehalten und wertet nur die unter
+\cmd{\$\{TESTS\}} angegebenen Dateien im Python-Interpreter aus. Das
+bewirkt für die jeweilige Datei das Ausführen der \emph{Doctests}. %
+\index{Doctests}%
+Sollte es dabei zu Fehlern kommen, bricht \cmd{emerge} %
+\index{emerge (Programm)}%
+den Vorgang ab.
+
+Da wir jetzt den Ebuild modifiziert haben, stimmt der Digest %
+\index{Ebuild!Digest}%
+nicht mehr, und wir müssen ihn neu generieren. %
+\index{Ebuild!Digest regenerieren}%
+Erst danach können wir den \cmd{ebuild}-Befehl mit der Aktion
+\cmd{test} %
+\index{ebuild (Programm)!test (Option)}%
+aufrufen. Dabei gilt es noch eine Besonderheit zu beachten:
+Normalerweise wird Portage die \cmd{src\_test}-Funktion nicht in den
+\cmd{emerge}-Prozess (oder eben auch in die \cmd{ebuild
+  webpy-0.22.ebuild test}-Aktion) einbeziehen. Das liegt daran, dass
+die Tests einiger Pakete dermaßen viel Zeit kosten (z.\,B.\
+\cmd{glibc}), dass dieses Feature für den durchschnittlichen Nutzer
+nicht sinnvoll ist. Man muss es also explizit in der
+\cmd{FEATURES}-Option %
+\index{FEATURES (Variable)}%
+%\index{make.conf (Datei)!FEATURES|see{FEATURES (Variable)}}%
+von \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+aktivieren (siehe Kapitel \ref{featuretest} ab Seite
+\pageref{featuretest}). Alternativ lässt es sich auch einmalig über
+die Kommandozeile aktivieren:
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{ebuild webpy-0.22.ebuild digest}
+\rprompt{webpy}\textbf{FEATURES="test" ebuild webpy-0.22.ebuild test}
+\ldots
+>>> Source compiled.
+\end{ospcode}
+
+Im vorliegenden Fall sollte nichts passieren und die Doctests
+einwandfrei funktionieren. Nach \cmd{Source compiled} erfolgt in
+diesem Fall kein weiterer Output.
+
+Kommen wir nach diesem Einschub zurück zum normalen Verlauf einer
+Installation: Nachdem \cmd{ebuild} die Komponenten für die
+Installation vorbereitet hat, müssen die Dateien installiert
+werden. Portage wird dabei die Installation in ein temporäres
+Verzeichnis vornehmen und erst dann in das eigentliche System
+übertragen. Damit kann Portage genau verfolgen, welche Dateien
+es installiert, und es so ermöglichen, die Software später weitgehend
+rückstandsfrei zu entfernen.
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{ebuild webpy-0.22.ebuild install}
+\ldots
+copying build/lib/web/__init__.py -> /var/tmp/portage/webpy-0.22/image/u
+sr/lib/python2.4/site-packages/web
+copying build/lib/web/webapi.py -> /var/tmp/portage/webpy-0.22/image/usr
+/lib/python2.4/site-packages/web
+copying build/lib/web/utils.py -> /var/tmp/portage/webpy-0.22/image/usr/
+lib/python2.4/site-packages/web
+>>> Completed installing webpy-0.22 into /var/tmp/portage/webpy-0.22/ima
+ge/
+\end{ospcode}
+
+Wie angegeben, erfolgt die Installation in das temporäre Verzeichnis
+\cmd{/var/""tmp/portage/webpy-0.22/image/}.% %
+\index{image (Verzeichnis)}%
+\index{var@/var!tmp!portage!webpy-0.22!image!}%
+
+
+Aus diesem erfolgt die eigentliche und abschließende Installation über
+die Aktion \cmd{qmerge}. %
+\index{ebuild (Programm)!qmerge (Option)}%
+Dabei wird Portage die installierten Dateien in der Datenbank unter
+\cmd{/var/db/pkg/dev-python/webpy-0.22/CONTENTS} %
+\index{CONTENTS (Datei)}%
+\index{var@/var!db!pkg!dev-python!webpy-0.22!CONTENTS}%
+festhalten.
+
+\begin{ospcode}
+\rprompt{webpy}\textbf{ebuild webpy-0.22.ebuild qmerge}
+\ldots
+>>> Merging dev-python/webpy-0.22 to /
+--- /usr/
+--- /usr/lib/
+--- /usr/lib/python2.4/
+--- /usr/lib/python2.4/site-packages/
+>>> /usr/lib/python2.4/site-packages/web/
+>>> /usr/lib/python2.4/site-packages/web/wsgi.py
+>>> /usr/lib/python2.4/site-packages/web/cheetah.py
+>>> /usr/lib/python2.4/site-packages/web/db.py
+>>> /usr/lib/python2.4/site-packages/web/template.py
+>>> /usr/lib/python2.4/site-packages/web/form.py
+>>> /usr/lib/python2.4/site-packages/web/net.py
+>>> /usr/lib/python2.4/site-packages/web/request.py
+>>> /usr/lib/python2.4/site-packages/web/httpserver.py
+>>> /usr/lib/python2.4/site-packages/web/debugerror.py
+>>> /usr/lib/python2.4/site-packages/web/http.py
+>>> /usr/lib/python2.4/site-packages/web/__init__.py
+>>> /usr/lib/python2.4/site-packages/web/webapi.py
+>>> /usr/lib/python2.4/site-packages/web/utils.py
+--- /usr/share/
+--- /usr/share/doc/
+>>> /usr/share/doc/webpy-0.22/
+>>> /usr/share/doc/webpy-0.22/PKG-INFO.gz
+ * Performing Python Module Cleanup .. ...
+ * Cleaning orphaned Python bytecode from /usr/lib/python2.3/site-packag
+es ..
+ * Cleaning orphaned Python bytecode from /usr/lib/python2.4/site-packag
+es ..                [ ok ]
+>>> Regenerating /etc/ld.so.cache...
+\rprompt{webpy}\textbf{cd \textasciitilde}
+\rprompt{\textasciitilde}\textbf{}
+\end{ospcode}
+
+Damit sind wir einmal erfolgreich durch den Ablauf einer Installation
+gewandert und haben die zentralen Elemente des Prozesses
+kennen gelernt. 
+\index{ebuild (Programm)|)}%
+\index{Ebuild|)}%
+\index{Ebuild!schreiben|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

@@ -1,0 +1,2863 @@
+\chapter{\label{howtoupdate}Gentoo frisch halten}
+
+
+\index{Aktualisierung|(}%
+%\index{Update|see{Aktualisieren}}%
+%\index{Portage!Baum!Aktualisieren|see{Aktualisieren}}%
+%\index{Paket!aktualisieren|see{Aktualisieren}}%
+%\index{System!aktualisieren|see{Aktualisieren}}%
+Wir haben schon in der Einleitung erwähnt, dass Gentoo dem Prinzip
+"`Install once, never reinstall"' folgt. Sofern wir unser System also
+nicht aus Versehen massiv beschädigen, sollten wir die Prozedur in
+Kapitel \ref{noxinstall} \emph{nie} wiederholen müssen. Das System %
+\index{System!neu installieren}%
+unter Murren neu zu installieren, weil "`irgendwie"' gar nichts mehr
+geht, gehört damit der Vergangenheit an.
+
+Es wäre aber nicht ganz richtig zu behaupten, Aktualisierungen
+unter Gentoo seien mit keinerlei Aufwand verbunden; %
+\index{Aktualisierung!Arbeitsaufwand}%
+diese erfolgen aber nicht im Rahmen einer kompletten Neuinstallation.
+
+Gentoo besitzt mit dem Portage-Baum %
+\index{Portage!Baum}%
+ein sehr lebendiges Archiv an Paketinformationen, das die Entwickler
+konstant aktualisieren. Es gibt also im eigentlichen Sinne keinen
+"`Versionssprung"' von einem Gentoo-Release %
+\index{Gentoo!Version}%
+zum nächsten.%
+\footnote{Die Installations-CDs/DVDs mit Versionsnummern wie 2007.0
+  oder 2008.0 werden lediglich zu einem beliebigen Zeitpunkt vom
+  Portage-Baum generiert, besonders gut getestet und dann den
+  Benutzern zur Verfügung gestellt. Sie stellen darüber hinaus aber
+  keinen Meilenstein des Portage-Baums dar.} %
+\index{Gentoo!Vergleich zu anderen Distributionen|(}%
+Damit lassen sich Aktualisierungen, die von den meisten anderen
+Distributionen bzw. Betriebssystemen im Rahmen eines  Versions\-sprungs
+zusammengepackt werden, in kleinere Portionen aufteilen und in
+kleineren Schritten durchführen. Vorschläge zu einem geeigneten
+Aktualisierungsschema geben wir am Ende des Kapitels ab Seite
+\pageref{updatecycle}.% %
+\index{Gentoo!Vergleich zu anderen Distributionen|)}%
+
+Bringen wir nun das System auf den neuesten Stand, entsteht bei der
+Lektüre dieses Buches folgendes Problem: Einige Beispiele werden von
+den Gegebenheiten auf Ihrem System abweichen; auch wenn es sich meist
+nur um veränderte Versionsnummern handelt, ist nicht auszuschließen,
+dass das ein oder andere Beispiel nicht mehr vollständig zu
+reproduzieren ist.
+
+Wenn Sie sich bis in dieses Kapitel vorgearbeitet haben, sind Sie zwar
+auch kein Gentoo-Anfänger mehr und werden vermutlich nicht
+verzweifeln; dennoch möchten wir Ihnen die Möglichkeit geben (und auch
+empfehlen), die Beispiele wie hier beschrieben nachzuvollziehen.
+Darum die Empfehlung, die nächsten beiden Abschnitte \ref{portagesync}
+und \ref{packageupdate} zunächst einmal \emph{nur zu lesen} und die
+Kommandos noch nicht auszuführen.
+
+Die Beispiele ab \ref{configupdate} basieren dann wieder auf dem
+System der beiliegenden LiveDVD. Sobald Sie sämtliche Themen dieses
+Buches, die Sie interessieren, bearbeitet haben, kehren Sie an diese
+Stelle zurück und aktualisieren Ihr System mit \cmd{emerge -{}-sync},
+gefolgt von \cmd{emerge -uND world}.
+
+\section{\label{portagesync}Portage-Baum aktualisieren}
+
+Das Aktualisieren einer Gentoo-Distribution beginnt, wie auch schon
+während der Installation kurz gesehen (siehe \ref{erstesupdate}),
+grundsätzlich mit
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --sync}
+>>> Starting rsync with rsync://130.230.54.100/gentoo-portage...
+>>> Checking server timestamp ...
+\ldots
+\end{ospcode}
+\index{emerge (Programm)!sync (Option)}%
+
+Wie auch schon auf Seite \pageref{erstesupdate} erwähnt, lassen sich
+die ausführlichen \cmd{rsync}-Informationen %
+\index{rsync (Programm)}%
+mit der Option
+\cmd{-{}-quiet} %
+\index{emerge (Programm)!quiet (Option)}%
+(bzw.\ \cmd{-q}) %
+%\index{emerge (Programm)!q (Option)|see{emerge (Programm), quiet    (Option)}}%
+unterdrücken.
+
+Hiermit bringen wir den Portage-Baum %
+\index{Portage!Baum}%
+auf den neuesten Stand und synchronisieren ihn mit einem der
+Mirror-Server.
+\index{Mirror}%
+Sollte der Befehl mit der Nachricht enden, dass
+eine neue Version von \cmd{sys-apps/portage} %
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+verfügbar ist (siehe Kapitel \ref{updateportage}), sollte der erste
+Befehl nach dem Synchronisieren lauten:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-apps/portage}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+
+[ebuild     U ] app-shells/bash-3.2_p17-r1 [3.1_p17] USE="nls -afs -bash
+logger -plugins -vanilla" 2,522 kB 
+[ebuild     U ] sys-apps/sandbox-1.2.18.1-r2 [1.2.17] 232 kB 
+[ebuild     U ] sys-apps/portage-2.1.3.19 [2.1.2.2] USE="-build -doc -ep
+ydoc (-selinux)" LINGUAS="-pl" 387 kB 
+*** Portage will stop merging at this point and reload itself,
+    then resume the merge.
+[ebuild     U ] dev-python/pycrypto-2.0.1-r6 [2.0.1-r5] USE="-bindist -g
+mp -test" 0 kB 
+
+Total: 4 packages (4 upgrades), Size of downloads: 3,139 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{emerge (Programm)!portage (Paket)}%
+
+Der Portage-Baum %
+\index{Portage!Baum}%
+liefert die Basisdaten für die Arbeit von \cmd{emerge} und
+die anderen Werkzeuge, die in \cmd{sys-apps/portage} %
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+enthalten sind. Entsprechend ist dieses Update nach einer
+Synchronisation so wichtig, um sicher zu gehen, dass die Interaktion
+der beiden Komponenten reibungslos funktioniert.% %
+\index{portage (Paket)!aktualisieren}%
+
+Es kann auch passieren, dass \cmd{emerge -{}-sync} %
+\index{emerge (Programm)!sync (Option)}%
+am Ende der Synchronisation noch folgende Nachricht ausspuckt:
+
+\begin{ospcode}
+ * IMPORTANT: 3 config files in '/etc' need updating.
+ * Type emerge --help config to learn how to update config files.
+\end{ospcode}
+\index{Konfiguration!aktualisieren}%
+
+Wir behandeln die Aktualisierung von Konfigurationsdateien
+nach einem Paket-Update erst wieder in Abschnitt
+\ref{configupdate}. Das Besondere an der oben gezeigten Nachricht ist
+aber, dass sie nicht nach einem Paket-Update erscheint, sondern nach
+der Synchronisation des Portage-Baums.
+
+Die Meldung besagt, dass es Dateien in \cmd{/etc} %
+\index{etc@/etc}%
+zu aktualisieren gibt, obwohl wir eigentlich nur die Dateien in
+\cmd{/usr/portage} %
+\index{portage (Verzeichnis)}%
+aktualisieren wollten.
+
+Die zu aktualisierenden Dateien, die von \cmd{emerge -{}-sync} %
+\index{emerge (Programm)!sync (Option)}%
+betroffen sein können, liegen alle in \cmd{/etc/portage} %
+\index{portage (Verzeichnis)}%
+und sind die \cmd{package.*}-Dateien, die wir in Kapitel
+\ref{chapterconcepts} recht ausführlich beleuchtet haben.
+
+Wenn Sie z.\,B.\ den Installationsangaben dieses Buches Schritt für
+Schritt gefolgt sind, dann haben Sie in
+\cmd{/etc/portage/package.use} %
+\index{package.use (Datei)}%
+z.\,B.\ die Zeile \cmd{net-www/apache mpm-prefork mpm-worker
+  threads} %
+\index{apache (Paket)}%
+%\index{net-www (Kategorie)!apache|see{apache (Paket)}}%
+stehen.
+
+Nun ist das Paket \cmd{net-www/apache} %
+\index{apache (Paket)}%
+%\index{net-www (Kategorie)!apache|see{apache (Paket)}}%
+aber in der Zwischenzeit aus der Kategorie \cmd{net-www} in
+\cmd{www-servers} gewandert. %
+\index{Kategorie!Wechsel}%
+%\index{Portage!Baum!Kategorie!Wechsel|see{Kategorie, Wechsel}}%
+Wir sehen also, dass die Paketkategorien nicht fix sind. Die
+Entwickler achten darauf, dass einzelne Kategorien nicht zu groß oder
+zu klein %
+\index{Kategorie!Größe}%
+werden und eine gewisse Übersichtlichkeit %
+\index{Kategorie!Sortierung}%
+erhalten bleibt.
+
+Für unsere Datei \cmd{/etc/portage/package.use} %
+\index{package.use (Datei)}%
+\index{etc@/etc!portage!package.use}%
+bedeutet das aber in diesem Fall, dass die Angabe
+\cmd{net-www/apache} %
+\index{apache (Paket)}%
+%\index{net-www (Kategorie)!apache|see{apache (Paket)}}%
+nicht mehr korrekt ist und wir beim nächsten Apache-Upgrade %
+\index{apache (Paket)!aktualisieren}%
+unsere Einstellungen der USE-Flags
+\index{USE-Flag}%
+verlieren würden.
+
+Portage ist deshalb in der Lage, nach einem \cmd{emerge -{}-sync} %
+\index{emerge (Programm)!sync (Option)}%
+alle Probleme zu beseitigen, die durch einen Wechsel der Kategorie
+entstehen können. Das betrifft nicht nur die Dateien in
+\cmd{/etc/portage}, %
+\index{portage (Verzeichnis)}%
+\index{etc@/etc!portage}%
+aber das ist die einzige Aktion, die einen direkten Einfluss auf 
+den Benutzer hat.
+
+Wir greifen also hier einmal auf \cmd{dispatch-conf}
+\index{dispatch-conf (Programm)}%
+(siehe Seite \pageref{configupdate}) vor und aktualisieren unsere
+Konfiguration in \cmd{/etc/portage}, %
+\index{portage (Verzeichnis)}%
+\index{etc@/etc!portage}%
+indem wir das Programm aufrufen und drei Mal mit \cmd{[U]} die
+Aktualisierung %
+\index{Konfiguration!aktualisieren}%
+akzeptieren:
+
+\begin{ospcode}
+--- /etc/portage/package.keywords       2008-01-25 19:46:31.000000000 +0
+100
++++ /etc/portage/._cfg0000_package.keywords     2008-01-28 09:59:26.0000
+00000 +0100
+@@ -1,3 +1,3 @@
+-net-www/apache ~x86
+-=net-www/apache-2.0.59-r2 ~x86
++www-servers/apache ~x86
++=www-servers/apache-2.0.59-r2 ~x86
+ =dev-libs/apr-util-1.2.8 ~x86
+
+>> (1 of 3) -- /etc/portage/package.keywords
+>> q quit, h help, n next, e edit-new, z zap-new, u use-new
+   m merge, t toggle-merge, l look-merge:  \cmdvar{u}
+--- /etc/portage/package.unmask 2008-01-25 19:39:55.000000000 +0100
++++ /etc/portage/._cfg0000_package.unmask       2008-01-28 09:59:26.0000
+00000 +0100
+@@ -1 +1 @@
+->=net-www/apache-2.2.0
++>=www-servers/apache-2.2.0
+
+>> (2 of 3) -- /etc/portage/package.unmask
+>> q quit, h help, n next, e edit-new, z zap-new, u use-new
+   m merge, t toggle-merge, l look-merge:  \cmdvar{u}
+--- /etc/portage/package.use    2008-01-25 19:15:14.000000000 +0100
++++ /etc/portage/._cfg0000_package.use  2008-01-28 09:59:26.000000000 +0
+100
+@@ -1 +1 @@
+-net-www/apache mpm-prefork mpm-worker threads
++www-servers/apache mpm-prefork mpm-worker threads
+
+>> (3 of 3) -- /etc/portage/package.use
+>> q quit, h help, n next, e edit-new, z zap-new, u use-new
+   m merge, t toggle-merge, l look-merge:  \cmdvar{u}
+\end{ospcode}
+\index{dispatch-conf (Programm)}%
+
+\subsection{Verbindungsprobleme beim Aktualisieren}
+
+\index{Aktualisierung!Alternativen|(}%
+In manchen Netzwerkumgebungen wird eine Firewall %
+\index{Firewall}%
+die
+Synchronisation mit Hilfe von \cmd{rsync} %
+\index{rsync (Programm)}%
+über Port 873 verhindern.
+In diesem Fall ist es möglich, auf HTTP über
+Port 80 auszuweichen.
+
+\label{emerge-webrsync}%
+Das Skript \cmd{emerge-webrsync} %
+\index{emerge-webrsync (Programm)}%
+lädt ein Snapshot-Archiv %
+\index{Portage!Baum, Snapshot}%
+des Portage-Baums über HTTP herunter und aktualisiert darüber unsere
+lokale Kopie des Baums. Es ersetzt somit \cmd{emerge -{}-sync}:% %
+\index{emerge (Programm)!sync (Option)}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge-webrsync}
+Fetching most recent snapshot
+Attempting to fetch file dated: 20080127
+portage-20080127.tar.bz2: OK
+Syncing local tree...
+
+\ldots
+
+>>> Updating Portage cache:  100%
+
+ *** Completed websync, please now perform a normal rsync if possible.
+     Update is current as of the of YYYYMMDD: 20080127
+\end{ospcode}
+\index{emerge-webrsync (Programm)}%
+
+Der Nachteil dieses Vorgehens: Wir laden den kompletten
+Portage-Baum %
+\index{Portage!Baum}%
+herunter, und das sind immerhin 40~MB Daten, von denen der größte
+Teil eigentlich schon auf dem eigenen System existiert.
+
+\label{emergedeltasync}%
+Wenn \cmd{rsync} %
+\index{rsync (Programm)}%
+konstant durch eine Firewall blockiert ist,  wäre es
+also deutlich effizienter, nur die Unterschiede zum letzten
+Synchronisationsstand herunterzuladen. Das erlaubt das Paket
+\cmd{app-portage/emerge-delta-webrsync}, %
+\index{emerge-delta-webrsync (Paket)}%
+%\index{app-portage  (Kategorie)!emerge-delta-webrsync|see{emerge-delta-webrsync    (Paket)}}%
+das wir allerdings, wenn gewünscht, gesondert installieren müssen.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/emerge-delta-webrsync}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] dev-util/diffball-0.7.1  USE="-debug" 325 kB 
+[ebuild  N    ] app-arch/tarsync-0.2.1  14 kB 
+[ebuild  N    ] app-portage/emerge-delta-webrsync-3.5.1-r2  13 kB 
+
+Total: 3 packages (3 new), Size of downloads: 351 kB
+
+Would you like to merge these packages? [Yes/No]
+\rprompt{\textasciitilde}\textbf{emerge-delta-webrsync}
+Looking for available base versions for a delta
+fetching patches
+\ldots 
+\end{ospcode}
+\index{emerge-delta-webrsync (Programm)}%
+
+Vor allem für Systeme mit geringer Bandbreite %
+\index{Bandbreite}%
+\index{Netzwerk!Bandbreite}%
+ist dies ein nützliches Werkzeug.
+
+Zum Abschluss der Synchronisation führt Portage automatisch ein Update
+des so genannten \emph{Metadaten-Cache}
+%\index{Portage!Metadaten|see{Metadaten}}%
+\index{Metadaten}%
+aus. Dieser speichert unter \cmd{/usr/por\-tage/metadata/cache} %
+\index{cache (Verzeichnis)}%
+\index{usr@/usr!portage!metadata!cache}%
+\index{Metadaten!Cache}%
+einige grundlegende Daten der Ebuilds wie z.\,B. die Homepage,
+USE-Flags, %
+\index{USE-Flag}%
+\index{Homepage}%
+Keywords %
+\index{Keywords}%
+usw.\ in einem Format, auf das \cmd{emerge} %
+\index{emerge (Programm)}%
+schnell zugreifen kann.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /usr/portage/metadata/cache/sys-libs/zlib-1.2.3-r1}
+\ldots
+http://www.gzip.org/zlib/zlib-1.2.3.tar.bz2
+
+http://www.zlib.net/
+ZLIB
+Standard (de)compression library
+alpha amd64 arm hppa ia64 m68k mips ppc ppc64 s390 sh sparc ~sparc-fbsd 
+x86 ~x86-fbsd
+multilib toolchain-funcs eutils portability flag-o-matic
+\ldots
+\end{ospcode}
+
+Den Cache %
+\index{Metadaten!Cache}%
+können wir auch losgelöst vom Befehl \cmd{emerge -{}-sync} über
+\cmd{emerge -{}-metadata} %
+\index{emerge (Programm)!metadata (Option)}%
+aktualisieren. Im Normalfall ist dies allerdings nicht notwendig.% %
+\index{Aktualisierung!Alternativen|)}%
+
+
+\section{\label{packageupdate}Pakete aktualisieren}
+
+\index{emerge (Programm)!update (Option)|(}
+
+Nach der Erstinstallation liegen nicht zwingend alle Pakete
+in der neuesten Version vor, schließlich sind wir von einer
+vorkompilierten Stage
+\index{Stage}%
+ausgegangen, deren Erstellungsdatum
+wahrscheinlich schon einige Zeit zurück liegt. Entsprechend sind für
+viele Pakete schon neuere Versionen verfügbar, da sich der
+Portage-Baum
+\index{Portage!Baum}%
+kontinuierlich weiter entwickelt.
+
+Wir wollen veraltete Pakete erneuern und wissen bereits, dass wir die
+neueste Apache-Version  mit \cmd{emerge www-servers/apache} %
+\index{apache (Paket)}%
+%\index{www-servers (Kategorie)!apache|see{apache (Paket)}}%
+installieren können. Der Befehl trifft allerdings keine
+Unterscheidung, ob das zu installierende Paket schon in der neuesten
+Version vorliegt oder nicht. Angenommen es gibt keine neuere Version
+als die derzeit installierte, verschwenden wir einige Zeit damit, das
+schon vorhandene Paket nochmals zu kompilieren %
+\index{Kompilieren}%
+und zu installieren.
+
+Damit ein Versionsunterschied ausschlaggebend für die Installation
+eines Pakets ist, fügen wir dem \cmd{emerge}-Aufruf die Option
+\cmd{-{}-update} %
+\index{emerge (Programm)!update (Option)}%
+(bzw.\ \cmd{-u}) %
+%\index{emerge (Programm)!u (Option)|see{emerge (Programm), update    (Option)}}%
+hinzu.  Damit führt \cmd{emerge} nur dann eine Aktion aus, wenn auch
+wirklich eine neuere Paketversion verfügbar ist. Da wir an dieser
+Stelle das Paket noch nicht wirklich aktualisieren wollen, sondern
+erst einmal überprüfen möchten, was Portage überhaupt machen würde,
+fügen wir die schon aus Kapitel \ref{emergepretend} bekannte Option
+\cmd{-{}-pretend} %
+\index{emerge (Programm)!pretend (Option)}%
+(bzw.\ \cmd{-p}) %
+%\index{emerge (Programm)!p (Option)|see{emerge (Programm), pretend    (Option)}}%
+ein.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pu www-servers/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies -
+!!! All ebuilds that could satisfy "~app-admin/apache-tools-2.2.8" have 
+been masked.
+!!! One of the following masked packages is required to complete your re
+quest:
+- app-admin/apache-tools-2.2.8 (masked by: ~x86 keyword)
+
+For more information, see MASKED PACKAGES section in the emerge man page
+ or 
+refer to the Gentoo Handbook.
+(dependency required by "www-servers/apache-2.2.8" [ebuild])
+\end{ospcode}
+\index{apache (Paket)}%
+%\index{www-servers (Kategorie)!apache|see{apache (Paket)}}
+
+Sollte eine ähnliche Ausgabe erscheinen, befinden sich vermutlich
+noch die Spielereien aus  Kapitel \ref{chapterconcepts} in den
+Dateien \cmd{/etc/portage/package.use}, \index{package.use (Datei)}%
+\cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei)}%
+und \cmd{/etc/portage/package.unmask}. %
+\index{package.unmask (Datei)}%
+Wir wollen hier aber die stabile Version installieren und
+entfernen zunächst einmal wieder alle \cmd{www-servers/apache}-Einträge %
+\index{apache (Paket)}%
+%\index{www-servers (Kategorie)!apache|see{apache (Paket)}}%
+mit \cmd{nano} aus diesen Dateien.
+
+Danach sollte die Ausgabe besser aussehen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pu www-servers/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild     U ] dev-lang/perl-5.8.8-r4 [5.8.8-r2] 
+[ebuild  N    ] dev-util/pkgconfig-0.22  USE="-hardened" 
+[ebuild     U ] app-misc/mime-types-7 [5] 
+[ebuild     U ] sys-devel/autoconf-2.61-r1 [2.61] 
+[ebuild  NS   ] dev-libs/apr-1.2.11  USE="ipv6 -debug -doc -urandom" 
+[ebuild     U ] dev-libs/openssl-0.9.8g [0.9.8d] USE="-gmp\% -kerberos\%" 
+[ebuild  N    ] dev-libs/libpcre-7.4  USE="unicode -doc" 
+[ebuild     U ] sys-devel/libtool-1.5.24 [1.5.22] USE="-vanilla\%" 
+[ebuild     U ] net-nds/openldap-2.3.39-r2 [2.3.30-r2] 
+[ebuild  NS   ] dev-libs/apr-util-1.2.10  USE="berkdb gdbm ldap mysql -d
+oc -postgres -sqlite -sqlite3" 
+[ebuild     U ] www-servers/apache-2.2.6-r7 [2.0.58-r2] USE="-sni\% -stat
+ic\% -suexec\%" APACHE2_MODULES="actions\%* alias\%* auth_basic\%* authn_alia
+s\%* authn_anon\%* authn_dbm\%* authn_default\%* authn_file\%* authz_dbm\%* au
+thz_default\%* authz_groupfile\%* authz_host\%* authz_owner\%* authz_user\%* 
+autoindex\%* cache\%* dav\%* dav_fs\%* dav_lock\%* deflate\%* dir\%* disk_cache
+\%* env\%* expires\%* ext_filter\%* file_cache\%* filter\%* headers\%* include\%
+* info\%* log_config\%* logio\%* mem_cache\%* mime\%* mime_magic\%* negotiatio
+n\%* rewrite\%* setenvif\%* speling\%* status\%* unique_id\%* userdir\%* usertr
+ack\%* vhost_alias\%* -asis\% -auth_digest\% -authn_dbd\% -cern_meta\% -charse
+t_lite\% -dbd\% -dumpio\% -ident\% -imagemap\% -log_forensic\% -proxy\% -proxy_
+ajp\% -proxy_balancer\% -proxy_connect\% -proxy_ftp\% -proxy_http\% -version\%
+" APACHE2_MPMS="-event\% -itk\% -peruser\% -prefork\% -worker\%" 
+[ebuild  N    ] app-admin/apache-tools-2.2.6  USE="ssl"
+\end{ospcode}
+\index{apache (Paket)}%
+%\index{www-servers (Kategorie)!apache|see{apache (Paket)}}%
+
+Es hat sich offensichtlich einiges seit dem \cmd{2007.0}-Release %
+\index{2007.0}%
+getan. Zum einen ist \cmd{>=www-servers/apache-2.2} mittlerweile die
+stabile Version, und bei den USE-Flags hat es massive Veränderungen
+gegeben. Wir hatten schon in Kapitel \ref{useexpand} erwähnt, dass
+sich das Konzept der erweiterten USE-Flags %
+\index{USE-Flag!erweitert}%
+(\cmd{USE\_EXPAND}) %
+\index{USE\_EXPAND (Variable)}%
+%\index{Variable!USE\_EXPAND|see{USE\_EXPAND Variable}}%
+weiter verbreitet, und der Apache-Server %
+\index{apache (Paket)}%
+%\index{www-servers (Kategorie)!apache|see{apache (Paket)}}%
+ist ein gutes Beispiel dafür.
+
+Offensichtlich können wir jetzt bei der Installation bestimmen,
+welche Module der Apache-Server aktiviert haben soll. Das dafür
+zuständige, erweiterte USE-Flag ist \cmd{APACHE2\_MODULES}. %
+\index{APACHE2\_MODULES (Variable)}%
+%\index{Variable!APACHE2\_MODULES|see{APACHE2\_MODULES Variable}}%
+Auch die
+Multi-Processing-Module %
+\index{Apache!Multi-Processing-Modul}%
+(siehe Seite \pageref{apachempm}) wurden aus den normalen USE-Flags
+herausgenommen und finden sich im erweiterten USE-Flag
+\cmd{APACHE2\_MPMS} %
+\index{APACHE2\_MPMS (Variable)}%
+%\index{Variable!APACHE2\_MPMS|see{APACHE2\_MPMS Variable}}%
+wieder.
+
+Den Zeichen- bzw.\ Farbcode %
+\index{Farbcode}%
+%\index{Portage!Farbcode|see{Farbcode}}%
+der USE-Flags %
+\index{USE-Flag}%
+haben wir auf Seite \pageref{usecolorcode} genauer beschrieben.
+
+Vielfach wollen wir nicht nur das Paket selbst, sondern auch gleich
+alle Abhängigkeiten des Paketes \index{Paket!-abhängigkeiten}%
+mit auf den neuesten Stand bringen. Die Option \cmd{-{}-deep} %
+\index{emerge (Programm)!deep (Option)}%
+(bzw.\ \cmd{-D}) %
+%\index{emerge (Programm)!D (Option)|see{emerge (Programm), deep    (Option)}}%
+instruiert \cmd{emerge}, %
+\index{emerge (Programm)}%
+auch für jedes im Baum der Abhängigkeiten
+vorliegende Paket zu überprüfen, ob neuere Versionen existieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -puD www-servers/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild     U ] sys-devel/gnuconfig-20070724 [20060702] 
+[ebuild     U ] dev-libs/expat-2.0.1 [1.95.8] 
+[ebuild     U ] app-misc/pax-utils-0.1.16 [0.1.15] 
+[ebuild  N    ] app-admin/python-updater-0.2  
+[ebuild  N    ] dev-util/pkgconfig-0.22  USE="-hardened" 
+[ebuild     U ] app-misc/mime-types-7 [5] 
+[ebuild  N    ] dev-libs/libpcre-7.4  USE="unicode -doc" 
+[ebuild     U ] sys-apps/ed-0.8 [0.2-r6] 
+[ebuild     U ] sys-apps/man-pages-2.75 [2.42] 
+[ebuild     U ] sys-devel/binutils-config-1.9-r4 [1.9-r3] 
+[ebuild     U ] app-misc/ca-certificates-20070303-r1 [20061027.2] 
+[ebuild     U ] sys-process/procps-3.2.7 [3.2.6] 
+[ebuild     U ] dev-lang/perl-5.8.8-r4 [5.8.8-r2] 
+[ebuild  N    ] perl-core/Storable-2.16  
+[ebuild     U ] dev-perl/Net-Daemon-0.43 [0.39] 
+[ebuild     U ] virtual/perl-Storable-2.16 [2.15] 
+[ebuild     U ] dev-perl/PlRPC-0.2020-r1 [0.2018] 
+[ebuild     U ] dev-perl/DBI-1.601 [1.53] 
+[ebuild     U ] sys-devel/autoconf-2.61-r1 [2.61] 
+[ebuild     U ] sys-devel/libtool-1.5.24 [1.5.22] USE="-vanilla\%" 
+[ebuild  NS   ] dev-libs/apr-1.2.11  USE="ipv6 -debug -doc -urandom" 
+[ebuild     U ] sys-libs/ncurses-5.6-r2 [5.5-r3] USE="-profile\%" 
+[ebuild     U ] sys-libs/readline-5.2_p7 [5.1_p4] 
+[ebuild     U ] sys-libs/gpm-1.20.1-r6 [1.20.1-r5] 
+[ebuild     U ] dev-libs/openssl-0.9.8g [0.9.8d] USE="-gmp\% -kerberos\%" 
+[ebuild     U ] dev-db/mysql-5.0.54 [5.0.26-r2] 
+[ebuild     U ] dev-perl/DBD-mysql-4.00.5 [3.0008] 
+[ebuild  NS   ] sys-libs/db-4.5.20_p2  USE="-bootstrap -doc -java -nocxx
+ -tcl -test" 
+[ebuild     U ] dev-lang/python-2.4.4-r6 [2.4.3-r4] USE="-examples\% -not
+hreads\%" 
+[ebuild     U ] net-nds/openldap-2.3.39-r2 [2.3.30-r2] 
+[ebuild  NS   ] dev-libs/apr-util-1.2.10  USE="berkdb gdbm ldap mysql -d
+oc -postgres -sqlite -sqlite3" 
+[ebuild  N    ] dev-libs/libxml2-2.6.30-r1  USE="ipv6 python readline -d
+ebug -doc -test" 
+[ebuild     U ] sys-devel/gettext-0.17 [0.16.1] USE="acl\%* openmp\%*" 
+[ebuild     U ] sys-devel/m4-1.4.10 [1.4.7] USE="-examples\%" 
+[ebuild     U ] sys-apps/diffutils-2.8.7-r2 [2.8.7-r1] 
+[ebuild     U ] sys-apps/man-1.6e-r3 [1.6d] 
+[ebuild     U ] sys-devel/binutils-2.18-r1 [2.16.1-r3] 
+[ebuild     U ] sys-apps/findutils-4.3.11 [4.3.2-r1] 
+[ebuild     U ] sys-apps/attr-2.4.39 [2.4.32] 
+[ebuild     U ] sys-apps/acl-2.2.45 [2.2.39-r1] 
+[ebuild     U ] net-misc/rsync-2.6.9-r5 [2.6.9-r1] 
+[ebuild     U ] sys-apps/coreutils-6.9-r1 [6.4] USE="-xattr\%" 
+[ebuild     U ] www-servers/apache-2.2.6-r7 [2.0.58-r2] USE="-sni\% -stat
+ic\% -suexec\%" APACHE2_MODULES="actions\%* alias\%* auth_basic\%* authn_alia
+s\%* authn_anon\%* authn_dbm\%* authn_default\%* authn_file\%* authz_dbm\%* au
+thz_default\%* authz_groupfile\%* authz_host\%* authz_owner\%* authz_user\%* 
+autoindex\%* cache\%* dav\%* dav_fs\%* dav_lock\%* deflate\%* dir\%* disk_cache
+\%* env\%* expires\%* ext_filter\%* file_cache\%* filter\%* headers\%* include\%
+* info\%* log_config\%* logio\%* mem_cache\%* mime\%* mime_magic\%* negotiatio
+n\%* rewrite\%* setenvif\%* speling\%* status\%* unique_id\%* userdir\%* usertr
+ack\%* vhost_alias\%* -asis\% -auth_digest\% -authn_dbd\% -cern_meta\% -charse
+t_lite\% -dbd\% -dumpio\% -ident\% -imagemap\% -log_forensic\% -proxy\% -proxy_
+ajp\% -proxy_balancer\% -proxy_connect\% -proxy_ftp\% -proxy_http\% -version\%
+" APACHE2_MPMS="-event\% -itk\% -peruser\% -prefork\% -worker\%" 
+[ebuild  N    ] app-admin/apache-tools-2.2.6  USE="ssl" 
+\end{ospcode}
+\index{apache (Paket)}%
+%\index{www-servers (Kategorie)!apache|see{apache (Paket)}}%
+
+Im Unterschied zur Liste weiter oben sind eine ganze Menge neuer
+Pakete hinzugekommen. Verzichten wir auf die \cmd{-{}-deep}-Option, so
+aktualisiert \cmd{emerge} nur die Pakete, die wirklich zwingend einer
+Aktualisierung bedürfen, damit die von uns gewünschte Software
+einwandfrei läuft.
+
+\label{btimedeps}
+Wer es ganz genau nimmt kann auch noch die
+Paketabhängigkeiten
+\index{Paket!-abhängigkeiten}%
+aktualisieren, die nicht unbedingt zur Laufzeit
+\index{Paket!-abhängigkeiten zu Laufzeit}%
+des Programms, sondern nur zum Kompilieren bzw. in der
+Installationsphase
+\index{Paket!-abhängigkeiten bei Installation}%
+zwingend notwendig sind (\emph{Build time dependencies}
+\index{Build Time Dependencies}%
+im Gegensatz zu den normalen \emph{Run time dependencies}; siehe Seite
+\pageref{specialdeps}).
+\index{Run Time Dependencies}%
+\index{Paket!-abhängigkeiten zu Laufzeit}%
+Dazu dient die Option \cmd{-{}-with-bdeps y}.
+\index{emerge (Programm)!with-bdeps (Option)}%
+Sie kommt eher selten zum Einsatz.
+
+In den obigen Beispielen sind zu aktualisierende Pakete mit der
+Markierung \cmd{[ebuild U ]} versehen, wobei hier das \cmd{U}
+"`update"' bezeichnet. Diese Pakete liegen also im synchronisierten
+Portage-Baum %
+\index{Portage!Baum}%
+in einer aktualisierten Version vor. Ersichtlich wird das auch an den
+Versionsnummern, die hinter den Namen der Ebuilds aufgeführt
+werden. So ist z.\,B.\ dem Ausschnitt zu dem Paket
+\cmd{dev-libs/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-libs (Kategorie)!openssl|see{openssl (Paket)}}%
+(\cmd{dev-libs/openssl-0.9.8g [0.9.8d]}) zu entnehmen, dass von der
+derzeitigen Version \cmd{0.9.8d} (die Angabe hinter dem Ebuild-Namen,
+in blau %
+\index{Farbcode}%
+und von eckigen Klammern eingerahmt) auf die Version \cmd{0.9.8g} (die
+Angabe direkt hinter dem Paketnamen) aktualisiert werden soll.
+
+Wer wissen möchte, was die Gentoo-Entwickler bei einem Paket in der
+Zwischenzeit geändert haben, bevor er es aktualisiert, kann sich über
+die Option \cmd{-{}-changelog} %
+\index{emerge (Programm)!changelog (Option)}%
+(bzw.\ \cmd{-l}) %
+%\index{emerge (Programm)!l (Option)|see{emerge (Programm), changelog    (Option)}}%
+die Datei \cmd{ChangeLog} %
+\index{ChangeLog (Datei)}%
+%\index{Paket!ChangeLog|see{ChangeLog (Datei)}}%
+des entsprechenden Ebuilds anzeigen lassen. Wir nehmen hier der
+Einfachheit halber ein wenig verändertes Paket:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -puvl app-misc/pax-utils}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild     U ] app-misc/pax-utils-0.1.16 [0.1.15] USE="-caps" 64 kB 
+
+Total: 1 package (1 upgrade), Size of downloads: 64 kB
+
+*pax-utils-0.1.16
+
+  24 Aug 2007; <solar@gentoo.org> -pax-utils-0.1.13.ebuild,
+  -pax-utils-0.1.14.ebuild, +pax-utils-0.1.16.ebuild:
+  - Version bump. man pages moved over to docbook. New: endian and perm
+  displays.. New: when -Tv are used together the disasm will be displaye
+d of
+  the offending text rel. The pax-utils code should compile out of the b
+ox on
+  solaris now. Lots of misc fixes.. to many to list..
+
+  01 Mar 2007; <genstef@gentoo.org> pax-utils-0.1.13.ebuild,
+  pax-utils-0.1.14.ebuild, pax-utils-0.1.15.ebuild:
+  Dropped ppc-macos keyword, see you in prefix
+
+  03 Feb 2007; Bryan Østergaard <kloeri@gentoo.org>
+  pax-utils-0.1.15.ebuild:
+  Stable on Alpha, bug 163453.
+
+  02 Feb 2007; Alexander H. Færøy <eroyf@gentoo.org>
+  pax-utils-0.1.15.ebuild:
+  Stable on MIPS; bug #163453
+
+  31 Jan 2007; Markus Rothe <corsair@gentoo.org> pax-utils-0.1.15.ebuild:
+  Stable on ppc64; bug #163453
+
+  30 Jan 2007; Steve Dibb <beandog@gentoo.org> pax-utils-0.1.15.ebuild:
+  amd64 stable, bug 163453
+
+  25 Jan 2007; Gustavo Zacarias <gustavoz@gentoo.org>
+  pax-utils-0.1.15.ebuild:
+  Stable on sparc wrt #163453
+
+  24 Jan 2007; Jeroen Roovers <jer@gentoo.org> pax-utils-0.1.15.ebuild:
+  Stable for HPPA (bug #163453).
+
+  23 Jan 2007; Raúl Porcel <armin76@gentoo.org> pax-utils-0.1.15.ebuild:
+  x86 stable wrt bug 163453
+
+  23 Jan 2007; nixnut <nixnut@gentoo.org> pax-utils-0.1.15.ebuild:
+  Stable on ppc wrt bug 163453
+\end{ospcode}
+\index{pax-utils (Paket)}%
+%\index{app-misc (Kategorie)!pax-utils|see{pax-utils (Paket)}}%
+
+Aktualisieren wir an dieser Stelle einmal den Apache-Server mit
+\cmd{emerge -u www-servers/apache}, damit wir in diesem Gebiet auf
+dem neuesten Stand sind und etwas herumexperimentieren können.
+
+Verwendet man \cmd{emerge} %
+\index{emerge (Programm)}%
+mit der \cmd{-{}-update}-Option, %
+\index{emerge (Programm)!update (Option)}%
+so werden Veränderungen bei den USE-Flags nicht mit einbezogen. So
+führt folgender Aufruf zu keiner Aktion, obwohl wir hier mit
+\cmd{USE="{}-ssl"{}} %
+%\index{USE-Flag!ssl|see{ssl (USE-Flag)}}%
+\index{ssl (USE-Flag)}%
+explizit angeben, dass wir das \cmd{www-servers/apache}-Paket %
+\index{apache (Paket)}%
+%\index{www-servers (Kategorie)!apache|see{apache (Paket)}}%
+diesmal ohne SSL-Unterstützung %
+\index{SSL}%
+installieren möchten.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{USE="-ldap" emerge -puv www-servers/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+
+Total size of downloads: 0 kB
+\end{ospcode}
+
+Um bei einem Update auch auf Veränderungen der USE-Flags
+\index{Paket!Aktualisieren!USE-Flags}%
+\index{emerge (Programm)!update (Option)}%
+zu reagieren, fügen wir die Option \cmd{-{}-newuse} %
+\index{emerge (Programm)!newuse (Option)}%
+(bzw.\ \cmd{-N}) %
+%\index{emerge (Programm)!N (Option)|see{emerge (Programm), newuse    (Option)}}%
+hinzu:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{USE="-ldap" emerge -puvN www-servers/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] sys-libs/zlib-1.2.3-r1  USE="(-build\%)" 0 kB 
+[ebuild   R   ] dev-libs/apr-util-1.2.10  USE="berkdb gdbm mysql -doc -l
+dap* -postgres -sqlite -sqlite3" 0 kB 
+[ebuild   R   ] www-servers/apache-2.2.6-r7  USE="ssl -debug -doc -ldap*
+ (-selinux) -sni -static -suexec -threads" APACHE2_MODULES="actions alia
+s auth_basic authn_alias authn_anon authn_dbm authn_default authn_file a
+uthz_dbm authz_default authz_groupfile authz_host authz_owner authz_user
+ autoindex cache dav dav_fs dav_lock deflate dir disk_cache env expires 
+ext_filter file_cache filter headers include info log_config logio mem_c
+ache mime mime_magic negotiation rewrite setenvif speling status unique_
+id userdir usertrack vhost_alias -asis -auth_digest -authn_dbd -cern_met
+a -charset_lite -dbd -dumpio -ident -imagemap -log_forensic -proxy -prox
+y_ajp -proxy_balancer -proxy_connect -proxy_ftp -proxy_http -version" AP
+ACHE2_MPMS="-event -itk -peruser -prefork -worker" 0 kB 
+
+Total: 3 packages (3 reinstalls), Size of downloads: 0 kB
+\end{ospcode}
+
+Der Ebuild ist jetzt mit der Markierung \cmd{[ebuild R ]}
+("`re-emerge"') %
+\index{Paket!erneut installieren}%
+versehen. Außerdem kennzeichnet \cmd{emerge} das veränderte USE-Flag
+jetzt mit einem Sternchen.% %
+\index{Paket!geänderte USE-Flag}%
+
+Damit kennen wir alle notwendigen Befehle, um unser System zu
+aktualisieren. Es ist allerdings nicht sinnvoll, das Update für jedes
+Paket einzeln durchzugehen. Es wäre deutlich angenehmer, alle auf dem
+System installierten Pakete in einem Arbeitsschritt zu aktualisieren.
+Diese Funktion erfüllt der spezielle Paketname \cmd{world}:% %
+\index{world (Paket)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pvuN world}
+
+These are the packages that would be merged, in order:
+
+Calculating world dependencies... done!
+[ebuild   R   ] sys-libs/zlib-1.2.3-r1  USE="(-build\%)" 0 kB 
+[ebuild     U ] dev-libs/expat-2.0.1 [1.95.8] USE="(-test\%)" 0 kB 
+[ebuild     U ] sys-devel/gcc-config-1.4.0-r4 [1.3.14] 0 kB 
+[ebuild     U ] dev-libs/gmp-4.2.2 [4.2.1] USE="-doc -nocxx" 1,707 kB 
+[ebuild  N    ] app-admin/python-updater-0.2  0 kB 
+[ebuild  N    ] dev-util/unifdef-1.20  65 kB 
+[ebuild     U ] app-arch/cpio-2.9-r1 [2.6-r5] USE="nls" 741 kB 
+[ebuild     U ] app-misc/pax-utils-0.1.16 [0.1.15] USE="-caps" 0 kB 
+[ebuild     U ] sys-libs/timezone-data-2007j [2007c] USE="nls" 345 kB 
+[ebuild  N    ] dev-libs/eventlog-0.2.5  305 kB 
+[ebuild     U ] app-arch/bzip2-1.0.4-r1 [1.0.3-r6] USE="-static (-build
+\%)" 822 kB 
+[ebuild     U ] sys-apps/hdparm-7.7 [6.6] 62 kB 
+[ebuild     U ] sys-apps/ethtool-6 [4] 127 kB 
+[ebuild     U ] net-misc/dhcpcd-3.1.5-r1 [2.0.5-r1] USE="-vram\% (-build\%
+) (-debug\%) (-static\%)" 40 kB 
+[ebuild     U ] sys-kernel/linux-headers-2.6.23-r3 [2.6.17-r2] USE="(-gc
+c64\%)" 4,671 kB 
+[ebuild     U ] sys-apps/debianutils-2.28.2 [2.17.4] USE="-static" 135 k
+B 
+[ebuild     U ] dev-libs/mpfr-2.3.0_p3 [2.2.0_p16] 853 kB 
+[ebuild     U ] sys-apps/ed-0.8 [0.2-r6] 67 kB 
+[ebuild     U ] sys-apps/pciutils-2.2.8 [2.2.3-r2] USE="zlib\%* -network-
+cron\%" 228 kB 
+[ebuild     U ] app-portage/flagedit-0.0.7 [0.0.5] 6 kB 
+[ebuild     U ] sys-apps/sysvinit-2.86-r10 [2.86-r8] USE="(-ibm) (-selin
+ux) -static" 0 kB 
+[ebuild     U ] net-misc/iputils-20070202 [20060512] USE="ipv6 -doc -sta
+tic" 87 kB 
+[ebuild     U ] sys-apps/man-pages-2.75 [2.42] USE="nls" 1,815 kB 
+[ebuild     U ] sys-devel/binutils-config-1.9-r4 [1.9-r3] 0 kB 
+[ebuild     U ] sys-process/procps-3.2.7 [3.2.6] USE="(-n32)" 276 kB 
+[ebuild     U ] sys-fs/udev-115-r1 [104-r12] USE="(-selinux)" 210 kB 
+[ebuild     U ] sys-libs/ncurses-5.6-r2 [5.5-r3] USE="gpm unicode -boots
+trap -build -debug -doc -minimal -nocxx -profile\% -trace" 2,353 kB 
+[ebuild     U ] sys-libs/readline-5.2_p7 [5.1_p4] 2,008 kB 
+[ebuild     U ] sys-libs/gpm-1.20.1-r6 [1.20.1-r5] USE="(-selinux)" 9 kB 
+[ebuild     U ] sys-apps/less-416 [394] USE="unicode" 288 kB 
+[ebuild     U ] dev-db/mysql-5.0.54 [5.0.26-r2] USE="berkdb perl ssl -bi
+g-tables -cluster -debug -embedded -extraengine -latin1 -max-idx-128 -mi
+nimal (-selinux) -static" 26,860 kB 
+[ebuild     U ] dev-perl/DBD-mysql-4.00.5 [3.0008] 120 kB 
+[ebuild     U ] dev-lang/python-2.4.4-r6 [2.4.3-r4] USE="berkdb gdbm ipv
+6 ncurses readline ssl -bootstrap -build -doc -examples\% -nocxx -nothre
+ads\% -tk -ucs2" 7,977 kB 
+[ebuild  N    ] dev-libs/libxml2-2.6.30-r1  USE="ipv6 python readline -d
+ebug -doc -test" 4,616 kB 
+[ebuild     U ] sys-libs/cracklib-2.8.10 [2.8.9-r1] USE="nls python" 565
+ kB 
+[ebuild     U ] sys-apps/file-4.21-r1 [4.20-r1] USE="python" 538 kB 
+[ebuild     U ] sys-devel/gettext-0.17 [0.16.1] USE="acl\%* nls openmp\%*
+ -doc -emacs -nocxx" 11,369 kB 
+[ebuild     U ] sys-devel/binutils-2.18-r1 [2.16.1-r3] USE="nls -multisl
+ot -multitarget -test -vanilla" 14,629 kB 
+[ebuild     U ] sys-devel/flex-2.5.33-r3 [2.5.33-r1] USE="nls -static" 0
+ kB 
+[ebuild     U ] sys-devel/m4-1.4.10 [1.4.7] USE="nls -examples\%" 722 kB 
+[ebuild     U ] sys-apps/acl-2.2.45 [2.2.39-r1] USE="nls (-nfs)" 150 kB 
+[ebuild     U ] sys-apps/man-1.6e-r3 [1.6d] USE="nls" 247 kB 
+[ebuild     U ] sys-apps/findutils-4.3.11 [4.3.2-r1] USE="nls (-selinux)
+ -static" 2,003 kB 
+[ebuild     U ] sys-apps/grep-2.5.1a-r1 [2.5.1-r8] USE="nls pcre\%* -stat
+ic (-build\%)" 516 kB 
+[ebuild     U ] sys-apps/gawk-3.1.5-r5 [3.1.5-r2] USE="nls" 0 kB 
+[ebuild     U ] app-editors/nano-2.0.7 [2.0.2] USE="ncurses nls unicode 
+-debug -justify -minimal -slang -spell" 1,332 kB 
+[ebuild     U ] dev-util/dialog-1.1.20071028 [1.0.20050206] USE="nls\%* u
+nicode -examples\%" 362 kB 
+[ebuild     U ] app-arch/gzip-1.3.12 [1.3.5-r10] USE="nls -pic -static (
+-build\%)" 452 kB 
+[ebuild     U ] sys-apps/net-tools-1.60-r13 [1.60-r12] USE="nls -static"
+ 105 kB 
+[ebuild     U ] sys-apps/kbd-1.13-r1 [1.12-r8] USE="nls" 652 kB 
+[ebuild     U ] app-arch/tar-1.19-r1 [1.16-r2] USE="nls -static" 1,839 k
+B 
+\ldots
+\end{ospcode}
+\index{emerge (Programm)!world (Paket)}
+
+\label{worldfile}
+\cmd{world} umfasst alle System-Pakete und jene, die wir manuell
+hinzugefügt haben. Letztere verwaltet Portage in der
+Datei \cmd{/var/lib/portage/world}:% %
+\index{world (Datei)}%
+\index{var@/var!lib!portage!world}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /var/lib/portage/world}
+app-admin/eselect
+app-admin/showconsole
+app-admin/syslog-ng
+app-benchmarks/bootchart
+app-misc/livecd-tools
+app-portage/emerge-delta-webrsync
+app-portage/euses
+app-portage/flagedit
+app-portage/gentoolkit
+app-portage/mirrorselect
+dev-db/mysql
+net-dialup/ppp
+net-misc/dhcpcd
+sys-apps/ethtool
+sys-apps/netplug
+sys-boot/grub
+sys-kernel/genkernel
+sys-kernel/gentoo-sources
+sys-process/vixie-cron
+www-servers/apache
+\end{ospcode}
+
+Die Liste enthält nur die Pakete, die wir tatsächlich auf der
+Kommandozeile in Verbindung mit \cmd{emerge} %
+\index{emerge (Programm)!installierte Pakete}%
+\index{emerge (Programm)!Kommandozeile}%
+\index{Paket!installiert}%
+angegeben haben, nicht jedoch solche, die \cmd{emerge}
+aufgrund von Abhängigkeiten installiert hat.
+
+Um ein Paket zum Testen zu installieren, ohne es gleich in diese Liste
+fest installierter Pakete aufzunehmen, kann man \cmd{emerge} mit der
+Option \cmd{-{}-oneshot} %
+\index{emerge (Programm)!oneshot (Option)}%
+(bzw.\ \cmd{-1}) %
+%\index{emerge (Programm)!1 (Option)|see{emerge (Programm), oneshot    (Option)}}%
+aufrufen. Damit installieren wir das Paket zwar normal, fügen es aber
+eben nicht zu \cmd{world} hinzu.% %
+\index{world (Datei)}%
+
+Wollen wir ein so installiertes Paket bzw.\ ein als Abhängigkeit
+installiertes Paket, das noch in der \cmd{world}-Datei %
+\index{world (Datei)}%
+fehlt, hinzufügen, %
+\index{world (Datei)!Paket hinzufügen}%
+\index{Paket!world hinzufügen}%
+ohne das bereits installierte Paket erneut zu kompilieren und
+installieren, erreichen wir das über die Option \cmd{-{}-noreplace} %
+\index{emerge (Programm)!noreplace (Option)}%
+(bzw.\ \cmd{-n}) %
+%\index{emerge (Programm)!n (Option)|see{emerge (Programm), noreplace    (Option)}}%
+Diese dient dazu, Pakete wirklich nur dann zu installieren, wenn sie
+noch nicht installiert wurden. Allerdings nimmt \cmd{emerge} das Paket
+auf jeden Fall in \cmd{world} %
+\index{world (Datei)}%
+auf, wenn es dort noch fehlt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -n net-nds/openldap}
+Calculating dependencies... done!
+>>> Recording net-nds/openldap in ``world'' favorites file...
+>>> Auto-cleaning packages...
+
+>>> No outdated packages were found on your system.
+\rprompt{\textasciitilde}\textbf{grep ldap /var/lib/portage/world}
+net-nds/openldap
+\end{ospcode}
+\index{emerge (Programm)!noreplace (Option)}%
+\index{world (Datei)}%
+\index{openldap (Paket)}%
+%\index{net-nds (Kategorie)!openldap|see{openldap (Paket)}}
+
+\label{fullupdate}%
+\cmd{emerge world} %
+\index{emerge (Programm)!world (Paket)}%
+ist in jedem Fall der Befehl, den wir für ein volles Update unseres
+Systems verwenden. Die Option \cmd{-{}-update} %
+\index{emerge (Programm)!update (Option)}%
+sollte unbedingt gesetzt sein, damit \cmd{emerge} wirklich nur Pakete
+aktualisiert, die ein Update nötig haben. Die Option
+\cmd{-{}-newuse} %
+\index{emerge (Programm)!newuse (Option)}%
+ist ebenfalls notwendig, damit Portage alle Pakete mit veränderten
+USE-Flags aktualisiert. Abschließend brauchen wir noch die Option
+\cmd{-{}-deep}, %
+\index{emerge (Programm)!deep (Option)}%
+damit \cmd{emerge} alle Abhängigkeiten ebenfalls berücksichtigt und
+nicht nur die Pakete, die direkt in unserer \cmd{world}-Datei %
+\index{world (Datei)}%
+gelistet sind. Damit ergibt sich folgender Befehl für ein komplettes
+Update des Systems:
+
+\begin{ospcode}
+emerge --update --newuse --deep world
+\end{ospcode}
+\index{emerge (Programm)!world (Paket)}%
+\index{emerge (Programm)!update (Option)}%
+\index{emerge (Programm)!newuse (Option)}%
+\index{emerge (Programm)!deep (Option)}%
+
+Alternativ kann man natürlich auch die Kurzform \cmd{emerge -uND
+  world} %
+%\index{emerge (Programm)!uND (Option)!world  (Paket)|see{System, aktualisieren}}%
+\index{Aktualisieren}%
+verwenden.
+
+\label{labelsystem}%
+Abgesehen von \cmd{world} %
+\index{world (Paket)}%
+gibt es noch den speziellen Bezeichner \cmd{system}, %
+\index{system (Paket)}%
+der alle Pakete umfasst, die für das Basissystem notwendig sind. %
+\index{Paket!System}%
+\index{System!Pakete}%
+Diese Liste ist über das installierte Profil definiert. Allerdings hat
+der Befehl \cmd{emerge system} %
+\index{emerge (Programm)!system (Paket)}%
+selten praktische Bedeutung.
+
+\index{emerge (Programm)!update (Option)|)}
+
+\section{\label{configupdate}Konfiguration aktualisieren}
+
+\index{Konfiguration!aktualisieren|(}%
+Der Update-Vorgang endet in den meisten Fällen mit einigen allgemeinen
+Informationen und häufig mit einer Nachricht über
+Konfigurationsdateien, die ein Update benötigen:
+
+\begin{ospcode}
+ * Regenerating GNU info directory index...
+ * Processed 96 info files.
+ * IMPORTANT: 5 config files in /etc need updating.
+ * Type emerge --help config to learn how to update config files.
+\end{ospcode}
+
+Dies ist nicht zwingend bei jedem Update der Fall, aber sehr häufig
+bringen neue Software-Versionen %
+\index{Paket!aktualisieren}%
+\index{Paket!-version}%
+natürlich auch neue Konfigurationsoptionen mit sich.
+
+Gentoo bietet hier mit der \emph{Config Protection} %
+%\index{Config Protection|see{Konfiguration, Schutz}}%
+\index{Konfiguration!Schutz}%
+ein besonderes Feature, das den Benutzer davor bewahrt, bei der
+Aktualisierung von Paketen unbedacht wichtige Konfigurationsdateien zu
+überschreiben. Da die Konfiguration des Systems ein zentrales Element
+für den einwandfreien Betrieb der Maschine darstellt, wollen wir uns
+etwas ausführlicher mit der Aktualisierung der Konfiguration
+beschäftigen.
+
+\label{configprotect}%
+\emph{Config Protection} %
+\index{Konfiguration!Schutz|(}%
+arbeitet verzeichnisorientert: Es lassen sich also bestimmte
+Verzeichnisse definieren, in denen Portage bei der Installation eines
+Paketes bereits vorhandene Dateien nicht überschreibt. Standardmäßig
+gilt dies z.\,B.\ für das Verzeichnis \cmd{/etc}. %
+\index{etc@/etc}%
+Die geschützten Verzeichnisse lassen sich über die Variable
+\cmd{CONFIG\_PROTECT} %
+\index{CONFIG\_PROTECT (Variable)}%
+%\index{Variable!CONFIG\_PROTECT|see{CONFIG\_PROTECT Variable}}%
+in der Datei \cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+festlegen. Die Basisdefinition \cmd{CONFIG\_PROTECT="{}/etc"{}} %
+\index{CONFIG\_PROTECT (Variable)}%
+%\index{Variable!CONFIG\_PROTECT|see{CONFIG\_PROTECT Variable}}%
+findet sich in der Datei \cmd{/etc/make.globals}. %
+\index{make.globals (Datei)}%
+\index{etc@/etc!make.globals}%
+Alle Verzeichnisse, die wir der gleichen Variable in
+\cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+hinzufügen, addieren sich zu dieser Basis-Definition.
+
+\label{configprotectmask}%
+Die Möglichkeit, den Schutz für einzelne Verzeichnisse wieder zu
+entfernen, bietet dann im Gegenzug die Variable
+\cmd{CONFIG\_PROTECT\_MASK}, %
+\index{CONFIG\_PROTECT\_MASK (Variable)}%
+%\index{Variable!CONFIG\_PROTECT\_MASK|see{CONFIG\_PROTECT\_MASK Variable}}%
+die sich ebenfalls in
+\cmd{/etc/make.conf} %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+definieren lässt. Als Standard ist (ebenfalls in
+\cmd{/etc/make.globals}) %
+\index{make.globals (Datei)}%
+\index{etc@/etc!make.globals}%
+das Verzeichnis \cmd{/etc/env.d} %
+\index{env.d (Verzeichnis)}%
+\index{etc@/etc!env.d}%
+vom Schutz ausgeschlossen. In diesem Verzeichnis können Ebuilds, wie
+unter \ref{envd} schon beschrieben, paketspezifische
+Umgebungsvariablen %
+\index{Umgebungsvariablen}%
+festlegen. Da jeder Benutzer diese
+Umgebungsvariablen in seinen eigenen Bash-Startup-Skripten
+umdefinieren kann (und soll), würde ein Schutz der Dateien in
+\cmd{/etc/env.d} %
+\index{env.d (Verzeichnis)}%
+\index{etc@/etc!env.d}%
+keinen Sinn ergeben, da sie nur die Standard-Konfiguration darstellen.
+
+Es ist z.\,B.\ sinnvoll, das Verzeichnis \cmd{/etc/init.d} %
+\index{init.d (Verzeichnis)}%
+\index{etc@/etc!init.d}%
+in die Variable \cmd{CONFIG\_""PROTECT\_MASK} %
+\index{CONFIG\_PROTECT\_MASK (Variable)}%
+%\index{Variable!CONFIG\_PROTECT\_MASK|see{CONFIG\_PROTECT\_MASK Variable}}%
+aufzunehmen, da die
+Init-Skripte, die in diesem Verzeichnis liegen, keine
+Konfigurationsdateien im eigentlichen Sinn darstellen. Die meisten
+Nutzer werden wohl auch keine eigenen Veränderungen an diesen Skripten
+vornehmen. Wichtig ist allerdings, als Nutzer genau zu wissen, für
+welche Verzeichnisse die \emph{Config Protection} gilt und für welche
+nicht. Entfernt man den Schutz, überschreibt Portage gnadenlos alte
+Dateien, ohne darauf Rücksicht zu nehmen, ob der Benutzer an diesen
+Veränderungen vorgenommen hat oder nicht.% %
+\index{Konfiguration!Schutz|)}%
+
+Wir gehen an dieser Stelle zurück zu unserem 2007.0-System und führen
+die folgenden Beispiele auf Basis des nicht aktualisierten Systems
+durch.
+
+Schauen wir uns als konkretes Beispiel für die Aktualisierung von
+Konfigurationsdateien einmal das Paket \cmd{dev-libs/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-libs (Kategorie)!openssl|see{openssl (Paket)}}%
+an. Da wir hier vom nicht aktualisierten System ausgehen, fehlt uns
+ein zu aktualisierendes Paket, aber das können wir umgehen, indem wir
+\cmd{dev-lib/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-lib (Kategorie)!openssl|see{openssl (Paket)}}%
+\emph{downgraden}, %
+\index{Downgrade}%
+\index{Paket!-version!verringern}%
+die derzeit installierte Version also reduzieren. Vorher schauen wir
+uns noch den Inhalt des zum Paket \cmd{dev-libs/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-libs (Kategorie)!openssl|see{openssl (Paket)}}%
+gehörenden Konfigurationsverzeichnisses \cmd{/etc/ssl} %
+\index{ssl (Verzeichnis)}%
+\index{etc@/etc!ssl}%
+an:
+
+\label{ssldowngrade}%
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /etc/ssl/}
+insgesamt 44
+drwxr-xr-x  5 root root  4096 29. Jan 20:25 .
+drwxr-xr-x 41 root root  4096 29. Jan 20:25 ..
+drwxr-xr-x  2 root root 12288 29. Jan 20:25 certs
+drwxr-xr-x  2 root root  4096 29. Jan 20:25 misc
+-rw-r--r--  1 root root  9374 29. Jan 20:25 openssl.cnf
+drwx------  2 root root  4096  6. Apr 2007  private
+\rprompt{\textasciitilde}\textbf{emerge -av =dev-libs/openssl-0.9.7l}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild     UD] dev-libs/openssl-0.9.7l [0.9.8d] USE="zlib -bindist -ema
+cs -test (-sse2%)" 2,645 kB 
+
+Total: 1 package (1 downgrade), Size of downloads: 2,645 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+
+>>> No outdated packages were found on your system.
+ * GNU info directory index is up-to-date.
+ * IMPORTANT: 3 config files in '/etc' need updating.
+ * Type emerge --help config to learn how to update config files.
+\end{ospcode}
+
+Auch wenn wir unsere Version hier verringern: \cmd{emerge} %
+\index{emerge (Programm)!downgrade}%
+beendet mit dem Hinweis, dass wir drei Konfigurationsdateien
+aktualisieren müssen. Offensichtlich gibt es zwischen
+\cmd{openssl-0.9.7} und \cmd{openssl-0.9.8} Unterschiede in der
+Standardkonfiguration.
+
+Im Beispiel hat \cmd{emerge} Konfigurationsdateien im Verzeichnis
+\cmd{/etc/ssl} %
+\index{ssl (Verzeichnis)}%
+\index{etc@/etc!ssl}%
+aktualisiert. Portage darf in \cmd{/etc} %
+\index{etc@/etc}%
+aber keine Dateien überschreiben %
+\index{Konfiguration!Schutz}%
+und entscheidet sich dafür, die neu zu installierenden Dateien erst
+einmal umzubenennen und es dem Nutzer zu überlassen, das Update der
+Konfigurationsdateien manuell %
+\index{Konfiguration aktualisieren!manuell}%
+durchzuführen. Dies geschieht natürlich nur, wenn wirklich
+Unterschiede zwischen den alten und neuen Dateien bestehen. Sind neue
+und alte Version einer Datei identisch, ignoriert \cmd{emerge} die
+neue Datei automatisch.
+
+So findet sich nach der Installation des älteren
+\cmd{dev-libs/openssl}-Pakets %
+\index{openssl (Paket)}%
+%\index{dev-libs (Kategorie)!openssl|see{openssl (Paket)}}%
+Folgendes im Verzeichnis \cmd{/etc/ssl} %
+\index{ssl (Verzeichnis)}%
+\index{etc@/etc!ssl}%
+wieder:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /etc/ssl/}
+insgesamt 52
+drwxr-xr-x  5 root root  4096 29. Jan 20:25 .
+drwxr-xr-x 41 root root  4096 29. Jan 20:25 ..
+drwxr-xr-x  2 root root 12288 29. Jan 20:25 certs
+-rw-r--r--  1 root root  9381 29. Jan 20:25 ._cfg0000_openssl.cnf
+drwxr-xr-x  2 root root  4096 29. Jan 20:25 misc
+-rw-r--r--  1 root root  9374 29. Jan 20:25 openssl.cnf
+drwx------  2 root root  4096  6. Apr 2007  private
+\end{ospcode}
+\index{ssl (Verzeichnis)}%
+
+Im Vergleich zum weiter oben abgebildeten Datei-Listing sehen wir eine
+Datei mit Namen \cmd{.\_cfg0000\_openssl.cnf}. %
+\index{.\_cfg0000\_openssl.cnf (Datei)}%
+\index{etc@/etc!ssl!.\_cfg0000\_openssl.cnf}%
+Diese enthält die aktualisierte Version der Datei \cmd{openssl.cnf}. %
+\index{openssl.cnf (Datei)}%
+\index{etc@/etc!ssl!openssl.cnf}%
+Das Präfix der Datei \cmd{.\_cfg0000\_} deutet darauf hin, dass wir es
+hier mit einer noch nicht aktualisierten Konfigurationsdatei zu tun
+haben. Die Tatsache, dass die Datei mit einem Punkt (\cmd{.}) im
+Dateinamen beginnt, bedeutet, dass die Datei versteckt %
+\index{Datei!versteckt}%
+ist und das System sie im Normalfall nicht anzeigt.
+
+Solange solche Dateien in den geschützten Verzeichnissen vorhanden
+sind, zeigt Portage am Ende eines \cmd{emerge}-Laufes den Hinweis
+\cmd{X config files in /etc need updating} an. Es liegt dann beim
+Nutzer, die alte und die neue Version zusammenzuführen. Sinn dieses
+Vorgangs ist es natürlich, Veränderungen, die der Nutzer in der
+vorigen Version vorgenommen hat, an dieser Stelle sicher in die
+Konfiguration der neuen Version zu überführen.
+
+\label{etc-update}%
+Derzeit bietet Gentoo drei verschiedene Tools für das Update der
+Konfigurationsdateien: \cmd{etc-update}, %
+\index{etc-update (Programm)}%
+\cmd{dispatch-conf} %
+\index{dispatch-conf (Programm)}%
+und \cmd{cfg-update}. %
+\index{cfg-update (Programm)}%
+Sowohl \cmd{etc-update} %
+\index{etc-update (Programm)}%
+als auch \cmd{dispatch-conf} %
+\index{dispatch-conf (Programm)}%
+sind integraler Bestandteil des \cmd{sys"=apps/portage}-Paketes, %
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+während \cmd{cfg-update} %
+\index{cfg-update (Programm)}%
+als eigenes Paket gleichen Namens (\cmd{app-portage/cfg-update}) %
+\index{cfg-update (Paket)}%
+%\index{app-portage (Kategorie)!cfg-update|see{cfg-update (Paket)}}%
+installiert werden muss.
+
+\cmd{etc-update} %
+\index{etc-update (Programm)}%
+ist das älteste Tool, \cmd{dispatch-conf} %
+\index{dispatch-conf (Programm)}%
+liefert als neuere
+Variante eine vereinfachte Handhabung und mehr
+Funktionalität. \cmd{cfg-update} %
+\index{cfg-update (Programm)}%
+ist in den Funktionen vergleichbar
+mit \cmd{dispatch-conf}, bietet jedoch besseren Support für grafische
+\cmd{diff}-Programme auf Desktop-Maschinen. %
+\index{Konfiguration aktualisieren!Desktop}%
+Von daher bringt es auf unserer Maschine keinen Vorteil, und es ist
+zudem noch als instabil markiert. Wir verwenden es hier nicht und
+konzentrieren uns nur auf \cmd{dispatch-conf}.% %
+\index{dispatch-conf (Programm)}%
+
+
+\index{dispatch-conf (Programm)|(}%
+Die Einstellungen für das Tool \cmd{dispatch-conf} finden sich in der
+Datei \cmd{/etc/dispatch-conf.conf}. %
+\index{dispatch-conf.conf (Datei)}%
+\index{etc@/etc!dispatch-conf.conf}%
+\index{dispatch-conf (Programm)!konfigurieren}%
+Die Standardeinstellungen dürften für die\osplinebreak{} meisten Nutzer in Ordnung
+sein, aber wer möchte kann dem Werkzeug weitere Möglichkeiten zum
+automatischen Kombinieren von alter und neuer Konfigurationsdatei
+geben. Per Default übernimmt \cmd{dispatch-conf}
+Veränderungen, die Leerzeilen %
+\index{Konfiguration aktualisieren!Leerzeilen}%
+oder Kommentarzeilen %
+\index{Konfiguration aktualisieren!Kommentarzeilen}%
+betreffen, nicht automatisch, sondern fragt den Nutzer, ob er dies
+möchte. Das lässt sich in der Konfigurationsdatei über die Einstellung
+\cmd{replace-wscomments} modifizieren:
+
+\begin{ospcode}
+replace-wscomments=yes
+\end{ospcode}
+\index{Konfiguration aktualisieren!Leerzeilen}%
+\index{Konfiguration aktualisieren!Kommentarzeilen}%
+\index{replace-wscomments (Variable)}%
+%\index{dispatch-conf.conf (Datei)!replace-wscomments|see{replace-wscomments (Variable)}}%
+
+Darüber hinaus kann \cmd{dispatch-conf} auch automatisch Dateien
+zusammenführen, wenn der User die Datei selbst noch nie modifiziert
+hat:
+
+\begin{ospcode}
+replace-unmodified=yes
+\end{ospcode}
+\index{Konfiguration!unmodifiziert}%
+\index{replace-unmodified (Variable)}%
+%\index{dispatch-conf.conf (Datei)!replace-unmodified|see{replace-unmodified (Variable)}}%
+
+Das Tool \cmd{dispatch-conf} %
+\index{dispatch-conf (Programm)}%
+kann automatisch Backup-Dateien im
+angegebenen \cmd{archive-dir} %
+\index{archive-dir (Variable)}%
+%\index{dispatch-conf.conf (Datei)!archive-dir|see{archive-dir (Variable)}}%
+\index{Konfiguration!archivieren}%
+anlegen. Das ist sinnvoll, damit die automatischen Aktionen keinen
+Schaden anrichten und jederzeit rückgängig zu machen sind.
+
+Die Standardeinstellung \cmd{archive-dir=/etc/config-archive} %
+\index{archive-dir (Variable)}%
+%\index{dispatch-conf.conf (Datei)!archive-dir|see{archive-dir    (Variable)}}%
+\index{config-archive (Verzeichnis)}%
+\index{etc@/etc!config-archive}%
+\index{Konfiguration!archivieren}%
+muss man nicht verändern. Allerdings legt \cmd{dispatch-conf} %
+\index{dispatch-conf (Programm)}%
+dort erst dann Backup-Dateien an, wenn das Verzeichnis auch
+existiert. Bei der Installation älterer Versionen des Paketes
+\cmd{sys-apps/portage} %
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+wird es nicht automatisch angelegt.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mkdir /etc/config-archive}
+\end{ospcode}
+
+Wer eine farbige Ausgabe des Tools \cmd{dispatch-conf} %
+\index{dispatch-conf (Programm)!farbig}%
+bevorzugt, kann den \cmd{diff}-Befehl %
+\index{diff (Programm)}%
+\index{dispatch-conf (Programm)!diff (Programm)}%
+ in \cmd{/etc/dispatch-conf.conf} auch in \cmd{colordiff} %
+\index{colordiff (Programm)}%
+\index{dispatch-conf (Programm)!colordiff (Programm)}%
+umwandeln:
+
+\begin{ospcode}
+diff="colordiff -Nu '\%s' '\%s' | less --no-init --QUIT-AT-EOF"
+\end{ospcode}
+\index{colordiff (Programm)}%
+\index{dispatch-conf (Programm)!farbig}%
+
+Dazu müssen wir aber noch das entsprechende Werkzeug installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-misc/colordiff}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-misc/colordiff-1.0.6-r1  16 kB 
+
+Total: 1 package (1 new), Size of downloads: 16 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{colordiff (Paket)}%
+%\index{app-misc (Kategorie)!colordiff|see{colordiff (Paket)}}%
+
+\cmd{dispatch-conf} selbst ruft man im Normalfall ohne weitere
+Optionen auf. Das Programm durchsucht dann die geschützten Verzeichnisse nach
+Konfigurations"=Updates. Es ist möglich, die Aktion von
+\cmd{dispatch-conf} auf ein bestimmtes Verzeichnis zu beschränken,
+indem man dieses als Argument übergibt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{dispatch-conf /etc/ssl}
+\end{ospcode}
+
+Das Tool zeigt dann im typischen \cmd{diff}-Stil %
+\index{diff (Programm)}%
+die Unterschiede zwischen neuer und alter Konfigurationsdatei an:
+
+\begin{ospcode}
+--- /etc/ssl/openssl.cnf        2008-01-30 08:32:45.000000000 +0100
++++ /etc/ssl/._cfg0000_openssl.cnf      2008-01-29 20:25:43.000000000 +0
+100
+@@ -44,8 +44,8 @@
+ 
+ certificate    = \$dir/cacert.pem       # The CA certificate
+ serial         = \$dir/serial           # The current serial number
+-crlnumber      = \$dir/crlnumber        # the current crl number
+-                                       # must be commented out to leave
+ a V1 CRL
++#crlnumber     = \$dir/crlnumber        # the current crl number must be
++                                       # commented out to leave a V1 CR
+L
+ crl            = \$dir/crl.pem          # The current CRL
+ private_key    = \$dir/private/cakey.pem# The private key
+ RANDFILE       = \$dir/private/.rand    # private random number file
+@@ -67,7 +67,7 @@
+ 
+ default_days   = 365                   # how long to certify for
+ default_crl_days= 30                   # how long before next CRL
+-default_md     = sha1                  # which md to use.
++default_md     = md5                   # which md to use.
+ preserve       = no                    # keep passed DN ordering
+ 
+ # A few difference way of specifying how similar the request should loo
+k
+@@ -188,7 +188,7 @@
+ 
+ # PKIX recommendations harmless if included in all certificates.
+ subjectKeyIdentifier=hash
+-authorityKeyIdentifier=keyid,issuer
++authorityKeyIdentifier=keyid,issuer:always
+ 
+ # This stuff is for subjectAltName and issuerAltname.
+ # Import the email address.
+
+>> (1 of 3) -- /etc/ssl/openssl.cnf
+>> q quit, h help, n next, e edit-new, z zap-new, u use-new
+   m merge, t toggle-merge, l look-merge: 
+\end{ospcode}
+\index{ssl (Verzeichnis)}%
+
+Mit der Taste \cmd{[U]} %
+\index{dispatch-conf (Programm)!u (Kommando)}%
+für \cmd{use-new} würden wir die neue Konfigurationsdatei akzeptieren
+und verwenden. Wir haben an dieser Stelle aber eine alte Version
+installiert, was wir in Kürze wieder rückgängig machen werden, und
+sollten hier erst einmal alle Aktualisierungen mit \cmd{[Z]} %
+\index{dispatch-conf (Programm)!z (Kommando)}%
+ablehnen.
+
+Die Funktionsweise des Tools lässt sich besser an einem kurzen,
+konstruierten Beispiel verstehen. Um das Folgende nachvollziehen,
+ist die bereits besprochene Einstellung in
+\cmd{/etc/dispatch-conf.conf} %
+\index{dispatch-conf.conf (Datei)}%
+vorzunehmen:
+
+\begin{ospcode}
+replace-wscomments=yes
+replace-unmodified=yes
+archive-dir=/etc/config-archive
+\end{ospcode}
+\index{replace-wscomments (Variable)}%
+%\index{dispatch-conf.conf (Datei)!replace-wscomments|see{replace-wscomments (Variable)}}%
+\index{replace-unmodified (Variable)}%
+%\index{dispatch-conf.conf (Datei)!replace-unmodified|see{replace-unmodified (Variable)}}%
+\index{archive-dir (Variable)}%
+%\index{dispatch-conf.conf (Datei)!archive-dir|see{archive-dir (Variable)}}%
+
+Wir erstellen jetzt ein temporäres Verzeichnis unter \cmd{/tmp} %
+\index{tmp@/tmp}%
+und erzeugen eine hypothetische Konfigurationsdatei:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mkdir /tmp/d-c}
+\rprompt{\textasciitilde}\textbf{echo "}
+> \textbf{# OPTION1}
+> \textbf{option1=test1}
+> \textbf{# OPTION2}
+> \textbf{option2=test2}
+> \textbf{" > /tmp/d-c/config}
+\end{ospcode}
+
+Angenommen wir würden das hypothetische Paket nun aktualisieren, %
+\index{Paket!aktualisieren}%
+wobei die Konfiguration jedoch nicht verändert wurde. Wir simulieren
+das, indem wir die gerade erstellte Demo-Konfiguration in eine
+versteckte Konfigurationsdatei %
+\index{Datei!versteckt}%
+kopieren. Die Datei benennen wir so, wie Portage es nach der
+Installation eines Paketes tun würde: \cmd{.\_cfg0001\_} als Präfix, %
+\index{Konfiguration aktualisieren!Präfix}%
+gefolgt von dem Dateinamen der zugehörigen Konfigurationsdatei:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cp /tmp/d-c/config /tmp/d-c/._cfg0001_config}
+\end{ospcode}
+
+Unter der Annahme, dass wir es \cmd{dispatch-conf} mit
+\cmd{replace-unmodifed=""yes} %
+\index{replace-unmodified (Variable)}%
+%\index{dispatch-conf.conf (Datei)!replace-unmodified|see{replace-unmodified (Variable)}}%
+erlaubt haben, unveränderte Konfigurationsdateien automatisch zu
+aktualisieren, erfordert der folgende Aufruf keine User-Interaktion:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{dispatch-conf /tmp/d-c}
+\end{ospcode}
+\index{Konfiguration!unmodifiziert}%
+
+Die von uns angelegte, versteckte Datei verschwindet, %
+\index{Datei!versteckt}%
+und dafür speichert \cmd{dispatch-conf} beim ersten Aufruf die
+Originalkonfiguration im \cmd{archive"=dir}, %
+\index{archive-dir (Variable)}%
+%\index{dispatch-conf.conf (Datei)!archive-dir|see{archive-dir    (Variable)}}%
+das wir in \cmd{/etc/dispatch-conf.conf} festgelegt haben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /tmp/d-c/}
+total 14
+drwxr-xr-x 2 root root   72 Nov 30 13:50 .
+drwxrwxrwt 8 root root 9760 Nov 30 13:50 ..
+-rw-r--r-- 1 root root   51 Nov 30 13:45 config
+\rprompt{\textasciitilde}\textbf{ls -la /etc/config-archive/tmp/d-c/}
+total 8
+drwxr-xr-x 2 root root 104 Nov 30 13:50 .
+drwxr-xr-x 3 root root  72 Nov 30 13:50 ..
+-rw-r--r-- 1 root root  51 Nov 30 13:45 config
+-rw-r--r-- 1 root root  51 Nov 30 13:45 config.dist
+\end{ospcode}
+\index{config-archive (Verzeichnis)}%
+
+Testen wir die gleiche Aktion, aber diesmal simulieren wir einige
+hinzugefügte Kommentarzeilen in der neuen Version der
+Konfigurationsdatei:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cp /tmp/d-c/config /tmp/d-c/._cfg0001_config}
+\rprompt{\textasciitilde}\textbf{echo "# OPTION3" >> /tmp/d-c/._cfg0001_config}
+\rprompt{\textasciitilde}\textbf{echo "#option3=test3" >> /tmp/d-c/._cfg0001_config}
+\rprompt{\textasciitilde}\textbf{dispatch-conf /tmp/d-c}
+\end{ospcode}
+
+Wenn wir es \cmd{dispatch-conf} mit \cmd{replace-wscomments=yes} %
+\index{replace-wscomments (Variable)}%
+%\index{dispatch-conf.conf  (Datei)!replace-wscomments|see{replace-wscomments (Variable)}}%
+erlaubt haben, Kommentare, %
+\index{Konfiguration aktualisieren!Kommentarzeilen}%
+Leerzeilen %
+\index{Konfiguration aktualisieren!Leerzeilen}%
+und unmodifizierte Sektionen automatisch zu aktualisieren, bleibt auch
+diesmal, wie zu erwarten, eine Reaktion aus. \cmd{dispatch-conf}
+entfernt %
+\index{dispatch-conf (Programm)}%
+die Datei \cmd{.\_cfg0001\_config} und fügt der eigentlichen
+Konfigurationsdatei \cmd{config} die hinzugefügten Kommentarzeilen
+hinzu:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /tmp/d-c/config}
+
+# OPTION1
+option1=test1
+# OPTION2
+option2=test2
+
+# OPTION3
+#option3=test3
+\end{ospcode}
+
+Bisher haben wir als Benutzer noch keinerlei Veränderung an der
+Konfigurationsdatei vorgenommen. Ohne Veränderungen an den
+Konfigurationsdateien sind die Aktionen von \cmd{dispatch-conf}
+allerdings nicht sonderlich spannend. 
+
+Kommen wir also zu einem realistischeren Beispiel. Wir verändern %
+\index{Konfiguration!verändert}%
+nun als Benutzer die Variablen \cmd{option1} und \cmd{option3} in
+unserer Konfigurationsdatei:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo "}
+> \textbf{# OPTION1}
+> \textbf{option1=modifiziert1}
+> \textbf{# OPTION2}
+> \textbf{option2=test2}
+> \textbf{}
+> \textbf{# OPTION3}
+> \textbf{option3=modifiziert3" > /tmp/d-c/config}
+\end{ospcode}
+
+Zunächst noch einmal eine unspektakuläre Variante:
+Angenommen bei der Aktualisierung des Paketes auf die nächste Version
+kam es zu keinen Veränderungen an der Konfigurationsdatei --
+d.\,h. die neu installierte Datei \cmd{.\_cfg0001\_config} %
+\index{.\_cfg0001\_config (Datei)}%
+entspricht der Konfigurationsdatei der früheren Version, die
+\cmd{dispatch-conf} im \cmd{config-archive} %
+\index{config-archive (Verzeichnis)}%
+unter \cmd{config.dist} %
+\index{config.dist (Datei)}%
+abgespeichert hat --, dann wird \cmd{dispatch-conf} registrieren, dass
+es wieder nicht handeln muss. Wir kopieren also die gespeicherte
+Konfiguration aus dem Archiv von \cmd{dispatch-conf}, um die neue,
+aber unveränderte Konfigurationsdatei zu simulieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cp /etc/config-archive/tmp/d-c/config.dist }\textbackslash
+> \textbf{/tmp/d-c/._cfg0001_config}
+\rprompt{\textasciitilde}\textbf{dispatch-conf /tmp/d-c}
+\end{ospcode}
+
+Wieder verrichtet \cmd{dispatch-conf} den Dienst klaglos, da sich die
+Konfigurationsdateien zwischen beiden Versionen offensichtlich nicht
+geändert haben und somit die Veränderungen des Nutzers unverändert
+bestehen bleiben können. Im Grunde löscht \cmd{dispatch-conf} hier
+einfach die Datei \cmd{.\_cfg0001\_config} %
+\index{.\_cfg0001\_config (Datei)}%
+als irrelevant.
+
+Beim nächsten Versionssprung verändert sich aber nun ein Wert, der im
+Konflikt %
+\index{Konfiguration aktualisieren!Konflikt|(}%
+mit den Änderungen des Benutzers steht. \cmd{dispatch-conf} kann also
+nicht mehr alleine entscheiden, welche die korrekte Konfiguration sein
+könnte, und fordert an dieser Stelle den User zur Interaktion
+auf. Dazu konstruieren wir eine Veränderung im nächsten simulierten
+Update: \cmd{option2} setzen wir jetzt auf einen neuen Wert.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo "}
+> \textbf{# OPTION1}
+> \textbf{option1=test1}
+> \textbf{# OPTION2}
+> \textbf{option2=neu2}
+> \textbf{}
+> \textbf{# OPTION3}
+> \textbf{#option3=test3" > /tmp/d-c/._cfg0001_config}
+\end{ospcode}
+
+Jetzt wird die Ausgabe von \cmd{dispatch-conf} endlich etwas
+interessanter, da es das erste Mal wirkliche Veränderungen zu
+kombinieren gilt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{dispatch-conf /tmp/d-c}
+--- /tmp/d-c/config     2006-11-30 16:01:39.000000000 +0100
++++ /tmp/d-c/._mrg0001_config   2006-11-30 16:01:46.000000000 +0100
+@@ -2,7 +2,7 @@
+ # OPTION1
+ option1=modifiziert1
+ # OPTION2
+-option2=test2
++option2=neu2
+ 
+ # OPTION3
+ option3=modifiziert3
+
+>> (1 of 1) -- /tmp/d-c/config
+>> q quit, h help, n next, e edit-new, z zap-new, u use-new
+   m merge, t toggle-merge, l look-merge: 
+\end{ospcode}
+
+\cmd{dispatch-conf} reduziert den Aufwand  auf die einzige
+Variable, bei der es beim fingierten Update zu einer Änderung kam. Da
+\cmd{option1} und \cmd{option3} gleich geblieben sind, %
+\index{Konfiguration!Modifikation}%
+übernimmt \cmd{dispatch-conf} die Änderungen des Nutzers in
+die neue Datei. \cmd{etc-update} %
+\index{etc-update (Programm)}%
+würde an allen drei Stellen eine Entscheidung des Nutzers
+verlangen.
+
+An dieser Stelle können wir nun wählen, ob wir alle Veränderungen mit
+\cmd{[Z]} %
+\index{dispatch-conf (Programm)!z (Kommando)}%
+ablehnen möchten oder sie mit \cmd{[U]} %
+\index{dispatch-conf (Programm)!u (Kommando)}%
+akzeptieren. Mit der Taste \cmd{[N]} %
+\index{dispatch-conf (Programm)!n (Kommando)}%
+\index{Konfiguration aktualisieren!verschieben}%
+verschiebt man das Update auf später. Die \cmd{merge}-Operationen
+(\cmd{[M]}) %
+\index{dispatch-conf (Programm)!m (Kommando)}%
+sind für komplexere Kombinationen gedacht und erlauben bei jeder
+Veränderung zu entscheiden, ob man die alte oder die neue Version
+bevorzugt. In diesen Fällen hat man auch die Möglichkeit einen Editor
+aufzurufen, mit dem man jede Veränderung manuell bearbeiten kann.
+
+Der große Vorteil von \cmd{dispatch-conf} ist, dass es die vom
+Paket mitgelieferten Konfigurationsdateien im Verzeichnis
+\cmd{/etc/config-archive} %
+\index{config-archive (Verzeichnis)}%
+als \cmd{*.dist} %
+\index{*.dist (Datei)}%
+(letzte Version) und \cmd{*.dist.new} %
+\index{*.dist.new (Datei)}%
+(aktuelle Version) speichert; auch die tatsächlich im System
+vorliegende Version legt \cmd{dispatch-conf} bei jedem Lauf in diesem
+Verzeichnis ab. So entsteht automatisch eine Art Versionsverwaltung
+der Konfigurationsdateien.
+\index{Konfiguration aktualisieren!Konflikt|)}%
+
+Wer direkt eine richtige Versionsverwaltung %
+\index{Konfiguration!Versionsverwaltung}%
+für \cmd{dispatch-conf} verwenden möchte, kann dies auch in
+\cmd{/etc/dispatch-conf.conf} aktivieren:
+
+\begin{ospcode}
+use-rcs=yes
+\end{ospcode}
+\index{Konfiguration!Versionsverwaltung}%
+\index{use-rcs (Variable)}%
+%\index{dispatch-conf.conf (Datei)!use-rcs|see{use-rcs (Variable)}}%
+
+Dann muss man allerdings das Versionskontrollsystem
+\cmd{app-text/rcs} %
+\index{rcs (Paket)}%
+%\index{app-text (Kategorie)!rcs|see{rcs (Paket)}}%
+\index{Versionskontrollsystem}%
+installieren, das nicht per Default zum System gehört:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-text/rcs}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-text/rcs-5.7-r3  330 kB 
+
+Total: 1 package (1 new), Size of downloads: 330 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+\index{rcs (Paket)}%
+%\index{app-text (Kategorie)!rcs|see{rcs (Paket)}}%
+\index{dispatch-conf (Programm)|)}%
+\index{Konfiguration!aktualisieren|)}%
+
+\section{Besonderheiten und Probleme bei Update und Installation}
+
+Es gibt beim Aktualisieren einer Gentoo-Installation gelegentlich
+Situationen, die vom simplen, oben beschriebenen Update abweichen. Den
+häufigsten wollen wir uns hier widmen. Auch bei der Installation neuer
+Pakete gibt es einige Spezialfälle, die wir hier ebenfalls behandeln.
+
+\subsection{Slots\label{slots}}
+
+\index{Slot|(}%
+%\index{Paket!Slot|see{Slot}}%
+Wir haben im letzten Abschnitt gesehen, dass \cmd{emerge} Pakete, die
+ein Update %
+\index{Paket!aktualisieren}%
+benötigen, mit der Markierung
+
+\begin{ospcode}
+[ebuild     U ] ...
+\end{ospcode}
+
+versieht. Stellenweise finden sich auch Pakete, die schon installiert
+sind, die \cmd{emerge} %
+\index{emerge (Programm)}%
+aber trotzdem bei einem Update als Neuinstallation markiert (siehe
+auch Seite \pageref{firstslot}). Dies ist z.\,B.\ beim Kernel der
+Fall:
+
+\begin{ospcode}
+emerge -av =sys-kernel/gentoo-sources-2.6.16-r13
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  NS   ] sys-kernel/gentoo-sources-2.6.16-r13  USE="-build -symli
+nk (-ultra1)" 40,119 kB 
+
+Total: 1 package (1 in new slot), Size of downloads: 40,119 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{No}
+\end{ospcode}
+
+Das \cmd{S} hinter dem \cmd{N} zeigt an, dass \cmd{emerge} %
+\index{emerge (Programm)}%
+die neue Version in einem neuen \emph{Slot} %
+%\index{Paket!installieren!Slot|see{Slot}}%
+%\index{Paket!installieren!parallel|see{Slot}}%
+installiert.
+
+Im Normalfall ist es sinnvoll, nur eine einzelne Version eines Paketes
+installiert zu haben und bei einem Update die alte Version zu
+ersetzen. %
+%\index{Paket!installieren!mehrere Versionen|see{Slot}}%
+Bei einigen Programmen oder Bibliotheken ändert sich jedoch mit der
+Versionsnummer die Funktionalität signifikant, und es werden mehrere
+Versionen im System benötigt. Dies ist z.\,B.\ auch bei \cmd{automake}
+der %
+\index{automake (Programm)}%
+Fall.
+
+\index{automake (Paket)|(}%
+Wenn wir in der Datenbank installierter Pakete (in
+\cmd{/var/db/pkg}) %
+\index{pkg (Verzeichnis)}%
+\index{var@/var!db!pkg}%
+nachschauen (eleganter geht dies mit \cmd{equery}, siehe Seite
+\pageref{equery}), sehen wir, dass \cmd{sys-devel/automake} %
+\index{automake (Paket)}%
+%\index{sys-devel (Kategorie)!automake|see{automake (Paket)}}%
+in mehreren Versionen vorliegt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /var/db/pkg/sys-devel/ | grep automake}
+automake-1.10
+automake-1.9.6-r2
+automake-wrapper-3-r1
+\end{ospcode}
+\index{sys-devel (Verzeichnis)}%
+\index{var@/var!db!pkg!sys-devel}%
+\index{grep (Programm)}%
+
+Diese sind notwendig, da nicht alle Releases von \cmd{automake}
+miteinander kompatibel sind. Für das Kompilieren mancher Pakete sind
+spezifische Versionen von \cmd{automake} %
+\index{automake (Programm)}%
+erforderlich. Um also zu
+gewährleisten, dass wir auf einem Gentoo-System auch alle Software
+erstellen können, sind die oben gelisteten Varianten alle im
+Standardsystem verfügbar.
+
+\index{Kernel|(}%
+\index{Kernel!Versionen|(}%
+Bei den meisten Paketen, die Portage in Slots installiert, ist es
+jedoch nicht notwendig, alle installierten Versionen auch wirklich im
+System zu behalten. Der Kernel wird, wie oben gezeigt, ebenfalls in
+Slots installiert. Allerdings dient dies nur dazu, dem Nutzer den
+Rückgriff auf verschiedene Versionen des Kernels zu erlauben. Da der
+Kernel das Herzstück des Systems darstellt, liegt es nahe, bei einem
+Kernel-Upgrade %
+\index{Kernel!Upgrade}%
+zuerst einmal die alte Version des Kernels zu behalten und diese erst
+zu entfernen, wenn eine neue Version auch wirklich stabil läuft.% %
+\index{Kernel!Versionen|)}%
+\index{Kernel|)}%
+
+Entsprechend installiert \cmd{emerge} %
+\index{emerge (Programm)}%
+den Source Code in verschiedenen
+Slots unter \cmd{/usr/src}. %
+\index{src (Verzeichnis)}%
+\index{usr@/usr!src}%
+Sobald eine ältere Version nicht mehr notwendig ist, können wir diese
+bedenkenlos entfernen (was im Falle des Kernels auch durchaus
+Speicherplatz spart):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -Cp =sys-kernel/gentoo-sources-2.6.16-r13}
+\end{ospcode}
+
+Das ist hier nur eine alte Beispielversion, die auf Ihrem System
+vermutlich nicht mehr vorhanden ist.
+
+\index{Paket!Slot entfernen|(}%
+\index{emerge (Programm)!prune (Option)|(}%
+Haben sich mehrere alte Versionen angesammelt, hilft die Option
+\cmd{-{}-prune} %
+\index{emerge (Programm)!prune (Option)}%
+(bzw.\ \cmd{-P}), %
+%\index{emerge (Programm)!P (Option)|see{emerge (Programm), prune    (Option)}}%
+die alle Versionen bis auf die neueste entfernt. Diese Option ist
+allerdings nicht ungefährlich %
+und wir sollten sie nur mit Vorsicht verwenden.
+
+Häufig schlägt der erste Aufruf mit folgender Meldung fehl:
+
+\osppagebreak
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --prune --pretend sys-devel/automake}
+
+Calculating dependencies... done!
+
+Dependencies could not be completely resolved due to
+the following required packages not being installed:
+\ldots
+\end{ospcode}
+
+Bevor \cmd{-{}-prune} %
+\index{emerge (Programm)!prune (Option)}%
+Paketversionen zum Entfernen vorschlägt, prüft Portage zumindest
+alle bekannten Abhängigkeiten der aktuell installierten Pakete
+daraufhin, ob sie eine Version eines bestimmten Slots
+benötigen. Dieser Test schlägt schnell fehl, wenn die Maschine nicht
+auf dem neuesten Stand ist. Der Aufruf \cmd{emerge -{}-update
+  -{}-newuse -{}-deep world} %
+\index{emerge (Programm)!update (Option)}%
+\index{emerge (Programm)!newuse (Option)}%
+\index{emerge (Programm)!deep (Option)}%
+bringt das System auf den neuesten Stand und sollte dieses Problem
+beseitigen.
+
+Danach sollte der Aufruf folgendermaßen aussehen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --prune --pretend sys-devel/automake}
+
+>>> These are the packages that would be unmerged:
+
+ sys-devel/automake
+    selected: 1.10 
+   protected: 1.9.6-r2 
+     omitted: none
+
+>>> 'Selected' packages are slated for removal.
+>>> 'Protected' and 'omitted' packages will not be removed.
+\end{ospcode}
+
+Hier ist \cmd{-{}-prune} also der Meinung, dass derzeit kein Paket im
+System von \cmd{sys-devel/automake-1.10} abhängt. Alle anderen
+Versionen (hier \cmd{sys"=devel/automake-1.9.6-r2}) werden noch
+benötigt.
+\index{Paket!Slot entfernen}%
+
+\index{Paket!entfernen|(}%
+Damit sollte man das Paket entfernen können. Bei dieser Operation ist
+dennoch Vorsicht geboten, da manche Pakete unabhängig von den für sie
+gelisteten Abhängigkeiten in der Lage sind, Bibliotheken automatisch
+zu ermitteln und einzubinden. Beim Kompilieren können solche Pakete
+quasi hinter dem Rücken von Portage automatisch die entsprechenden
+Verknüpfungen vornehmen.
+
+Als Resultat sind diese Pakete dann nach der Deinstallation des
+eigentlich als überflüssig angenommenen Paketes nicht mehr brauchbar
+und wir müssen sie neu installieren.
+\index{automake (Paket)|)}%
+
+Aus diesem Grund sollte man \cmd{-{}-prune} nur für unkritische Pakete
+verwenden. Wir habe hier zwar \cmd{automake} als Beispiel verwendet,
+da es auf den meisten Systemen in mehreren Slots installiert ist, aber
+in der Praxis sollte man genau mit diesen systemkritischen Paketen
+nicht experimentieren.% %
+\index{emerge (Programm)!prune (Option)|)}%
+\index{Paket!entfernen|)}%
+\index{Slot|)}%
+
+\index{emerge (Programm)!Fehler|(}%
+\subsection{Blocker\label{blocker}}
+
+\index{Paket!Blockade|(}%
+%\index{Paket!Konflikt|see{Paket, Blockade}}%
+In seltenen Fällen kommt es beim Update oder der Installation zu
+Situationen, in denen sich zwei Pakete gegenseitig blockieren.
+Konstruieren wir einmal ein unwahrscheinliches, aber reproduzierbares
+Szenario, in dem wir versuchen, das Tool \cmd{app-admin/nologin} %
+\index{nologin (Paket)}%
+%\index{app-admin (Kategorie)!nologin|see{nologin (Paket)}}%
+zu installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv app-admin/nologin}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-admin/nologin-20050522  3 kB 
+[blocks B     ] sys-apps/shadow (is blocking app-admin/nologin-20050522)
+[blocks B     ] app-admin/nologin (is blocking sys-apps/shadow-4.0.18.1)
+
+Total: 1 package (1 new, 2 blocks), Size of downloads: 3 kB
+\end{ospcode}
+\index{emerge (Programm)}%
+
+\cmd{emerge} meldet zurück, dass das derzeit installierte Paket
+\cmd{sys-apps/shadow} %
+\index{shadow (Paket)}%
+%\index{sys-apps (Kategorie)!shadow|see{shadow (Paket)}}%
+eine Installation von \cmd{app-admin/nologin-20050522} %
+\index{nologin (Paket)}%
+%\index{app-admin (Kategorie)!nologin (Paket)|see{nologin (Paket)}}%
+verhindert.
+
+Führen wir \cmd{emerge app-admin/nologin} ohne das \cmd{-pv}
+aus, bricht \cmd{emerge} ab:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge app-admin/nologin}
+Calculating dependencies... done!
+
+!!! Error: the sys-apps/shadow package conflicts with another package;
+!!!        the two packages cannot be installed on the same system toget
+her.
+!!!        Please use 'emerge --pretend' to determine blockers.
+
+For more information about Blocked Packages, please refer to the followi
+ng
+section of the Gentoo Linux x86 Handbook (architecture is irrelevant):
+
+http://www.gentoo.org/doc/en/handbook/handbook-x86.xml?full=1#blocked
+\end{ospcode}
+\index{nologin (Paket)}%
+%\index{app-admin (Kategorie)!nologin|see{nologin (Paket)}}%
+\index{emerge (Programm)}%
+%\index{emerge (Programm)!Fehler!conflict|see{Paket, Blockade}}%
+
+Diese Konfliktsituation lässt sich lösen, indem wir das blockierende
+Paket (hier also \cmd{sys-apps/shadow}) %
+\index{sys-apps (Programm)}%
+über \cmd{emerge -{}-unmerge} %
+\index{emerge (Programm)!unmerge (Option)}%
+entfernen. Bevor man dies tut, sollte man sich allerdings darüber
+informieren, warum dieser Konflikt besteht, und sicher entscheiden
+können, ob ein Entfernen des blockierenden Paketes überhaupt die
+richtige Lösung darstellt.
+
+Im gegebenen Fall würde das Entfernen von \cmd{sys-apps/shadow} %
+\index{shadow (Paket)}%
+%\index{sys-apps (Kategorie)!shadow|see{shadow (Paket)}}%
+zentrale Werkzeuge für das User-Management entfernen. \cmd{emerge}
+warnt vor dieser Aktion allerdings auch, da das
+\cmd{sys-apps/shadow}-Paket %
+\index{shadow (Paket)}%
+%\index{sys-apps (Kategorie)!shadow|see{shadow (Paket)}}%
+Bestandteil der \cmd{system}-Pakete ist:
+
+\osppagebreak
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --unmerge sys-apps/shadow -pv}
+
+>>> These are the packages that would be unmerged:
+
+
+!!! 'sys-apps/shadow' is part of your system profile.
+!!! Unmerging it may be damaging to your system.
+
+
+ sys-apps/shadow
+    selected: 4.0.18.1
+   protected: none
+     omitted: none
+
+>>> 'Selected' packages are slated for removal.
+>>> 'Protected' and 'omitted' packages will not be removed.
+\end{ospcode}
+
+Beschäftigt man sich eingehender mit der Ursache des Konflikts wird
+klar, dass \cmd{app-admin/nologin} %
+\index{nologin (Paket)}%
+%\index{app-admin (Kategorie)!nologin|see{nologin (Paket)}}%
+ein BSD-spezifisches %
+\index{BSD}%
+Tool ist und es auf unserem System nichts zu
+suchen hat. Mittlerweile ist das Paket sogar vollständig aus dem
+Portage-Baum verschwunden. Diese Demonstration ist also etwas
+konstruiert und im Normalfall sind Blockaden eher selten.
+
+Aber wenn sie auftauchen, haben sie immer einen klar definierten
+Grund -- und ohne diesen zu kennen, sollte man in keinem Fall die
+blockierenden Elemente aus dem System entfernen, sondern zunächst die
+Ursache des Problems identifizieren.
+\index{Paket!Blockade|)}%
+
+\subsection{No-Fetch}
+
+\index{Fetch-Restriktion|(}%
+%\index{emerge (Programm)!Fehler!fetch  restriction|see{Fetch-Restriktion}}%
+%\index{No-Fetch|see{Fetch-Restriction}}%
+\index{Quellarchiv!herunterladen|(}%
+\index{Paket!Quellcode herunterladen}%
+Es gibt Softwarepakete, bei denen \cmd{emerge} %
+\index{emerge (Programm)}%
+die Quellen nicht direkt über FTP oder HTTP herunterladen kann,
+sondern die Intervention des Nutzers erfordert. Dies ist z.\,B.\ bei
+älteren Java-Paketen der Fall. Hier muss sich der Nutzer durch ein
+paar Webseiten klicken, bevor er an die Quell-Archive %
+\index{Quellarchiv}%
+gelangt. \cmd{emerge} %
+\index{emerge (Programm)}%
+kann in solchen Fällen keine durchgehende Installation anbieten und
+bricht an der entsprechenden Stelle mit einem Hinweis auf die
+notwendigen Schritte zum Download der Quellen ab:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge =dev-java/sun-jdk-1.4*}
+\ldots
+>>> Emerging (6 of 6) dev-java/sun-jdk-1.4.2.13 to /
+
+!!! dev-java/sun-jdk-1.4.2.13 has fetch restriction turned on.
+!!! This probably means that this ebuild's files must be downloaded
+!!! manually.  See the comments in the ebuild for more information.
+
+ * Please download j2sdk-1_4_2_13-linux-i586.bin from:
+ * http://javashoplm.sun.com/ECom/docs/Welcome.jsp?StoreId=22&PartDetail
+Id=j2sdk-1.4.2_13-oth-JPR&SiteId=JSC&TransactionId=noreg
+ * (first select 'Accept License', then click on 'self-extracting file'
+ * under 'Linux Platform - Java(TM) 2 SDK, Standard Edition')
+ * and move it to /usr/portage/distfiles
+\end{ospcode}
+
+Sobald der Nutzer die Datei auf das lokale System heruntergeladen und
+in \cmd{/usr/portage/distfile} %
+\index{distfile (Verzeichnis)}%
+\index{usr@/usr!portage!distfile}%
+(bzw.\ \cmd{DISTDIR}, %
+\index{DISTDIR (Variable)}%
+%\index{Variable!DISTDIR|see{DISTDIR Variable}}%
+siehe Seite \pageref{distdirvar}) platziert hat, kann \cmd{emerge} %
+\index{emerge (Programm)}%
+die Fetch-Phase überspringen und das Paket installieren.
+
+Die Blockade des Downloads (\emph{Fetch-Restriction}) zeigt
+\cmd{emerge} %
+\index{emerge (Programm)}%
+auch schon bei einem hypothetischen Lauf durch ein rotes
+\cmd{F} an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv =dev-java/sun-jdk-1.4*}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-portage/portage-utils-0.1.23  0 kB 
+[ebuild  N    ] app-arch/unzip-5.52-r1  0 kB 
+[ebuild  N    ] dev-java/java-config-wrapper-0.12-r1  0 kB 
+[ebuild  N    ] dev-java/java-config-2.0.31  0 kB 
+[ebuild  N    ] dev-java/java-config-1.3.7  0 kB 
+[ebuild  N F  ] dev-java/sun-jdk-1.4.2.13  USE="-X -alsa -doc -examples 
+-jce -nsplugin" 35,510 kB 
+
+Total: 6 packages (6 new), Size of downloads: 35,510 kB
+Fetch Restriction: 1 package (1 unsatisfied)
+\end{ospcode}
+\index{Quellarchiv!herunterladen|)}%
+\index{Fetch-Restriktion|)}%
+\index{emerge (Programm)!Fehler|)}%
+
+\subsection{Binäre Abhängigkeiten und revdep-rebuild\label{revdeprebuild}}
+
+\index{Paket!-abhängigkeiten, binär|(}%
+\index{revdep-rebuild (Programm)|(}%
+Wir haben schon in der Einleitung (siehe Seite \pageref{bindeps})
+erwähnt, dass bei Gentoo die binären Abhängigkeiten erst auf dem
+Rechner des Benutzers entstehen. %
+\index{Kompilieren!Abhängigkeiten}%
+Portage nutzt diese Tatsache, um binäre Abhängigkeiten %
+\index{Abhängigkeiten!binär}%
+vollständig zu ignorieren und somit dem Benutzer eine sehr flexible
+Paketverwaltung anzubieten.
+
+Das ändert allerdings nichts daran, dass diese binären Abhängigkeiten
+auf dem Rechner des Nutzers entstehen und wir sie verletzen können.
+
+Ein einmal installiertes Paket ist durchaus von einer ganz bestimmten
+Version einer Bibliothek %
+\index{Bibliothek!Version}%
+abhängig, nämlich derjenigen, die der Nutzer vorher installiert hat.
+
+Schauen wir uns das am konkreten Apache-Beispiel %
+\index{Apache}%
+an. Der
+Apache-Server hängt, sofern wir das \cmd{ssl}-USE-Flag %
+%\index{USE-Flag!ssl|see{ssl (USE-Flag)}}%
+\index{ssl (USE-Flag)}%
+aktiviert haben, von der Bibliothek \cmd{dev-libs/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-libs (Kategorie)!openssl|see{openssl (Paket)}}%
+ab.
+
+Etwas weiter oben (siehe Seite \pageref{ssldowngrade}) haben wir auf
+eine niedrigere SSL-Version gewechselt, um das Aktualisieren von
+Konfigurationsdateien zu demonstrieren. Wir gehen an dieser Stelle
+davon aus, dass Sie derzeit also die Version \cmd{0.9.7l} installiert
+haben.
+
+Zum Zeitpunkt unserer Apache-Installation war aber die Version
+\cmd{0.9.8d} installiert.% %
+\index{Bibliothek!Version}%
+
+Versuchen wir im folgenden Schritt, den Apache-Server neu zu starten:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 restart}
+ * Apache2 has detected a syntax error in your configuration files:
+/usr/sbin/apache2: error while loading shared libraries: libssl.so.0.9.8
+: cannot open shared object file: No such file or directory
+\end{ospcode}
+
+Da der Apache bei der ursprünglichen Installation gegen die
+SSL-Bibliothek %
+%\index{SSL!Bibliothek|see{openssl (Paket)}}%
+der Version \cmd{0.9.8} %
+\index{Bibliothek!Version}%
+verlinkt wurde, haben wir mit dem Downgrade %
+\index{Paket!Downgrade}%
+der Bibliothek die binäre Kompatibilität %
+\index{Kompatibilität!binär}%
+gebrochen. Das Beispiel ist natürlich eher konstruiert, da ein
+Downgrade eher selten stattfindet. Die Upgrade-Situation %
+\index{Paket!Update}%
+\index{Paket!Aktualisieren}%
+findet sich deutlich häufiger, führt aber zu demselben Problem. Würden
+wir jetzt die Version \cmd{openssl-0.9.7l} behalten wollen, kommen wir
+um eine Neuinstallation des Apache-Servers nicht umhin, um die binäre
+Kompatibilität wieder herzustellen.
+
+Finden sich also nach einem Update Fehlermeldungen %
+\index{Fehler}%
+wie \cmd{error while loading shared libraries}, %
+%\index{Shared libraries|see{Bibliothek}}%
+kann man davon ausgehen, dass man an irgendeiner Stelle die binäre
+Abhängigkeit %
+\index{Abhängigkeiten!binär}%
+gebrochen hat und die abhängigen Pakete neu installieren muss.
+
+Nun wäre es sehr umständlich, diese Probleme manuell durch Testen der
+einzelnen Pakete zu lösen. Darum gibt es das Werkzeug
+\cmd{revdep-rebuild}, %
+\index{revdep-rebuild (Programm)}%
+das den Prozess automatisiert. Das Tool
+stammt ebenfalls aus dem Paket \cmd{app-portage/gentoolkit}, %
+\index{gentoolkit (Paket)}%
+%\index{app-portage (Kategorie)!gentoolkit|see{gentoolkit (Paket)}}%
+das wir an dieser Stelle ja schon installiert haben sollten.
+
+Da wir gerade bewusst die Abhängigkeit zwischen \cmd{net-www/apache} %
+\index{apache (Paket)}%
+%\index{net-www (Kategorie)!apache|see{apache (Paket)}}%
+und \cmd{dev-libs/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-libs (Kategorie)!openssl|see{openssl (Paket)}}%
+gebrochen haben, können wir \cmd{revdep-rebuild} einmal laufen lassen,
+um zu sehen, ob es uns das selbst generierte Problem meldet. Wir fügen
+die Option \cmd{-{}-pretend} %
+\index{revdep-rebuild (Programm)!pretend (Option)}%
+(bzw.\ \cmd{-p}) %
+%\index{revdep-rebuild (Programm)!p (Option)|see{revdep-rebuild    (Programm), pretend (Option)}}%
+hinzu, um zu vermeiden, dass das Skript die Situation automatisch
+repariert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{revdep-rebuild -p}
+Configuring search environment for revdep-rebuild
+
+Checking reverse dependencies...
+
+Packages containing binaries and libraries broken by a package update
+will be emerged.
+
+Collecting system binaries and libraries... done.
+  (/root/.revdep-rebuild.1_files)
+
+Collecting complete LD_LIBRARY_PATH... done.
+  (/root/.revdep-rebuild.2_ldpath)
+
+Checking dynamic linking consistency...
+  broken /usr/bin/ldapcompare (requires  libcrypto.so.0.9.8 libssl.so.0.
+9.8)
+  broken /usr/bin/ldapdelete (requires  libcrypto.so.0.9.8 libssl.so.0.9
+.8)
+\ldots
+  broken /usr/sbin/sshd (requires  libcrypto.so.0.9.8 libssl.so.0.9.8)
+  broken /usr/sbin/ssmtp (requires  libcrypto.so.0.9.8 libssl.so.0.9.8)
+ done.
+  (/root/.revdep-rebuild.3_rebuild)
+
+Assigning files to ebuilds... done.
+  (/root/.revdep-rebuild.4_ebuilds)
+
+Evaluating package order...
+!!! Multiple versions within a single package slot have been 
+!!! pulled into the dependency graph:
+
+('ebuild', '/', 'dev-db/mysql-5.0.26-r2', 'merge') (no parents)
+
+('ebuild', '/', 'dev-db/mysql-5.0.38', 'merge') pulled in by
+  ('ebuild', '/', 'dev-perl/DBD-mysql-3.0008', 'merge')
+  ('ebuild', '/', 'virtual/mysql-5.0', 'merge')
+
+ done.
+  (/root/.revdep-rebuild.5_order)
+
+All prepared. Starting rebuild...
+emerge --oneshot -p =dev-lang/perl-5.8.8-r2 =net-misc/wget-1.10.2 =dev-l
+ang/python-2.4.3-r4 =net-nds/openldap-2.3.30-r2 =dev-db/mysql-5.0.26-r2 
+=dev-perl/DBD-mysql-3.0008 =net-misc/openssh-4.5_p1-r1 =net-www/apache-2
+.0.58-r2 =mail-mta/ssmtp-2.61-r2 
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] dev-lang/perl-5.8.8-r2  
+[ebuild   R   ] net-misc/wget-1.10.2  
+[ebuild   R   ] dev-lang/python-2.4.3-r4  
+[ebuild   R   ] net-nds/openldap-2.3.30-r2  
+[ebuild   R   ] dev-db/mysql-5.0.26-r2  
+[ebuild   R   ] dev-perl/DBD-mysql-3.0008  
+[ebuild   R   ] net-misc/openssh-4.5_p1-r1  USE="ldap*" 
+[ebuild   R   ] net-www/apache-2.0.58-r2  USE="mpm-prefork* mpm-worker* 
+threads*"
+[ebuild   R   ] mail-mta/ssmtp-2.61-r2  
+Now you can remove -p (or --pretend) from arguments and re-run revdep-re
+build.
+\end{ospcode}
+\index{Abhängigkeiten!Fehler suchen}%
+
+Zuletzt informiert uns \cmd{revdep-rebuild}, dass nicht nur
+\cmd{net-www/""apache} %
+\index{apache (Paket)}%
+%\index{net-www (Kategorie)!apache|see{apache (Paket)}}%
+nicht mehr funktioniert, sondern dass auch \cmd{dev-db/mysql} %
+\index{mysql (Paket)}%
+%\index{dev-db (Kategorie)!mysql|see{mysql (Paket)}}%
+und noch einige weitere Pakete von OpenSSL abhängen und neu
+installiert werden müssten, wenn wir bei der älteren Version von
+\cmd{dev-libs/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-libs (Kategorie)!openssl|see{openssl (Paket)}}%
+bleiben wollen.
+
+Außerdem informiert \cmd{revdep-rebuild} darüber, dass nun ein zweiter
+Lauf ohne die Option \cmd{-{}-pretend} %
+\index{revdep-rebuild (Programm)!pretend (Option)}%
+angebracht sei. Würden wir diesen an dieser Stelle durchführen, würde
+\cmd{revdep-rebuild} die eigentliche Analyse der Situation nicht
+nochmals vornehmen, sondern das gespeicherte Resultat nutzen, um die
+defekten Pakete zu erneuern.
+
+\index{revdep-rebuild (Programm)!Funktionsweise|(}%
+Wir wollen uns aber erst einmal die Funktionsweise des Werkzeugs
+genauer ansehen, damit klar wird, wie sich die binären Abhängigkeiten
+auswirken. 
+
+\cmd{revdep-rebuild} analysiert alle Dateien in einigen vorgegebenen
+Verzeichnissen, die üblicherweise kompilierte Programme enthalten. Die
+zu durchsuchenden Verzeichnisse gibt \cmd{revdep-rebuild} auch in der
+temporären Datei \cmd{{\textasciitilde}/.revdep-rebuild.0\_env} %
+\index{.revdep-rebuild.0\_env (Datei)}%
+%\index{{\textasciitilde}!.revdep-rebuild.0\_env|see{.revdep-rebuild.0\_env    (Datei)}}%
+aus (Variable \cmd{SEARCH\_DIRS}). %
+\index{SEARCH\_DIRS (Variable)}%
+%\index{Variable!SEARCH\_DIRS|see{SEARCH\_DIRS Variable}}%
+Alle ausführbaren Dateien in
+diesem Ordner finden sich dann in der temporären Datei
+\cmd{{\textasciitilde}/.revdep-rebuild.1\_files} %
+\index{.revdep-rebuild.1\_files (Datei)}%
+%\index{{\textasciitilde}!.revdep-rebuild.1\_files|see{.revdep-rebuild.1\_files    (Datei)}}%
+wieder. Die Orte, an denen Bibliotheken %
+\index{Bibliothek!Pfad}%
+abgelegt sein können, finden sich in
+\cmd{{\textasciitilde}/.revdep-rebuild.2\_ldpath}.% %
+\index{.revdep-rebuild.2\_ldpath (Datei)}%
+%\index{{\textasciitilde}!.revdep-rebuild.2\_ldpath|see{.revdep-rebuild.2\_ldpath    (Datei)}}%
+
+Vereinfacht ausgedrückt, nimmt \cmd{revdep-rebuild} dann für jedes
+binäre Programm eine Überprüfung mit \cmd{ldd} %
+\index{ldd (Programm)}%
+vor:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ldd /usr/sbin/apache2 | grep "not found"}
+	libssl.so.0.9.8 => not found
+	libcrypto.so.0.9.8 => not found
+\end{ospcode}
+\index{ldd (Programm)}%
+\index{grep (Programm)}%
+
+\cmd{ldd} %
+\index{ldd (Programm)}%
+zeigt die Abhängigkeiten von Bibliotheken %
+\index{Abhängigkeiten!Bibliotheken}%
+und damit eventuell verbundene Probleme an.
+
+Alle Dateien mit solchen nicht erfüllten Abhängigkeiten speichert
+\cmd{revdep"=rebuild} unter
+\cmd{{\textasciitilde}/.revdep-rebuild.3\_rebuild} %
+\index{.revdep-rebuild.3\_rebuild (Datei)}%
+%\index{{\textasciitilde}!.revdep-rebuild.3\_rebuild|see{.revdep-rebuild.3\_rebuild    (Datei)}}%
+ab. Hier durchsucht das Programm dann die installierten
+Pakete, %
+\index{Paket!installiert}%
+um festzustellen, zu welchen Paketen die defekten Programme gehören.
+Das Ergebnis der Analyse findet sich in
+\cmd{{\textasciitilde}/.revdep-rebuild.4\_ebuilds} %
+\index{.revdep-rebuild.4\_ebuilds (Datei)}%
+%\index{{\textasciitilde}!.revdep-rebuild.4\_ebuilds|see{.revdep-rebuild.4\_ebuilds    (Datei)}}%
+wieder und enthält im vorliegenden Fall:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat {\textasciitilde}/.revdep-rebuild.4_ebuilds}
+dev-perl/DBD-mysql-3.0008
+dev-lang/python-2.4.3-r4
+dev-lang/perl-5.8.8-r2
+dev-db/mysql-5.0.26-r2
+net-nds/openldap-2.3.30-r2
+mail-mta/ssmtp-2.61-r2
+net-www/apache-2.0.58-r2
+net-misc/wget-1.10.2
+net-misc/openssh-4.5_p1-r1
+\end{ospcode}
+\index{revdep-rebuild (Programm)!Funktionsweise|)}%
+
+Diese ließen sich nun mit einem erneuten Aufruf von
+\cmd{revdep-rebuild} ohne die Option \cmd{-{}-pretend} %
+\index{revdep-rebuild (Programm)!pretend (Option)}%
+reparieren. In unserem Fall ist es aber einfacher, wieder die neueste
+Version von OpenSSL zu installieren und damit die zerstörten
+Abhängigkeiten zu reparieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge openssl}
+\end{ospcode}
+
+Danach sollte sich der Apache-Server  wieder problemlos starten lassen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 restart}
+ * Starting apache2 ...             [ ok ]
+\end{ospcode}
+
+Wie sich mit \cmd{equery} (siehe Kapitel \ref{equery}) schon im
+Voraus überprüfen lässt, welche Pakete vom Update einer Bibliothek
+betroffen sein könnten, erklären wir genauer auf Seite
+\pageref{preventrevdepbreak}.% %
+\index{Paket!-abhängigkeiten, binär|)}%
+\index{revdep-rebuild (Programm)|)}%
+
+\index{emerge (Programm)!Fehler|(}%
+\subsection{Maskierte Pakete}
+
+\index{Paket!maskiert|(}%
+%\index{emerge (Programm)!Fehler!masked|see{Paket, maskiert}}%
+Unter Umständen bricht Portage bei der Installation eines Paketes mit
+folgender Meldung ab:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge =sys-devel/gcc-3*}
+!!! All ebuilds that could satisfy "=sys-devel/gcc-3*" have been masked.
+!!! One of the following masked packages is required to complete your re
+quest:
+- sys-devel/gcc-3.3.5.20050130-r1 (masked by: package.mask)
+# These are release-specific things and won't show up in the tree this w
+ay
+
+- sys-devel/gcc-3.4.1-r3 (masked by: package.mask, ~x86 keyword)
+- sys-devel/gcc-3.2.3-r4 (masked by: profile, package.mask)
+- sys-devel/gcc-3.2.2 (masked by: profile, package.mask, missing keyword)
+- sys-devel/gcc-3.3.6-r1 (masked by: package.mask)
+- sys-devel/gcc-3.4.6-r1 (masked by: package.mask)
+- sys-devel/gcc-3.4.6-r2 (masked by: package.mask)
+- sys-devel/gcc-3.4.5-r1 (masked by: package.mask)
+- sys-devel/gcc-3.4.4-r1 (masked by: package.mask)
+- sys-devel/gcc-3.3.2-r7 (masked by: profile, package.mask)
+- sys-devel/gcc-3.3.6 (masked by: package.mask)
+- sys-devel/gcc-3.3.5-r1 (masked by: package.mask)
+- sys-devel/gcc-3.1.1-r2 (masked by: profile, package.mask)
+- sys-devel/gcc-3.4.5 (masked by: package.mask)
+- sys-devel/gcc-3.4.6 (masked by: package.mask, ~x86 keyword)
+
+For more information, see MASKED PACKAGES section in the emerge man page
+or refer to the Gentoo Handbook.
+\end{ospcode}
+
+In diesem Fall verweigert \cmd{emerge} die Installation je nach
+Version aus unterschiedlichen Gründen.
+So ist z.\,B.\ das Paket \cmd{sys-devel/gcc-3.4.6} %
+\index{gcc (Paket)}%
+%\index{sys-devel (Kategorie)!gcc|see{gcc (Paket)}}%
+als instabil markiert (\cmd{masked by: {\textasciitilde}x86 keyword}).
+\index{Paket!{\textasciitilde}x86 keyword}%
+Die Blockade lässt sich aufheben, indem wir für dieses Paket das
+entsprechende instabile Keyword in der Datei
+\cmd{/etc/portage/package.keywords} %
+\index{package.keywords (Datei)}%
+\index{etc@/etc!portage!package.keywords}%
+hinzufügen (siehe \ref{MaskiertePakete}).
+
+Eine andere Fehlermeldung (\cmd{masked by: package.mask}) %
+\index{Paket!maskiert durch package.mask}%
+zeigt an, dass die Entwickler die gewünschte Version innerhalb der
+Datei \cmd{/usr/portage/""profiles/package.mask} %
+\index{package.mask (Datei)}%
+\index{usr@/usr!portage!profiles!package.mask}%
+gesperrt haben. Üblicherweise wird ein Grund für die Maskierung
+angegeben, und man sollte als Nutzer im Normalfall davon absehen, die
+Version zu installieren. Die Blockade können wir jedoch, sofern wir
+uns sicher sind, über einen Eintrag in der Datei
+\cmd{/etc/portage/""package.unmask} %
+\index{package.unmask (Datei)}%
+\index{etc@/etc!portage!package.unmask}%
+entfernen (siehe \ref{MaskiertePakete}).
+
+Auf \cmd{x86}-Maschinen zeigt Portage die Begründung \cmd{masked by:
+  missing keyword} %
+\index{Paket!missing keyword}%
+oder auch \cmd{masked by: -* keyword} und \cmd{masked by: -x86\osplinebreak{}
+  keyword} %
+\index{Paket!-x86 keyword}%
+selten an. Diese Fehler weisen darauf hin, dass das zu installierende
+Paket von den Entwicklern entweder noch nicht auf dieser Architektur %
+\index{Paket!Architektur}%
+getestet wurde (\cmd{missing keyword}) oder sie es als auf dieser
+Architektur nicht als nicht funktional markiert haben. Im Falle des
+fehlenden Keywords kann es trotzdem sein, dass das Paket problemlos
+funktioniert, es nur noch niemand getestet hat. In diesem Fall kann
+man die Entwickler über die Bug-Datenbank %
+\index{Bug!Datenbank}%
+darüber informieren, dass man das Paket gerne auf der entsprechenden
+Architektur getestet sehen würde. Es hilft natürlich, wenn man selbst
+schon einmal das entsprechende Keyword zu dem Ebuild hinzufügt und das
+Paket selber testet (mehr dazu in Kapitel \ref{addkeyword} auf Seite
+\pageref{addkeyword}).
+
+Als letzten möglichen Grund kann Portage \cmd{masked by: profile} %
+\index{Paket!im Profil maskiert}%
+anzeigen und dem Nutzer damit melden, dass das zu installierende Paket
+nicht mit dem gewählten Profil in Einklang zu bringen ist. Diese
+Schranke sollten wir nicht umgehen, da sie normalerweise triftige
+Gründe hat (z.\,B.\ läuft das Programm nur auf speziellen
+Rechner-Architekturen).% %
+\index{Paket!maskiert|)}%
+
+\subsection{System-Pakete}
+
+\index{Paket!System|(}%
+\index{system (Paket)|(}%
+Es war bereits von  einer Warnung
+die Rede, die Portage ausgibt, wenn der Nutzer Pakete
+aus dem Basis-System zu entfernen beabsichtigt (siehe \ref{blocker}):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --unmerge sys-apps/shadow -pv}
+
+>>> These are the packages that would be unmerged:
+
+!!! 'sys-apps/shadow' is part of your system profile.
+!!! Unmerging it may be damaging to your system.
+\end{ospcode}
+\index{emerge (Programm)!System-Paket}%
+\index{shadow (Paket)}%
+%\index{sys-apps (Kategorie)!shadow|see{shadow (Paket)}}%
+
+Die Warnung sollten wir ernst nehmen, da die System-Pakete essentiell
+für das Funktionieren der Maschine sind und wir solche Pakete nie
+entfernen sollten!% %
+\index{system (Paket)|)}%
+\index{Paket!System|)}%
+
+\subsection{Entwicklerfehler}
+
+\index{Fehler!Entwickler|(}%
+Es gibt durchaus eine Reihe von Fehlern, bei denen der Nutzer
+unschuldig ist und die durch typische Entwicklerfehler %
+zustande kommen. Dadurch, dass die Nutzer praktisch direkt am
+Portage-CVS-System %
+\index{Portage!CVS}%
+hängen und alle Veränderungen am Originalbaum sofort über die
+Rsync-Mirror-Server %
+\index{Mirror!rsync}%
+weitergegeben werden, können schon kleine Ungenauigkeiten bei
+Veränderungen von Entwicklerseite zu Problemen beim Nutzer führen.
+
+Aufgrund des typischen Ablaufs bei der Ebuild-Entwicklung %
+\index{Ebuild!Entwicklung}%
+(siehe Kapitel \ref{writeebuilds}) kommt es hierbei vor allem zu den
+im Folgenden beschriebenen Fehlern. In allen Fällen sollte man einen
+entsprechenden Bug-Report in der Gentoo-Datenbank %
+\index{Bug!Datenbank}%
+anlegen.
+
+\subsubsection{Falscher Digest}
+
+Alle Ebuilds %
+und  Quellarchive %
+müssen im Portage-Baum über Check\-sum\-men %
+\index{Ebuild!Checksumme}%
+\index{Quellarchiv!Checksumme}%
+identifizierbar sein. Diese erstellen die Entwickler bei Veränderungen
+am Ebuild und beim Einchecken neuer Versionen. Auf Nutzerseite verwendet
+Portage diese Checksummen, um die Integrität von Ebuilds und Quellen
+zu verifizieren. %
+\index{Checksumme!verifizieren}%
+Damit kann der Nutzer sicher sein, dass er keinen Schadcode %
+\index{Schadcode}%
+auf seinem Rechner ausführt, sofern er denn den Entwicklern
+ausreichend vertraut.
+
+Es kann allerdings passieren, dass ein Entwickler beim Einchecken
+eines neuen Ebuilds oder der Veränderung eines alten Ebuilds vergisst,
+diese Checksummen zu aktualisieren. %
+\index{Checksumme!fehlerhaft}%
+In diesem Fall scheitert Portage auf Nutzerseite mit der Meldung:
+
+\begin{ospcode}
+>>> checking ebuild checksums
+!!! Digest verification failed:
+\end{ospcode}
+\index{emerge (Programm)!Digest Fehler}%
+
+Dieser Fehler ist in fast jedem Fall der Entwicklerseite
+zuzuschreiben. Wenn der Fehler einige Zeit später nach einem erneuten
+\cmd{emerge -{}-sync} %
+\index{emerge (Programm)!sync (Option)}%
+nicht verschwindet, sollte man der Bug-Datenbank einen entsprechenden
+Fehlerbericht hinzufügen.
+
+\subsubsection{Fehlende und zirkuläre Abhängigkeiten}
+
+Sind in einem Ebuild Abhängigkeiten definiert, die als Paket gar nicht
+existieren, %
+\index{Paket!-abhängigkeiten fehlen}%
+so scheitert Portage ebenfalls:
+
+\begin{ospcode}
+emerge: there are no ebuilds to satisfy ">=sys-foo/depfoo-1".
+
+!!! Problem with ebuild sys-foo/foo-1
+!!! Possibly a DEPEND/*DEPEND problem. 
+\end{ospcode}
+\index{emerge (Programm)!Fehlendes Paket}%
+
+Gleiches gilt, wenn in einem Ebuild Abhängigkeiten %
+\index{Paket!-abhängigkeiten, zirkulär}%
+definiert sind, die in einem geschlossen Kreis resultieren:
+
+\begin{ospcode}
+!!! Error: circular dependencies: 
+
+ebuild / sys-foo/foo-1 depends on ebuild / sys-foo/foo-2
+ebuild / sys-foo/foo-2 depends on ebuild / sys-foo/foo-1
+\end{ospcode}
+\index{emerge (Programm)!zirkuläre Abhängigkeit}%
+
+Tritt einer dieser Fehler bei einem Paket des Portage-Baums auf, so
+ist dies ein klarer Fehler eines Entwicklers und wir sollten das
+Problem unter \cmd{http://bugs.gentoo.org} %
+\index{Bug!Datenbank}%
+eintragen. Diese Fehler sind allerdings selten und treten eher auf,
+wenn man eigene Ebuilds entwickelt (siehe
+Kapitel \ref{writeebuilds}).% %
+\index{Fehler!Entwickler|)}%
+\index{emerge (Programm)!Fehler|)}%
+
+\section{System aufräumen}
+
+\index{System!aufräumen|(}%
+Wenn wir Pakete deinstallieren, entfernt \cmd{emerge} die bei der
+Installation ebenfalls installierten Abhängigkeiten nicht automatisch
+mit (siehe Seite \pageref{firstdepclean}). Genauso werden auch bei
+einer Aktualisierung nicht einfach Pakete deinstalliert, wenn die neue
+Version im Gegensatz zur vorigen nicht mehr von diesen abhängt.
+
+Folglich sammelt unser System zwangsläufig mit der Zeit ungenutzte
+Bibliotheken an. Wer eine Software nur kurz testet, dann für
+uninteressant befindet und wieder deinstalliert, behält unweigerlich
+alle aufgrund von Abhängigkeiten installierten Pakete im System.
+
+Für die gelegentliche Aufräumaktion bietet sich die Option
+\cmd{-{}-depclean} %
+\index{emerge (Programm)!depclean (Option)}%
+an, die wir in jedem Fall erst einmal mit \cmd{-{}-pretend} %
+\index{emerge (Programm)!pretend (Option)}%
+laufen lassen müssen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --depclean -p}
+*** WARNING *** Depclean may break link level dependencies. Thus, itis
+*** WARNING *** recommended to use a tool such as `revdep-rebuild` (from
+*** WARNING *** app-portage/gentoolkit) in order to detect such breakage.
+*** WARNING ***  
+*** WARNING *** Also study the list of packages to be cleaned for any obv
+ious
+*** WARNING *** mistakes. Packages that are part of the world set will al
+ways
+*** WARNING *** be kept.  They can be manually added to this set with
+*** WARNING *** `emerge --noreplace <atom>`.  Packages that are listed in
+*** WARNING ***  package.provided (see portage(5)) will be removed by
+*** WARNING ***  depclean, even if they are part of the world set.
+*** WARNING ***  
+*** WARNING ***  As a safety measure, depclean will not remove any packag
+es
+*** WARNING ***  unless *all* required dependencies have been resolved.  
+As a
+*** WARNING ***  consequence, it is often necessary to run
+*** WARNING ***  `emerge --update --newuse --deep world` prior to depclea
+n.
+\ldots
+\end{ospcode}
+
+Portage brüllt uns hier geradezu an, diese Option nur mit extremer
+Vorsicht zu verwenden. Das ist auch der Grund, warum dieser Vorgang
+nicht automatisch abläuft. 
+
+Der korrekte Ablauf für einen solchen Aufräumvorgang besteht also
+zunächst einmal in einer vollständigen Aktualisierung des Systems mit
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --update --newuse --deep world}
+\end{ospcode}
+\index{emerge (Programm)!update (Option)}%
+\index{emerge (Programm)!newuse (Option)}%
+\index{emerge (Programm)!deep (Option)}%
+\index{world (Paket)}%
+
+Danach sollte man \cmd{-{}-depclean} %
+\index{emerge (Programm)!depclean (Option)}%
+erneut mit \cmd{-{}-pretend} %
+\index{emerge (Programm)!pretend (Option)}%
+laufen lassen und sich sehr genau ansehen, welche Pakete \cmd{emerge}
+dabei als überflüssig markiert.
+
+Alle Pakete, bei denen man auch nur einen Hauch von Unsicherheit
+verspürt, ob sie nicht vielleicht wichtig für das System sind, sollte
+man über folgenden Befehl zu \cmd{world} %
+\index{world (Paket)}%
+hinzufügen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --noreplace \cmdvar{PAKET}}
+\end{ospcode}
+\index{emerge (Programm)!noreplace (Option)}%
+
+Diese Pakete sollte \cmd{emerge} nun bei einem erneuten Lauf von
+\cmd{-{}-depclean} %
+\index{emerge (Programm)!depclean (Option)}%
+nicht mehr anzeigen.
+
+So abgesichert, kann man anschließend die Option \cmd{-{}-pretend} %
+\index{emerge (Programm)!pretend (Option)}%
+entfernen und die Aufräumaktion anlaufen lassen.
+
+Zur Sicherheit überprüft man danach nochmals alle binären
+Abhängigkeiten mit \cmd{revdep-rebuild}.% %
+\index{revdep-rebuild (Programm)}%
+\index{System!aufräumen|)}%
+
+\section{\label{updatecycle}Update-Zyklus}
+
+\index{Aktualisierung!Frequenz|(}%
+%\index{Update!Zyklus|see{Aktualisierung, Frequenz}}%
+Da der Portage-Baum %
+\index{Portage!Baum}%
+im CVS-System %
+\index{Portage!CVS}%
+der Entwickler kontinuierlich auf die Rsync-Server %
+\index{Mirror!rsync}%
+gespiegelt wird, könnte man quasi stündlich das eigene Gentoo-System
+aktualisieren.
+
+Man könnte, aber man sollte natürlich nicht.
+
+Grundsätzlich haben die Mirror-Server %
+\index{Mirror!Server}%
+die Policy, dass kein Benutzer mehrmals an einem Tag von einer
+IP-Adresse aus synchronisieren sollte. Im Normalfall dürfte dies auch
+wirklich nicht notwendig sein.
+
+Es stellt sich darum die Frage nach einem sinnvollen Update-Zyklus.
+Was sind die ausschlaggebenden Punkte für die Entscheidung, wie oft
+man synchronisiert?
+
+\begin{ospdescription}
+  \ospitem{Fehler} Die Tatsache, dass Entwickler auch nur Menschen
+  sind, führt gelegentlich dazu, dass neuere Paket-Versionen Probleme
+  mit sich bringen. Diese werden meist relativ schnell wieder
+  korrigiert, da andere Benutzer vom gleichen Fehler betroffen
+  sind. Nachdem die Entwickler den Fehler korrigiert haben, stellen
+  sie meist eine neue Version zur Verfügung, die das Problem
+  behebt.% %
+  \index{Paket!-fehler}%
+  \index{Paket!-version}%
+
+  Beim automatischen Update mit hoher Frequenz erwischt man das Paket
+  also erst einmal in der problematischen Fassung und muss es dann ein
+  zweites Mal kompilieren und installieren.
+
+  \ospitem{Features} Ein Versionssprung bei einer Software heißt nicht
+  immer, dass die Entwickler kritische Fehler behoben haben oder dass
+  neue Eigenschaften, die für uns wichtig sind, verfügbar sind.% %
+  \index{Paket!-eigenschaften}%
+  \index{Paket!-version}%
+
+  Wenn wir mit hoher Frequenz aktualisieren, kompilieren wir die Pakete
+  bei jedem noch so kleinen Versionssprung neu.
+
+  \ospitem{Sicherheit} %
+  Pakete, die als unsicher erkannt wurden, müssen wir so schnell wie
+  möglich ersetzen, damit die eigene Maschine nicht kompromittiert
+  werden kann.% %
+  \index{Paket!-sicherheit}%
+  \index{Sicherheit}%
+
+  Eine höhere Frequenz der Aktualisierungen bedeutet also höhere
+  Sicherheit.
+
+\ospitem{Kompatibilität} Je seltener wir aktualisieren, desto mehr
+  weichen wir vom Stand des Portage-Baums ab. Nach längerer Zeit kann
+  es passieren, dass Neuerungen nicht mehr direkt mit unserer Maschine
+  kompatibel sind. Eine hohe Update-Frequenz vermeidet solche Probleme.
+  \index{Paket!Kompatibilität}%
+\end{ospdescription}
+
+Im Prinzip stehen sich also der Aufwand beim Kompilieren %
+\index{Kompilieren!Aufwand}%
+und die Aktualität %
+\index{System!Aktualität}%
+des Systems gegenüber.
+
+Es gibt Nutzer, die den Portage-Baum jede Nacht synchronisieren %
+\index{Aktualisieren}%
+und neue Pakete automatisch über einen Cron-Job kompilieren und
+installieren. Das Problem dabei: Das automatische Update %
+\index{Aktualisierung!automatisch}%
+kann die Software zwar aktualisieren und sollte im Normalfall auch
+fehlerfrei durchlaufen, aber ab und an besteht mit einem Update einer
+Software auch die Notwendigkeit, die Konfiguration des Paketes %
+\index{Konfiguration!aktualisieren}%
+oder den von der Software verwalteten Datenbestand zu aktualisieren. %
+\index{Daten!aktualisieren}%
+Diese Prozesse sind im Regelfall nicht durch den Ebuild automatisiert,
+und es besteht die Chance, dass die neuen Pakete in einem nicht
+funktionierenden Zustand enden.
+
+Dennoch: Wer gerne an der vordersten Front der Software-Entwicklung
+steht, der findet die notwendige Konfiguration für diese Art der
+nächtlichen Aktualisierung in Kapitel \ref{dailysync}.
+
+Generell ist der interaktive Modus, %
+\index{Aktualisierung!interaktiv}%
+bei dem wir die Anweisungen am Ende einer Installation befolgen, aber
+vorzuziehen. Auch ist ein tägliches Update der Pakete %
+\index{Aktualisierung!täglich}%
+nicht wirklich zu empfehlen, denn schließlich bringt es wenig, Pakete
+zu aktualisieren, wenn der einzige ersichtliche "`Vorteil"' in einer
+erhöhten Versionsnummer besteht.
+
+Die Aktualisierung einmal im Monat ist meist sinnvoller. %
+\index{Aktualisierung!monatlich}%
+Als Zeitpunkt eignet sich ein Moment, in dem notfalls noch die Zeit
+vorhanden ist, das aktualisierte System ein wenig zu testen und
+eventuell auftretende Probleme zu korrigieren.
+
+\index{Sicherheit|(}%
+Allerdings ist Sicherheit dabei ein problematischer Punkt. Eine
+Zeitspanne von einem Monat kann bei gravierenden Lücken durchaus
+problematisch sein. Der Sicherheitscheck lässt sich unter Gentoo
+allerdings recht einfach automatisieren, so dass wir einmal täglich
+überprüfen können, ob Pakete mit Sicherheitslücken installiert
+sind. Die entsprechende Konfiguration beschreiben wir in Kapitel
+\ref{dailysec}. %
+\index{Sicherheit|)}%
+Finden sich solche Lecks, können wir die betroffene Software gezielt
+aktualisieren.
+
+Damit reicht es dann sogar aus, halbjährlich %
+\index{Aktualisierung!halbjährlich}%
+ein Update auf den Gentoo-Maschinen durchzuführen. So kommen
+zwar meist einige hundert zu aktualisierende Pakete zusammen, aber der
+Aufwand ist geringer als die zusammengenommene Zeit, die man in das
+tägliche Update investieren muss.
+\index{Aktualisierung|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% coding: latin-1-unix
+%%% End: 
+
+% LocalWords:  ssl

@@ -1,0 +1,1021 @@
+\chapter{\label{diversconfig}Konfigurationsvariablen}
+
+\index{Paket!konfigurieren|(}%
+In den vorangegangenen Kapiteln haben wir fast alle zentralen
+Konfigurationsdateien besprochen.  Darüber hinaus haben einzelne
+Programme oder Services oft ihre eigenen, ganz spezifischen
+Konfigurationsoptionen, die sich in den allermeisten Fällen über
+entsprechende Dateien in \cmd{/etc} %
+\index{etc@/etc}%
+\index{etc@/etc}%
+beeinflussen lassen.
+
+Die Art der Konfiguration ist von Paket zu Paket unterschiedlich, so
+dass wir in diesem Buch nur ausgewählte Pakete beschreiben. Allerdings
+lassen sich grundsätzlich zwei Verfahren unterscheiden, die
+häufig Anwendung finden. Diese beiden
+Mechanismen wollen wir hier beleuchten.
+
+Jede dieser Konfigurationsvarianten verwendet ein spezielles
+Verzeichnis innerhalb von \cmd{/etc}.  Umgebungsvariablen können wir
+in \cmd{/etc/env.d} %
+\index{env.d (Verzeichnis)}%
+festlegen und servicespezifische Variablen in \cmd{/etc/conf.d}. %
+\index{conf.d (Verzeichnis)}%
+\index{etc@/etc!conf.d}%
+\index{Paket!konfigurieren|)}%
+
+Abschließend kümmern wir uns noch kurz um die Datei
+\cmd{/etc/rc.conf}, %
+\index{rc.conf (Datei)}%
+die früher sehr viele Variablen enthielt. Mittlerweile sind die
+Entwickler dazu übergangen, die meisten auf Dateien innerhalb von
+\cmd{/etc/conf.d} zu verteilen, so dass nur noch wenige Änderungen in
+\cmd{rc.conf} notwendig sind.
+
+\section{\label{envdsection}Umgebungsvariablen}
+
+\index{Umgebungsvariablen|(}%
+Viele Programme, die wir über die Kommandozeile aufrufen,
+beziehen so genannte Umgebungsvariablen in ihre Konfiguration ein.
+Gentoo definiert diese Variablen im Verzeichnis \cmd{/etc/env.d},
+\index{etc@/etc!env.d}%
+\index{env.d (Verzeichnis)}%
+und wir wollen im Folgenden beschreiben, wie sich die Werte
+modifizieren lassen.
+
+\subsection{Die wichtigsten Variablen}
+
+Die aktuell definierten Umgebungsvariablen lassen sich unter
+\cmd{bash} %
+\index{bash (Programm)}%
+mit \cmd{export} %
+\index{export (Programm)}%
+anzeigen. Folgender Befehl listet den Inhalt der Umgebungsvariable
+\cmd{PATH}:% %
+\index{PATH (Variable)} \index{Umgebungsvariablen!PATH}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{export | grep " PATH"}
+declare -x PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin
+:/bin:/opt/bin:/usr/i686-pc-linux-gnu/gcc-bin/4.1.1"
+\end{ospcode}
+
+Diese Variable ist von zentraler Bedeutung für die Kommandozeile, denn
+sie bestimmt, wo das System nach ausführbaren Programmen %
+\index{Programm}%
+\index{Ausführbare Datei}%
+sucht.
+Generell sind unter Gentoo (und auch vielen anderen Distributionen)
+folgende Variablen von besonderer Bedeutung:
+
+\begin{ospdescription}
+  \ospitem{\cmd{PATH}} %
+  Listet die Ordner, in denen das System nach ausführbaren Dateien
+  sucht. Tippt man ein Kommando wie \cmd{emerge} ein, so muss eine
+  entsprechende Datei in den im \cmd{PATH} gelisteten Verzeichnissen
+  vorkommen, damit das System das Kommando erfolgreich ausführen
+  kann.% %
+  \index{PATH (Variable)}%
+%  \index{Umgebungsvariablen!PATH|see{PATH (Variable)}}%
+  \index{Programm}%
+
+  \ospitem{\cmd{ROOTPATH}} Hat die gleiche Funktion wie
+  \cmd{PATH}, gilt jedoch ausschließlich für den \cmd{root}-Benutzer.
+  \index{ROOTPATH (Variable)}
+%  \index{Umgebungsvariablen!ROOTPATH|see{ROOTPATH (Variable)}}
+  \index{root (Benutzer)!Programme}
+
+  \ospitem{\cmd{LDPATH}} Bezeichnet die Orte, an denen sich
+  Bibliotheken befinden können.
+  \index{LDPATH (Variable)}
+%  \index{Umgebungsvariablen!LDPATH|see{LDPATH (Variable)}}
+  \index{Bibliothek}
+
+  \ospitem{\cmd{MANPATH}} Listet die Orte, an denen sich
+  \cmd{man}-Seiten befinden. Diese kann man dann mit dem
+  \cmd{man}-Befehl lesen.% %
+  \index{MANPATH (Variable)}%
+%  \index{Umgebungsvariablen!MANPATH|see{MANPATH (Variable)}}%
+  \index{Hilfeseiten}%
+
+  \ospitem{\cmd{INFODIR}} %
+  Listet die Orte, an denen sich \cmd{info}-Seiten befinden. Diese
+  kann man mit dem \cmd{info}-Befehl anzeigen.% %
+  \index{INFODIR (Variable)}%
+%  \index{Umgebungsvariablen!INFODIR|see{INFODIR (Variable)}}%
+  \index{Hilfeseiten}
+
+  \ospitem{\cmd{PAGER}} Bezeichnet das bevorzugte Anzeige-Programm für
+  Textdateien (üblicherweise \cmd{less}).
+  \index{PAGER (Variable)}
+%  \index{Umgebungsvariablen!PAGER|see{PAGER (Variable)}}
+  \index{Dateien!anzeigen}
+
+  \ospitem{\cmd{EDITOR}} Bezeichnet das bevorzugte Editier-Programm
+  (üblicherweise \cmd{nano}, \cmd{vi} oder \cmd{emacs}).
+  \index{EDITOR (Variable)}
+%  \index{Umgebungsvariablen!EDITOR|see{EDITOR (Variable)}}
+  \index{Dateien!editieren}
+  \index{Editor}
+
+  \ospitem{\cmd{CONFIG\_PROTECT}} %
+  Listet die Verzeichnisse, in denen Portage während eines
+  \cmd{emerge}-Vorgangs keine Dateien überschreiben wird, sondern dem
+  Nutzer ermöglicht, sie mittels
+  \cmd{etc-update} oder \cmd{dispatch-conf} zu aktualisieren (siehe auch
+  Seite \pageref{configprotect}).% %
+  \index{CONFIG\_PROTECT (Variable)}%
+%  \index{Umgebungsvariablen!CONFIG\_PROTECT|see{CONFIG\_PROTECT      (Variable)}}%
+  \index{Konfiguration!Schutz}%
+
+  \ospitem{\cmd{CONFIG\_PROTECT\_MASK}} Diese Variable maskiert
+  innerhalb der in \cmd{CONFIG\_PROTECT} angegebenen Verzeichnisse
+  einzelne Bereiche, in denen es Portage dennoch erlaubt ist, Dateien
+  zu überschreiben (siehe auch Seite \pageref{configprotectmask}).
+  \index{CONFIG\_PROTECT\_MASK (Variable)}
+%  \index{Umgebungsvariablen!CONFIG\_PROTECT\_MASK|see{CONFIG\_PROTECT\_MASK (Variable)}}
+  \index{Konfiguration!Schutz}%
+\end{ospdescription}
+
+\subsection{Umgebungsvariablen modifizieren}
+
+Wie bereits erwähnt, dient das Verzeichnis \cmd{/etc/env.d} %
+\index{etc@/etc!env.d|(}%
+\index{env.d (Verzeichnis)|(}%
+dazu, die Umgebungsvariablen zu definieren. Hier findet sich eine
+Dateiliste mit numerischen Präfixen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /etc/env.d}
+00basic
+02locale
+05binutils
+05gcc
+05portage.envd
+50ncurses
+70klibc
+70less
+99gentoolkit-env
+binutils
+gcc
+\end{ospcode}
+
+Die vorangestellte Zahl bestimmt den Rang einer
+Konfigurationsdatei. Die Dateien mit den niedrigeren Zahlen wertet
+\cmd{env-update} %
+\index{env-update (Programm)}%
+zuerst aus und überschreibt ihre Werte, wenn nachfolgende
+Konfigurationsdateien dieselben Variablen festlegen.
+
+\label{env-update}%
+Führt man das Kommando \cmd{env-update} %
+\index{env-update (Programm)}%
+aus, liest dieses die einzelnen Konfigurationsdateien aus und
+kombiniert sie in der Datei \cmd{/etc/profile.env}.% %
+\index{profile.env (Datei)}%
+\index{etc@/etc!profile.env|(}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/profile.env}
+# THIS FILE IS AUTOMATICALLY GENERATED BY env-update.
+# DO NOT EDIT THIS FILE. CHANGES TO STARTUP PROFILES
+# GO INTO /etc/profile NOT /etc/profile.env
+
+export CONFIG_PROTECT_MASK='/etc/terminfo /etc/revdep-rebuild'
+export CVS_RSH='ssh'
+export GCC_SPECS=''
+export INFOPATH='/usr/share/info:/usr/share/binutils-data/i686-pc-linux-
+gnu/2.16.1/info:/usr/share/gcc-data/i686-pc-linux-gnu/4.1.1/info'
+export LANG='de_DE.utf8'
+export LC_ALL='de_DE.utf8'
+export LESS='-R -M --shift 5'
+export LESSOPEN='|lesspipe.sh %s'
+export MANPATH='/usr/local/share/man:/usr/share/man:/usr/share/binutils-
+data/i686-pc-linux-gnu/2.16.1/man:/usr/share/gcc-data/i686-pc-linux-gnu/
+4.1.1/man'
+export PAGER='/usr/bin/less'
+export PATH='/opt/bin:/usr/i686-pc-linux-gnu/gcc-bin/4.1.1'
+export PRELINK_PATH_MASK='/usr/lib/klibc'
+export PYTHONPATH='/usr/lib/portage/pym'
+export ROOTPATH='/opt/bin:/usr/i686-pc-linux-gnu/gcc-bin/4.1.1'
+\end{ospcode}
+
+Schaut man sich die \cmd{PATH}-Variable %
+\index{PATH (Variable)}%
+an, bemerkt man allerdings, dass die oben angegebene Regel, nach der
+Umgebungsvariablen entsprechend der Zahl am Dateianfang überschrieben
+werden, nicht ganz stimmen kann:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ grep "^PATH" /etc/env.d/*}
+/etc/env.d/00basic:PATH="/opt/bin"
+/etc/env.d/05gcc:PATH="/usr/i686-pc-linux-gnu/gcc-bin/4.1.1"
+\end{ospcode}
+
+Eigentlich müsste der Wert aus \cmd{/etc/env.d/05gcc} %
+\index{05gcc (Datei)}%
+\index{etc@/etc!env.d!05gcc}%
+den entsprechenden \cmd{PATH}-Wert %
+\index{PATH (Variable)}%
+aus \cmd{/etc/env.d/00basic} %
+\index{00basic (Datei)}%
+\index{etc@/etc!env.d!05gcc}%
+überschreiben.
+Bei den Pfaden zu ausführbaren Dateien ist dies aber wenig
+sinnvoll. So installieren einige Pakete Programme in \cmd{/opt/bin} %
+\index{bin@/bin}%
+%\index{opt@/opt!bin|see{bin (Verzeichnis)}}%
+und der \cmd{gcc}-Compiler %
+%\index{Compiler!gcc (Programm)|see{gcc (Programm)}}%
+\index{gcc (Programm)}%
+einige Werkzeuge unter \cmd{/usr/i686-pc-linux-gnu/gcc-bin/4.1.1}.
+\index{gcc-bin (Verzeichnis)}%
+\index{usr@/usr!i686-pc-linux-gnu!gcc-bin}%
+In solchen Fällen sollte man durchaus beide Pfade in die globale
+\cmd{PATH}-Variable %
+\index{PATH (Variable)}%
+aufnehmen.
+Das entsprechende Verhalten sehen wir ja auch im Resultat:
+
+\begin{ospcode}
+export PATH='/opt/bin:/usr/i686-pc-linux-gnu/gcc-bin/4.1.1'
+\end{ospcode}
+
+Dennoch ist das die Ausnahme für die Werte innerhalb von
+\cmd{/etc/env.d}. Diese gilt, innerhalb von Portage fest kodiert, für
+folgende Werte:
+
+\cmd{KDEDIRS}\\
+\cmd{PATH}\\
+\cmd{CLASSPATH}\\
+\cmd{LDPATH}\\
+\cmd{MANPATH}\\
+\cmd{INFODIR}\\
+\cmd{INFOPATH}\\
+\cmd{ROOTPATH}\\
+\cmd{CONFIG\_PROTECT}\\
+\cmd{CONFIG\_PROTECT\_MASK}\\
+\cmd{PRELINK\_PATH}\\
+\cmd{PRELINK\_PATH\_MASK}\\
+\cmd{PYTHONPATH}\\
+\cmd{ADA\_INCLUDE\_PATH}\\
+\cmd{ADA\_OBJECTS\_PATH}\\
+\cmd{PKG\_CONFIG\_PATH}
+
+
+Diesen Mechanismus machen sich verschiedene Pakete zu Nutze, um die
+entsprechenden Variablen zu ergänzen. So lassen sich problemlos neue
+Pfade für ausführbare Dateien oder Hilfe-Seiten hinzufügen.
+
+\index{Umgebungsvariablen|)}%
+\index{env.d (Verzeichnis)|)}%
+
+
+\section{Servicevariablen\label{Servicevariablen}}
+
+\index{Konfiguration!Service|(}%
+\index{Service!-variablen|(}%
+\index{conf.d (Verzeichnis)|(}%
+Kommen wir zum zweiten Mechanismus, der die
+Konfiguration für die Service"=Skripte unter \cmd{/etc/init.d}
+\index{init.d (Verzeichnis)}%
+vereinheitlicht. Die entsprechenden Dateien befinden sich unter
+\cmd{/etc/conf.d}.
+
+\subsection{Zuordnung}
+
+Die Konfigurationsdateien für ein spezifisches Skript sind im
+Normalfall analog benannt. Also ist \cmd{/etc/conf.d/apache2} %
+\index{apache2 (Datei)}%
+\index{etc@/etc!conf.d!apache2}%
+für die Konfiguration von \cmd{/etc/init.d/apache2} %
+\index{apache2 (Datei)}%
+\index{etc@/etc!init.d!apache2}%
+zuständig. Nicht jedes \cmd{init.d}-Skript hat jedoch zwangsläufig
+eine Konfigurationsdatei.
+
+Auch befindet sich häufig nicht die komplette Konfiguration für den
+Service in der Datei unter \cmd{/etc/conf.d}. Die Apache-Konfiguration
+z.\,B.\ ist sehr komplex, und der Großteil der Konfigurationsdateien
+befindet sich unter \cmd{/etc/apache2}, %
+\index{apache2 (Verzeichnis)}%
+\index{etc@/etc!apache2}%
+während \cmd{/etc/conf.d/apache2} %
+\index{apache2 (Datei)}%
+nur einige Basis-Einstellungen erlaubt.
+
+Einige der Konfigurationsdateien haben wir uns schon in anderen
+Kapiteln angesehen (\cmd{hostname} auf Seite \pageref{confdhostname},
+\cmd{keymaps} auf Seite \pageref{confdkeymaps} und Seite
+\pageref{confdkeymap2}, \cmd{consolefont} auf Seite
+\pageref{confdconsolefont}, \cmd{clock} auf Seite \pageref{confdclock} und
+\cmd{net} auf Seite \pageref{confdnet}). Die übrigen, allgemeinen
+Dateien beschreiben wir hier.
+
+\index{Konfiguration!Service|)}%
+\index{Service!-variablen|)}%
+
+\subsection{/etc/conf.d/rc}
+\index{rc (Datei)|(}%
+\index{etc@/etc!conf.d!rc}%
+
+Diese Konfigurationsdatei definiert nicht die Variablen für ein
+spezifisches Init-Skript, sondern liefert die Grundkonfiguration für
+alle Init-Skripte. Über diese Datei lassen sich somit einige zentrale
+Eigenschaften des Boot"=Vorgangs steuern.
+
+Die Datei ist etwas zu lang, um sie hier in Gänze
+darzustellen -- darum hier nur der Überblick über die
+Liste der verfügbaren Variablen und deren Standardwerte:
+
+\begin{ospcode}
+RC_TTY_NUMBER=11
+RC_PARALLEL_STARTUP="no"
+RC_INTERACTIVE="yes"
+RC_HOTPLUG="yes"
+RC_COLDPLUG="yes"
+RC_PLUG_SERVICES=""
+RC_NET_STRICT_CHECKING="no"
+RC_DOWN_INTERFACE="yes"
+RC_VOLUME_ORDER="raid evms lvm dm"
+RC_VERBOSE="no"
+RC_BOOTLOG="no"
+RC_BOOTCHART="no"
+RC_USE_FSTAB="no"
+RC_USE_CONFIG_PROFILE="yes"
+RC_FORCE_AUTO="no"
+RC_DEVICES="auto"
+RC_DEVICE_TARBALL="no"
+RC_SWAP_ERASE="no"
+RC_DMESG_LEVEL="1"
+RC_RETRY_KILL="yes"
+RC_RETRY_TIMEOUT=1
+RC_RETRY_COUNT=5
+RC_FAIL_ON_ZOMBIE="no"
+RC_KILL_CHILDREN="no"
+RC_WAIT_ON_START="0.1"
+#RC_DAEMON="/usr/bin/valgrind --tool=memcheck --log-file=/tmp/valgrind.s
+yslog-ng"
+\end{ospcode}
+
+
+\begin{ospdescription}
+  
+\ospitem{\cmd{RC\_TTY\_NUMBER}}
+Die Variable \cmd{RC\_TTY\_NUMBER} bestimmt die Zahl an Terminals
+\index{RC\_TTY\_NUMBER (Variable)|(}%
+\index{Terminals}%
+\index{tty}%
+(\emph{ttys}), die beim Systemstart geöffnet werden. Der Standardwert
+ist auf elf gesetzt, aber bei einem Server-System kann man den Wert
+problemlos reduzieren. Selbst für eine Desktop-Maschine ist der Wert
+hoch, da die meisten Benutzer nur den X-Server starten und die anderen
+Terminals unbenutzt bleiben. Die Ressourcen, die man durch eine
+Reduktion des Wertes spart, sind allerdings minimal. 
+\index{RC\_TTY\_NUMBER (Variable)|)}%
+
+\ospitem{\cmd{RC\_PARALLEL\_STARTUP}} %
+Die Option \cmd{RC\_PARALLEL\_STARTUP} ist da schon spannender, da
+sie %
+\index{RC\_PARALLEL\_STARTUP (Variable)|(}%
+\index{Optimieren!Boot-Vorgang|(}%
+bestimmt, ob das System während des Boot"=Vorgangs die Init-Skripte
+parallel starten soll oder nicht. Die eingesparte Zeit ist zwar nicht
+groß, aber wer wartet schon gern.  Ganz ohne Vorsicht ist die
+Einstellung nicht zu genießen: Gentoo unterstützt das Verfahren noch
+nicht lange, und aus diesem Grunde ist der Standardwert der
+Variablen auf \cmd{no} gesetzt. Nach Aktivieren der Option sollte man
+beim nächsten Boot"=Vorgang nach Problemen Ausschau halten.
+
+Beim parallelen Boot"=Vorgang wird die Ausgabe der Init-Skripte gekürzt,
+damit sich die Ausgaben verschiedener Skripte nicht überlagern und
+damit nicht mehr zuzuordnen sind.
+\index{Optimieren!Boot-Vorgang|)}%
+\index{RC\_PARALLEL\_STARTUP (Variable)|)}%
+
+\ospitem{\cmd{RC\_INTERACTIVE}}
+\cmd{RC\_INTERACTIVE="{}yes"{}} erlaubt es, während des Systemstarts die
+\index{RC\_INTERACTIVE (Variable)|(}%
+\index{Boot-Vorgang!unterbrechen}%
+Taste \taste{I} zu verwenden, um den Boot"=Vorgang zu unterbrechen und
+bei jedem Service zu wählen, ob er gestartet werden soll oder
+nicht. Vor allem bei Boot-Problemen %
+\index{Boot!Fehler}%
+ist diese Möglichkeit sehr
+nützlich.
+\index{RC\_INTERACTIVE (Variable)|)}%
+
+\ospitem{\cmd{RC\_*PLUG*}}
+\cmd{RC\_HOTPLUG} legt fest, ob die Init-Skripte auch durch ein
+\index{RC\_HOTPLUG (Variable)|(}%
+\index{Hotplug}%
+Hotplug-Event angestoßen werden dürfen. Das kann vor allem bei
+mobilen Maschinen oder USB-Hardware sinnvoll sein. Fügt man neue
+Netzwerkkarten oder WLAN-Empfänger hinzu, müssen vielfach auch
+einige Netzwerkdienste neu gestartet werden. Wer dies verhindern
+möchte, setzt abweichend von der Standardeinstellung
+\cmd{RC\_HOTPLUG="{}no"{}}.% 
+\index{RC\_HOTPLUG (Variable)|)}%
+
+\index{RC\_COLDPLUG (Variable)|(}%
+\index{Coldplug!Init.d-Services}%
+Die Option \cmd{RC\_COLDPLUG}
+hat den gleichen Zweck und verhindert,
+wenn gewünscht, den Aufruf von Init-Skripten in der Coldplug-Phase
+während des Systemstarts.
+\index{RC\_COLDPLUG (Variable)|)}%
+\index{RC\_PLUG\_SERVICES (Variable)|(}%
+Darüber hinaus kann man
+mit der Einstellung \cmd{RC\_PLUG\_SERVICES}
+genauer spezifizieren, welche Services bei einem Cold-
+bzw. Hotplug-Ereignis gestartet werden dürfen. Die Syntax ist
+in den Kommentaren der Datei \cmd{/etc/conf.d/rc} beschrieben.
+\index{RC\_PLUG\_SERVICES (Variable)|)} %
+
+\ospitem{\cmd{RC\_NET\_STRICT\_CHECKING}}
+Eine Vielzahl von Services hängt von einem funktionierenden Netzwerk
+\index{RC\_NET\_STRICT\_CHECKING (Variable)|(}%
+\index{Boot!Netzwerk}%
+ab (siehe auch Kapitel \ref{initddepend} ab Seite
+\pageref{initddepend}) und lässt sich erst starten, wenn dieses
+verfügbar ist. Viele Rechner besitzen aber mittlerweile mehrere
+Netzwerkschnittstellen, und die Bedingung "`Netzwerk
+  verfügbar"'
+\index{Netzwerk!Verfügbarkeit}%
+lässt sich unterschiedlich formulieren. Über den Parameter
+\cmd{RC\_NET\_STRICT\_CHECKING} 
+lässt sich bestimmen, wie dies geschieht. 
+
+Bei \cmd{RC\_NET\_STRICT\_CHECKING="{}none"{}} geht das Init.d"=System
+stets davon aus, dass ein funktionierendes Netzwerk zur Verfügung
+steht. Mit den beiden Einstellung \cmd{RC\_NET\_STRICT\_CHECKING="{}no"{}}
+bzw.\ \cmd{RC\_NET\_STRICT\_CHECKING="{}lo"{}} muss für diese Annahme
+mindestens ein Netzwerkskript ausschließlich bzw.\ einschließlich \cmd{net.lo}
+erfolgreich gestartet sein. Die Einstellung \cmd{"{}lo"{}}
+unterscheidet sich in der Praxis nicht von \cmd{"{}none"{}}, da jede
+normal konfigurierte Maschine das %
+\index{Loopback-Interface}%
+Loopback-Interface startet.  Schließlich verlangt die Option
+\cmd{RC\_NET\_STRICT\_CHECKING="{}yes"{}}, dass das System \emph{alle}
+Schnittstellen erfolgreich starten muss, damit es das Netzwerk als
+etabliert betrachten darf.% %
+\index{RC\_NET\_STRICT\_CHECKING (Variable)|)}%
+
+\ospitem{\cmd{RC\_DOWN\_INTERFACE}}
+\cmd{RC\_DOWN\_INTERFACE} legt fest, ob das System die Netzwerkschnittstellen
+\index{RC\_DOWN\_INTERFACE (Variable)|(}%
+beim Herunterfahren vollständig abschalten soll. Wer
+seine Maschine mit Wake-on-LAN
+\index{Wake-on-LAN}%
+betreibt muss hier die Einstellung \cmd{no} wählen.
+\index{RC\_DOWN\_INTERFACE (Variable)|)}%
+
+\ospitem{\cmd{RC\_VOLUME\_ORDER}}
+Die Einstellung \cmd{RC\_VOLUME\_ORDER} erlaubt für Maschinen mit
+\index{RC\_VOLUME\_ORDER (Variable)|(}%
+komplexer Festplattenkonfiguration und verschiedenen
+Festplatten"=Management"=Systemen (RAID, LVM etc.)
+\index{RAID}%
+\index{LVM}%
+die Startabfolge
+dieser Systeme festzulegen.
+\index{RC\_VOLUME\_ORDER (Variable)|)}%
+
+\ospitem{\cmd{RC\_VERBOSE}} Wer beim Booten Probleme erkennt oder
+Services sieht, die nicht %
+\index{RC\_VERBOSE (Variable)|(}%
+\index{Boot!Meldungen|(}%
+erfolgreich starten, dem kann \cmd{RC\_VERBOSE="{}yes"{}} vielleicht
+helfen. Die Option soll die Menge der von den Init-Skripten
+zurückgegebenen Informationen erhöhen. Bisher respektieren aber nur
+wenige Init.d-Skripte diese Einstellung. Ist jedoch
+\cmd{RC\_PARALLEL\_STARTUP="{}yes"{}} gesetzt (d.\,h.\ die Meldungen
+fehlen völlig), bekommt man mit dieser Option die Ausgabe der
+Init-Skripte zurück. In diesem Fall können sich aber die Ausgaben
+verschiedener Init-Skripte überlappen.% %
+\index{Boot!Meldungen|)}%
+\index{RC\_VERBOSE (Variable)|)}%
+
+\ospitem{\cmd{RC\_BOOTLOG}} %
+Ebenfalls für das Debuggen von Problemen beim Boot"=Vorgang nützlich %
+\index{RC\_BOOTLOG (Variable)|(}%
+\index{Boot!loggen}%
+ist die Option \cmd{RC\_BOOTLOG}, die es mit dem Wert \cmd{yes}
+erlaubt, die Ausgabe des Boot"=Vorgangs in der Datei
+\cmd{/var/log/boot.msg} %
+\index{boot.msg (Datei)|(}%
+\index{var@/var!log!boot.msg}%
+abzuspeichern. Vor allem bei Maschinen ohne Monitor kann das sehr
+hilfreich sein. Dafür muss das Paket
+\cmd{app-admin/showconsole} %
+\index{showconsole (Programm)}%
+%\index{Boot!showconsole (Programm)|see{showconsole (Programm)}}%
+\index{showconsole (Paket)}%
+%\index{app-admin (Kategorie)!showconsole|see{showconsole (Paket)}}%
+installiert sein, außerdem sollte der Boot"=Vorgang auf die
+Darstellung eines Splash-Screens verzichten, da \cmd{showconsole}
+sonst versagt. %
+\index{showconsole (Programm)}%
+\index{RC\_BOOTLOG (Variable)|)}%
+
+\ospitem{\cmd{RC\_BOOTCHART}} Gerade bei Desktop-Maschinen sind viele
+Nutzer an einem möglichst \index{RC\_BOOTCHART (Variable)|(}%
+\index{Boot!Optimieren|\see{Optimieren!Boot-Vorgang}}%
+\index{Optimieren!Boot-Vorgang|(}%
+schnellen Start der Maschine interessiert. Um hier
+Optimierungsmöglichkeiten zu identifizieren, kann man das
+\cmd{bootchart}-Programm verwenden (\cmd{app-benchmarks/bootchart}),
+\index{bootchart (Programm)}%
+%\index{Boot!bootchart (Programm)|see{bootchart (Programm)}}%
+\index{bootchart (Paket)}%
+%\index{app-benchmarks (Kategorie)!bootchart|see{bootchart (Paket)}}%
+das den zeitlichen Verlauf beim Booten grafisch veranschaulicht und
+damit Flaschenhälse während des Startprozesses auffindbar macht. \cmd{RC\_BOOTCHART="{}yes"{}} aktiviert dann das Profiling
+des Boot"=Vorgangs. Wie man anschließend aus den
+gesammelten Daten einen grafischen Überblick erstellt,
+beschreibt die Dokumentation des \cmd{bootchart}-Programms.
+\index{Optimieren!Boot-Vorgang|)}%
+\index{RC\_BOOTCHART (Variable)|)}%
+
+\ospitem{\cmd{\label{rcusefstab}RC\_USE\_FSTAB}} %
+Die besonderen Dateisysteme \cmd{proc}, %
+\index{RC\_USE\_FSTAB (Variable)|(}%
+\index{proc@/proc}%
+\cmd{sysfs} %
+\index{sysfs (Dateisystem)}%
+und \cmd{devpts} %
+\index{devpts (Dateisystem)}%
+bindet man normalerweise über die Verzeichnisse
+\cmd{/proc}, %
+\index{proc@/proc}%
+\cmd{/sys} %
+\index{sys@/sys}%
+und \cmd{/dev/pts} %
+\index{pts (Verzeichnis)}%
+%\index{dev@/dev!pts|see{pts (Verzeichnis)}}%
+in das System ein. Sollte die
+\cmd{/etc/fstab} etwas anderes verlangen,
+\index{fstab (Datei)}%
+ignoriert das Init-System dies.  Über die Einstellung
+\cmd{RC\_USE\_FSTAB="{}yes"{}} kann man es dennoch
+anweisen, die Zielverzeichnisse für diese speziellen
+Dateisysteme aus den Einträgen der \cmd{/etc/fstab}-Datei zu entnehmen
+(siehe auch Kapitel \ref{udevrcusefstab} ab Seite
+\pageref{udevrcusefstab}). %
+\index{RC\_USE\_FSTAB (Variable)|)}%
+
+\ospitem{\cmd{RC\_USE\_CONFIG\_PROFILE}}
+Um die Konfigurierbarkeit bei mobilen Rechnern %
+\index{Laptop}%
+zu erhöhen, gibt es bei
+Gentoo die Möglichkeit, die Konfiguration des Init-System an den
+jeweiligen Runlevel anzupassen. Im Kapitel \ref{softrunlevel} ab Seite
+\pageref{softrunlevel} haben wir schon besprochen, wie sich der
+Runlevel des Systems beim Booten über die Option \cmd{softlevel}
+\index{Kernel!softlevel (Option)}%
+wählen lässt. Um gegebenenfalls auch die Konfiguration eines
+Init.d-Skriptes an den aktuell gewählten Runlevel anzupassen,
+speichert man die für diese Umgebung spezifische Konfiguration in
+einer Datei, die am Ende den Namen des gewählten Softlevels, getrennt
+durch einen Punkt, trägt.
+
+Angenommen, unter \cmd{/etc/runlevels}
+\index{runlevels (Verzeichnis)}%
+\index{etc@/etc!runlevels}%
+liegt ein Ordner
+\cmd{unterwegs}, der die Konfiguration für den mobilen Einsatz des
+Rechners festlegt, dann könnten wir hier z.\,B.\ einen geänderten
+Hostnamen in der Datei \cmd{/etc/conf.d/hostname.unterwegs}
+\index{hostname (Datei)}%
+\index{etc@/etc!conf.d!hostname}%
+festlegen, während wir den Standardwert in der normalen Datei
+\cmd{/etc/conf.d/hostname} festlegen.
+Dieses Verhalten ist normalerweise erwünscht, lässt sich aber bei
+Bedarf über die Einstellung 
+\index{RC\_USE\_CONFIG\_PROFILE (Variable)}%
+\cmd{RC\_USE\_CONFIG\_PROFILE} deaktivieren.
+
+\ospitem{\cmd{RC\_FORCE\_AUTO}}
+Die Option \cmd{RC\_FORCE\_AUTO}
+\index{RC\_FORCE\_AUTO (Variable)}%
+vom Standardwert \cmd{no} auf \cmd{yes} zu setzen führt dazu, dass
+das Init.d-System beim Boot oder Stopp der Maschine versucht, jegliche
+Nutzer-Interaktion %
+\index{Boot!Interaktion}%
+zu unterdrücken. Im Normalfall fordert das System
+beim Boot"=Vorgang eine solche
+Interaktion nur, wenn es zu einem
+schwerwiegenden Fehler %
+\index{Boot!Fehler}%
+kommt, und darum sollte man diese Option nicht
+aktivieren. Bei Systemen ohne Monitor besteht jedoch im
+Normalfall keine Möglichkeit, mit dem System während des Hoch- bzw.\
+Herunterfahrens zu interagieren, so dass hier der Wert \cmd{yes} sinnvoll
+ist.
+
+\ospitem{\cmd{RC\_DEVICE*}}
+Die Variablen \cmd{RC\_DEVICES} und \cmd{RC\_DEVICE\_TARBALL}
+beschreiben wir
+im Kapitel \ref{udev} zu \cmd{udev} ab Seite \pageref{udev}.
+
+\ospitem{\cmd{RC\_SWAP\_ERASE}} %
+Die Variable \cmd{RC\_SWAP\_ERASE} %
+\index{RC\_SWAP\_ERASE (Variable)}%
+ist in der \cmd{/etc/conf.d/rc} nett kommentiert und, wie dem
+Kommentar zu entnehmen, für paranoide Linux-Nutzer gedacht. %
+\index{Sicherheit}%
+Setzt der Benutzer die Variable auf \cmd{yes}, so wird das System den
+Swap-Speicher beim Herunterfahren löschen. %
+\index{Swap!löschen}%
+Erfahrene Hacker könnten aus den Swap-Daten möglicherweise private
+Daten des Nutzers rekonstruieren, und wer meint, sich vor solchen
+Attacken schützen zu müssen, kann die Option entsprechend aktivieren.
+
+\ospitem{\cmd{RC\_DMESG\_LEVEL}} %
+Mit der Variablen \cmd{RC\_DMESG\_LEVEL} %
+\index{RC\_DMESG\_LEVEL (Variable)}%
+kann man die Menge der Kernel-Nachrichten %
+\index{Kernel!Log-Messages}%
+beeinflussen. Die Standardeinstellung ist \cmd{1}; in diesem Fall gibt
+der Kernel nur wirklich fatale Fehler auf der Konsole (also dem
+Start-Bildschirm) aus. Wer Probleme mit seiner Hardware hat, kann den
+Wert erhöhen und erhält vielleicht bessere Hinweise auf mögliche
+Ursachen.
+
+\ospitem{\cmd{RC\_RETRY\_*, RC\_FAIL\_ON\_ZOMBIE, RC\_KILL\_CHILDREN}}
+und \cmd{RC\_WAIT\_ON\_START}\\
+Bleiben noch ein paar Variablen, die das Verhalten beim Starten
+bzw. Stoppen von Services durch das Init.d-System beeinflussen. Diese
+gelten jedoch nur für die Skripte in \cmd{/etc/init.d}, die zum Starten und Stoppen von Services das
+\cmd{start-stop-daemon}-Programm
+\index{start-stop-daemon (Programm)}%
+verwenden.
+Dies betrifft z.\,B.\ den System-Logger \cmd{syslog-ng}:
+\index{syslog-ng (Paket)}%
+%\index{app-admin (Kategorie)!syslog-ng|see{syslog-ng (Paket)}}%
+
+\begin{ospcode}
+...
+start() \{
+  checkconfig || return 1
+  ebegin "Starting syslog-ng"
+  [[ -n \$\{SYSLOG_NG_OPTS\} ]] \&\& SYSLOG_NG_OPTS="--\$\{SYSLOG_NG
+_OPTS\}"
+  start-stop-daemon --start --quiet --exec /usr/sbin/syslog-ng\$\{SY
+SLOG_NG_OPTS\}
+   eend \$? "Failed to start syslog-ng"
+\}
+
+stop() \{
+  ebegin "Stopping syslog-ng"
+  start-stop-daemon --stop --quiet --pidfile /var/run/syslog-ng.pid
+  eend \$? "Failed to stop syslog-ng"
+  sleep 1 # needed for syslog-ng to stop in case we're restarting
+\}
+...
+\end{ospcode}
+
+Dabei kann man über die Option \cmd{RC\_RETRY\_KILL="{}yes"{}} %
+\index{RC\_RETRY\_KILL (Variable)}%
+festlegen, dass der \cmd{start-stop-daemon} %
+\index{start-stop-daemon (Programm)}%
+mehrfach versuchen soll, den Service %
+\index{Service!Fehler}%
+mit einem \cmd{KILL}-Signal zu stoppen, sofern dies im ersten Versuch
+nicht gelingt.  In diesem Fall legt der Parameter
+\cmd{RC\_RETRY\_TIMEOUT} %
+\index{RC\_RETRY\_TIMEOUT (Variable)}%
+\index{start-stop-daemon (Programm)!Timeout}%
+die Zeitspanne zwischen zwei Versuchen fest und
+\cmd{RC\_RETRY\_COUNT} %
+\index{RC\_RETRY\_COUNT (Variable)}%
+bestimmt die Anzahl der Wiederholungen.
+
+Angenommen das Init.d-System ist der Meinung, ein Service sei
+erfolgreich gestartet worden und habe noch kein Stopp-Signal vom
+Benutzer erhalten, so sollte beim Stoppen des Service der Prozess auch
+noch detektierbar sein. Ist er es nicht, beschwert sich das
+Init.d"=System im Normalfall nicht. Wer möchte, kann in dieser Situation
+aber auch einen Fehler %
+\index{Service!Fehler}%
+erzwingen, indem er \cmd{RC\_FAIL\_ON\_ZOMBIE} %
+\index{RC\_FAIL\_ON\_ZOMBIE (Variable)}%
+auf \cmd{yes} setzt.
+
+Die Option \cmd{RC\_WAIT\_ON\_START} %
+\index{RC\_WAIT\_ON\_START (Variable)}%
+legt fest, wie lange das Init-System nach dem Start eines Service
+wartet, bis es überprüft, ob der Start erfolgreich war.
+
+Zu guter Letzt kann man mit der Option \cmd{RC\_KILL\_CHILDREN} %
+\index{RC\_KILL\_CHILDREN (Variable)}%
+festlegen, ob das Init.d-System beim Stoppen eines Service auch all
+dessen Kind-Prozesse beendet. %
+\index{Service!Kindprozesse}%
+Das ist nicht unbedingt als globale
+Einstellung zu empfehlen, da in diesem Fall z.\,B.\ beim SSH-Server
+alle geöffneten Terminals ebenfalls automatisch geschlossen würden. Im
+Normalfall kann man sich auf dem Server über SSH einloggen und den
+\cmd{sshd}-Daemon %
+\index{sshd (Programm)}%
+\index{sshd (Programm)!Neustart}%
+neu starten, ohne dass dabei die eigene Verbindung zusammenbricht. Vor
+allem wenn man die Konfiguration des \cmd{sshd} verändert hat, ist die
+eine bestehende Verbindung sehr nützlich, sollte man sich vielleicht
+plötzlich mit der geänderten Konfiguration nicht mehr einloggen
+können. Die bestehende Verbindung kann man dann nutzen, um die
+Konfiguration zurückzusetzen.
+
+Ähnlich sollte auch bei anderen Services eventuell laufenden
+Kind-Prozessen die Möglichkeit gegeben werden ihre Arbeit
+abzuschließen, bevor sie vollständig stoppen.
+
+
+\end{ospdescription}
+
+\subsubsection{Der Rest von /etc/conf.d/rc}
+
+Es gibt noch einige weitere Variablen in dieser zentralen
+Konfigurationsdatei, die wir an dieser Stelle jedoch nicht weiter
+besprechen wollen, da sie derart tief in das Init.d-System eingreifen,
+dass man sehr genau wissen sollte, was man eigentlich verändert. Dafür
+sollte man sich intensiver mit der Dokumentation und dem Code des
+\cmd{sys-apps/baselayout}-Pakets %
+\index{baselayout (Paket)}%
+%\index{sys-apps (Kategorie)!baselayout|see{baselayout (Paket)}}%
+auseinander setzen.% %
+\index{rc (Datei)|)}%
+
+\subsection{/etc/conf.d/bootmisc}
+
+\index{bootmisc (Datei)|(}%
+\index{etc@/etc!conf.d!bootmisc}%
+Einige kleinere Aufgaben, die  beim Boot"=Vorgang anfallen, erledigt das Init-Skript
+\cmd{/etc/init.d/bootmisc}. %
+\index{etc@/etc!init.d!bootmisc}%
+Auch hier gibt es eine Konfigurationsdatei:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/conf.d/bootmisc}
+# /etc/conf.d/bootmisc
+
+# Put a nologin file in /etc to prevent people from logging in before
+# system startup is complete
+
+DELAYLOGIN="no"
+
+# Should we completely wipe out /tmp or just selectively remove known
+# locks / files / etc... ?
+
+WIPE_TMP="no"
+\end{ospcode}
+
+Für einen Server kann man \cmd{DELAYLOGIN} %
+\index{DELAYLOGIN (Variable)}%
+auf \cmd{yes} setzen, damit sich externe Benutzer erst nach dem
+vollständigen Boot"=Vorgang einloggen können.
+Außerdem ist es möglich, das \cmd{/tmp}-Verzeichnis %
+\index{tmp@/tmp (Verzeichnis)}%
+während des Boot"=Vorgangs automatisch leeren zu lassen, indem man
+\cmd{WIPE\_TMP} %
+\index{WIPE\_TMP (Variable)}%
+auf \cmd{yes} setzt.% %
+\index{bootmisc (Datei)|)}%
+
+\subsection{/etc/conf.d/hdparm}
+
+\index{hdparm (Datei)|(}%
+\index{etc@/etc!conf.d!hdparm}%
+Das Werkzeug \cmd{hdparm}
+\index{hdparm (Programm)}%
+ist essentiell, um den Festplattenzugriff
+unter Linux zu optimieren. %
+\index{Optimieren!Festplatte}%
+Es ist an dieser Stelle nicht möglich,
+detailliert auf \cmd{hdparm} einzugehen, da die Zahl an verfügbaren
+Optionen recht hoch ist.
+
+Es gibt ein Init-Skript gleichen Namens (\cmd{/etc/init.d/hdparm}),
+\index{etc@/etc!init.d!hdparm}%
+das beim Boot"=Vorgang plattenspezifische Einstellungen aktiviert.
+Die dafür notwendige Konfiguration findet sich erwartungsgemäß in
+\cmd{/etc/conf.d/hdparm}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/conf.d/hdparm}
+# /etc/conf.d/hdparm: config file for /etc/init.d/hdparm
+
+# You can either set hdparm arguments for each drive using hdX_args,
+# discX_args, cdromX_args and genericX_args, e.g.
+#
+# hda_args="-d1 -X66"
+# disc1_args="-d1"
+# cdrom0_args="-d1"
+
+# or you can set options for all PATA drives
+pata_all_args="-d1"
+
+# or you can set options for all SATA drives
+sata_all_args="
+
+# or, you can set hdparm options for all drives
+all_args="
+\end{ospcode}
+
+Allgemeine Einstellungen, die für alle Platten gelten, können wir mit
+Hilfe von \cmd{all\_args}
+\index{hdparm (Datei)!all\_args (Variable)}%
+festlegen. Für bestimmte Plattentypen
+(paralleles ATA -- PATA;
+\index{PATA}%
+serielles ATA -- SATA;
+\index{SATA}%
+ATA = Advanced
+Technology Attachment) gibt es zwei Optionen
+(\cmd{pata\_all\_args},
+\index{hdparm (Datei)!pata\_all\_args (Variable)}%
+\cmd{sata\_all\_args}),
+\index{hdparm (Datei)!sata\_all\_args (Variable)}%
+die global Parameter
+für diesen Plattentyp festlegen. Die meisten handelsüblichen Laufwerke
+fallen in die PATA-Klasse.
+
+In den meisten Fällen kann man z.\,B.\ die Option \cmd{-d1}
+\index{hdparm (Programm)!d1 (Option)}%
+verwenden. Damit wird der DMA-Zugriff
+\index{DMA}%
+auf die Platte oder das
+DVD-ROM-Laufwerk
+\index{DMA}%
+aktiviert. Da die meisten modernen Laufwerke diese
+Option unterstützen, die den Datenfluss merklich beschleunigt,
+kann man sie relativ sicher eintragen. Entsprechend findet sich in der
+Standardkonfiguration der Eintrag \cmd{pata\_all\_args="{}-d1"{}} wieder.
+\index{Festplatte!DMA aktivieren}%
+
+Bevor man speziellere Einstellungen festlegt, sollte man wenn möglich
+mit Hilfe von \cmd{hdparm} überprüfen, ob die eigene
+Festplatte die gewünschten Optionen überhaupt unterstützt.  Meist kann
+man auf die Fähigkeiten von \cmd{hdparm} vertrauen, die korrekten
+Einstellungen eigenständig festzustellen.
+
+Die aktuell gesetzten Optionen kann man sich mit Hilfe des Befehls
+\cmd{hdparm DEVICE} ansehen. Für \cmd{/dev/hda} sieht das dann z.\,B.\
+so aus:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{hdparm /dev/hda}
+/dev/hda:
+ multcount    = 16 (on)
+ IO_support   =  1 (32-bit)
+ unmaskirq    =  1 (on)
+ using_dma    =  1 (on)
+ keepsettings =  0 (off)
+ readonly     =  0 (off)
+ readahead    = 256 (on)
+ geometry     = 65535/16/63, sectors = 156301488, start = 0
+\end{ospcode}
+\index{hda (Festplatte)}%
+
+Optionen wie DMA, 32-Bit IO, unmaskierter IRQ etc. sind hier korrekt
+gesetzt. In den meisten Fällen ist keine Modifikation der
+Standardwerte in \cmd{/etc/conf.d/hdparm} notwendig.
+Genauere Informationen über die eigene Platte liefert
+\cmd{hdparm -i \cmdvar{DEVICE}}:
+\index{hdparm (Programm)!i (Option)}%
+\index{Festplatte!Informationen}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{hdparm -i /dev/hda}
+
+/dev/hda:
+
+ Model=SAMSUNG SP1614N, FwRev=TM100-30, SerialNo=S016J10XC24795
+ Config=\{ HardSect NotMFM HdSw>15uSec Fixed DTR>10Mbs \}
+ RawCHS=16383/16/63, TrkSize=34902, SectSize=554, ECCbytes=4
+ BuffType=DualPortCache, BuffSize=8192kB, MaxMultSect=16, MultSect=16
+ CurCHS=4047/16/255, CurSects=16511760, LBA=yes, LBAsects=268435455
+ IORDY=on/off, tPIO=\{min:240,w/IORDY:120\}, tDMA=\{min:120,rec:120\}
+ PIO modes:  pio0 pio1 pio2 pio3 pio4 
+ DMA modes:  mdma0 mdma1 mdma2 
+ UDMA modes: udma0 udma1 *udma2 udma3 udma4 udma5 
+ AdvancedPM=no WriteCache=enabled
+ Drive conforms to: (null):  ATA/ATAPI-1 ATA/ATAPI-2 ATA/ATAPI-3 ATA/ATA
+PI-4 ATA/ATAPI-5 ATA/ATAPI-6 ATA/ATAPI-7
+
+ * signifies the current active mode
+\end{ospcode}
+
+Beide oben genannten Befehle dürften einen Überblick geben, ob
+die Platte korrekt funktioniert. Einen Testlauf führt man mit
+\cmd{hdparm -tT DEVICE} durch. 
+\index{hdparm (Programm)!tT (Option)}%
+\index{Festplatte!Performance}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{hdparm -tT /dev/hda}
+/dev/hda:
+ Timing cached reads:   924 MB in  2.00 seconds = 461.21 MB/sec
+ Timing buffered disk reads:   74 MB in  3.08 seconds =  24.01 MB/sec
+\end{ospcode}
+
+Dieser Testlauf lässt sich nutzen, um die Performance der Platte bei
+Veränderungen an der Konfiguration zu überprüfen. Solche Spielereien
+sollte man allerdings nur vornehmen, wenn man sich sicher ist, dass
+die automatische Konfiguration nicht vernünftig arbeitet.
+\index{hdparm (Datei)|)}%
+
+\subsection{/etc/conf.d/local.*}
+
+\index{local.start (Datei)|(}%
+\index{local.stop (Datei)|(}%
+\index{etc@/etc!conf.d!local.start}%
+\index{etc@/etc!conf.d!local.stop}%
+Um das Verhalten beim Starten bzw. Herunterfahren des Systems zu modifizieren,
+\index{Boot!-vorgang}%
+kann man
+ in den Dateien \cmd{/etc/conf.d/local.start} und
+\cmd{/etc/\osplinebreak{}conf.d/local.stop} eigene Befehle einfügen. Das zugehörige
+Init-Skript heißt in diesem Fall allerdings nur
+\cmd{/etc/init.d/local}.
+\index{local (Datei)|(}%
+\index{etc@/etc!init.d!local}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/conf.d/local.start}
+# /etc/conf.d/local.start
+
+# This is a good place to load any misc programs
+# on startup (use \&>/dev/null to hide output)
+
+\rprompt{\textasciitilde}\textbf{cat /etc/conf.d/local.stop}
+# /etc/conf.d/local.stop
+
+# This is a good place to unload any misc.
+# programs you started above.
+# For example, if you are using OSS and have
+# "/usr/local/bin/soundon" above, put
+# "/usr/local/bin/soundoff" here.
+\end{ospcode}
+
+\cmd{local.start} benutzt der Autor z.\,B., um über das Programm
+\cmd{setkeycodes} beim Hochfahren des Systems einige besondere Tasten
+auf der Tastatur im Kernel zu deklarieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{setkeycodes e016 174 e064 212 e03c 213}
+\end{ospcode}
+\index{setkeycodes (Programm)|)}%
+
+\index{local.start (Datei)|)}%
+\index{local.stop (Datei)|)}%
+\index{conf.d (Verzeichnis)|)}%
+
+\subsection{/etc/rc.conf}
+
+\index{rc.conf (Datei)|(}%
+\index{etc@/etc!rc.conf}%
+Nahezu alle Konfigurationsvariablen, die früher einmal in dieser Datei zu
+finden waren, sind in andere Dateien
+innerhalb von \cmd{/etc/conf.d} gewandert.
+Übrig blieben \cmd{UNICODE},
+\index{UNICODE (Variable)}%
+\cmd{EDITOR}
+\index{EDITOR (Variable)}%
+und
+\cmd{XSESSION}.
+\index{XSESSION (Variable)}%
+
+\cmd{UNICODE} haben wir schon kurz während der Installation auf Seite
+\pageref{unicodevar} erwähnt. Da wir hier ein Unicode-System
+\index{Unicode}%
+aufbauen
+und die Variable standardmäßig auf \cmd{yes} gesetzt ist,
+besteht hier kein Änderungsbedarf.
+
+Auch \cmd{EDITOR} fand schon bei der Installation in Kapitel
+\ref{editorvar} Erwähnung. Hier sollte jeder einfach seinen
+bevorzugten Editor wählen.% %
+\index{Editor}%
+
+Und schließlich dient \cmd{XSESSION}
+\index{XSESSION (Variable)}%
+dazu, den Fenstermanager
+\index{Fenstermanager}%
+für den
+X-Server
+\index{X-Server}%
+auszuwählen. Da wir an dieser Stelle keine grafische
+Benutzeroberfläche
+\index{GUI}%
+installiert haben, lassen wir die Variable auch
+weiter auskommentiert.
+\index{rc.conf (Datei)|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

@@ -1,0 +1,80 @@
+\documentclass{book}
+
+\usepackage{opensourcepress}
+\usepackage{opensourcepress-gentoo}
+
+\begin{document}
+
+
+\section{Zweiter Durchgang}
+
+\begin{osplist}
+
+
+\item Zwischen einer ueber- und einer untergeordneten Ueberschrift
+  sollte immer irgendein Text stehen, damit das nicht so daemlich
+  aussieht (Ansprechenderes Layout sorgt auf psychologischer Ebene
+  dafuer, dass die Leser/innen mit guter Laune bei der Stange bleiben
+  und damit auch selbst besser lernen.)
+
+  \begin{ospcode} 
+    {\textbackslash}section\{Vorbereitungen\}
+
+    irgendein Text
+
+    {\textbackslash}subsection\{Noch mehr Vorbereitungen\}
+
+  \end{ospcode}
+
+\item Gentoo-System, Gentoo-Nutzer u.a. Zusammensetzungen mit
+  deutschen Wortbestandteilen (duerfen auch Lehnwoerter sein) bitte
+  koppeln
+
+\item Es ist immer besser, theoretische Ausfuehrungen um ein
+  passendes Beispiel zu ergaenzen. Da muss ich als Leserin naemlich
+  nicht mehr versuchen, Deinen abstrakten Text in der Praxis
+  fehlertraechtig umzusetzen, sondern sehe sofort: Aha, so muss das
+  sein!
+
+\item Bitte die Pseudo-Backus-Naur-Schreibweise der Manpages vermeiden.
+Sie verwirrt nur: Ist <> jetzt etwas, was ich mitschreiben soll oder nicht?
+Die Manpages sind ja leider auch nicht wirklich konsequent, und wir haben
+immerhin mit \emph{} die Moeglichkeit, Platzhalter durch einen anderen Font
+kenntlich zu machen.
+\end{osplist}
+
+\item Leider gibt es keine Moeglichkeit, \cmd{} und \emph{} (zur
+Kenntlichmachung der Platzhalter) zu verschachteln (Hat mit der Schrift im
+Endlayout zu tun). Daher muss es
+  \begin{ospcode}
+  \cmd\{/etc/init.d/net.\}\emph\{interface\}
+  \end{ospcode}
+heißen, nicht
+  \begin{ospcode}
+  \cmd\{/etc/init.d/net.\emph\{interface\}\}
+  \end{ospcode}
+\end{osplist}
+
+\section{Kapitelabschluss}
+
+Kurze Ablaufübersicht:
+
+\begin{osplist}
+\item Inhaltliche Korrektur
+\item Beseitigen von GW, MW, PJ, UW Kommentaren, Beseitigen von FIXME
+\item Alle Kommandos durchlaufen
+\item Index überarbeiten, dabei die Textzeile vor Index-Eintraegen
+  grundsaetzlich NICHT mit Prozentzeichen abschliessen, da sonst keine
+  Leerzeichen im Satz erscheinen
+\item Code-Umgebung checken (max. 72 Zeichen, ``{} %'')
+\item doppelte Anfuehrungszeichen innerhalb von cmd mit geschweiftem
+  Klammerpaar vom Folgenden trennen, also "{}
+\item Passiv-Check: grep "w[uei]rd"
+\item ispell check
+\item make laufen lassen
+\item End-Space Check: grep "[^ \\]%$" *.tex | grep -v "\\index" | grep -v "\\label" | grep -v "\}\}%$"
+\item Klammer Check: for fl in *.tex;do echo "$fl";echo "----------";sed -n '/begin.ospcode/,/end.ospcode/p' $fl | sed -e 's/\\[a-z]*{\([^{}]*\\)}/\1/' | sed -e 's/\\[a-z]*{\([^}]*\)}/\1/' | sed -e 's/\\[a-z]*{\([^}]*\)}/\1/' | sed -e 's/{\\textasciitilde}//' | sed -e\ 's/{\\textbackslash}//' |  grep ``\([^\\]{\|[^\\]}\)'';done
+\item pdf drucken und lesen
+\end{osplist}
+
+\end{document}

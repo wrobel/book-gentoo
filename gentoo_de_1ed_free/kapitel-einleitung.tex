@@ -1,0 +1,377 @@
+\addcontentsline{toc}{chapter}{Vorwort}
+\plainheading{Vorwort}{Vorwort}
+\chapter*{Vorwort}
+
+
+
+
+Ein wichtiger Hinweis gleich vorweg: Dieses Buch ist nicht für den
+Linux-Anfänger geschrieben.  Zum einen ist Gentoo nicht gerade eine
+typische Einsteiger-Distribution, und zum anderen würden die
+Beschreibungen ausufern, wenn wir Leser ansprechen wollten, denen der
+Umgang mit der Kommandozeile nicht vertraut ist.  Wer aber ein wenig
+Linux-Erfahrung mitbringt, keine Berührungsängste hat und Gentoo noch
+nicht kennt, dem bietet dieses Buch einen sauberen Einstieg.  Darüber
+hinaus möchte es für den Gentoo-Kenner ein hilfreiches Nachschlagewerk
+bei der täglichen Arbeit mit dem System sein.
+
+Ohne Gentoo-Kenntnisse geht es zunächst einmal darum, das System zu
+installieren und damit eine Grundlage zu schaffen, auf der man
+experimentieren und arbeiten kann. Entsprechend starten wir in Kapitel
+\ref{noxinstall} mit der grundlegenden Installation. Dabei haben wir
+darauf geachtet, dass dieses Buch und die beiliegende DVD zusammen mit
+einem geeigneten Rechner und ein wenig Festplattenspeicher ausreichen,
+um das System erfolgreich zu installieren. Eine Netzwerkanbindung ist
+nicht notwendig.
+
+Wer die Distribution schon kennt wird im Installationskapitel in
+groben Zügen die Instruktionen des Gentoo-Installationshandbuches
+wiederfinden, aber an vielen Stellen gehen wir darüber hinaus, um den
+Installationsprozess zu veranschaulichen und damit ein
+Grundverständnis für das Gesamtsystem zu schaffen.
+
+Sobald das System steht, gehen wir in den Kapiteln \ref{kernel} bis
+\ref{howtoupdate} schrittweise auf die wichtigsten
+Konfigurationsoptionen und Portage, das Paketmanagementsystem von
+Gentoo, ein. Wir legen hier zwar noch das Augenmerk auf 
+den Gentoo-Neuling, doch können einige Abschnitte nach der
+Erstinstallation zunächst einmal übersprungen werden bzw. sind eher
+für erfahrene Anwender von Interesse. Gerade im Zusammenhang mit der
+Konfiguration sind hier aber tiefergehende Informationen sinnvoll
+und als Referenz zum späteren Nachschlagen zu nutzen.
+
+Ab Kapitel \ref{diverstools} lassen wir die Installation hinter uns
+und beschäftigen uns mit fortgeschrittenen Themen für die langfristige
+Pflege, Nutzung und Erweiterung des Systems.
+Hier finden Sie Informationen zu
+Programmen und Optionen, die ich als langjähriger Gentoo-Nutzer und
+mittlerweile aktiver Entwickler immer wieder aus verschiedensten
+Quellen nachschlagen musste, so dass ich glaube, dass auch andere
+erfahrene Anwender einen Nutzen aus dieser Zusammenstellung ziehen
+werden.
+
+Sollte damit die Zielsetzung des Buches umrissen sein, so bleibt in
+dieser Einleitung noch die möglicherweise wichtigste Frage zu
+klären\,\ldots
+
+
+
+\section*{\label{whygentoo}Warum Gentoo?}
+
+Das Gentoo-Projekt hat seine Distribution nach dem schnellsten
+Schwimmer unter den Pinguinen benannt, dem Gentoo, und es suggeriert
+damit,
+\index{Gentoo (Pinguinart)}%
+ein mit Gentoo Linux betriebenes System in Bezug auf die
+Geschwindigkeit der verwendeten Software maximal optimieren zu können.
+Das ist sicherlich nicht ganz falsch, denn eine Distribution, bei der
+man sämtliche Software selbst aus dem Source-Code kompiliert, bietet
+mehr Einflussmöglichkeiten als eine aus vorgefertigten Binärpaketen
+bestehende, da sie es gestattet, den Kompiliervorgang für
+die Zielhardware zu optimieren.
+
+Wen jedoch die Hoffnung auf ein merklich schnelleres Linux-System zur
+Installation von Gentoo treibt, mag zur Überzeugung kommen, dass der
+deutsche Name desselben Vogels die Sache besser trifft:
+\index{Eselspinguin}%
+Eselspinguin\,\ldots\ Den Geschwindigkeitsgewinn optimal auf den
+Prozessor abgestimmter Soft\-ware gegenüber generisch für i386 gebauten
+Paketen nimmt der Anwender im Betrieb kaum wahr.  Dafür schlägt die
+Zeit, die man bei Gentoo für die Kompilation der Software
+benötigt, durchaus zu Buche; sie summiert sich zu einigen Stunden
+Rechenzeit, und so fragt man sich schnell, ob man da nicht an der Nase
+herumgeführt wurde.
+
+So liegt der Vorteil eines Gentoo-Systems trotz des Namens nur in
+geringem Maße in der Geschwindigkeit. Es ist zwar richtig, dass sich
+die installierte Software über entsprechende Compiler-Flags in ihrer
+Geschwindigkeit optimieren
+\index{Compiler-Flags!optimieren}%
+lässt. Dieser Vorgang ist jedoch keinesfalls simpel und treibt selbst
+Linux-Profis hin und wieder zur Verzweif\/lung, weil die Kombination
+mancher Optionen bei bestimmten Softwarepaketen zu schwer
+identifizierbaren Fehlern führt. Gerade Anfänger gehen hier schnell in
+eine Falle und wenden sich irritiert von der Distribution ab.
+
+
+
+\section*{Die Vorteile}
+
+\index{Gentoo!Vergleich zu anderen Distributionen|(}%
+Wirklich von Vorteil ist vielmehr das Fehlen binärer Abhängigkeiten
+zwischen den eigentlichen Paket\emph{definitionen}.
+\index{Paket!definition}%
+
+Als \emph{Paket}
+\index{Paket}%
+bezeichnen die verschiedenen Linux-Distributionen ein Stück
+installierbare Software. Die Verwaltung der Pakete -- vor allem also
+die Installation bzw. das Entfernen der Software -- übernimmt der
+\emph{Paketmanager}. Am weitesten verbreitet ist  RPM (\emph{Red Hat Package Manager}),
+\index{RPM}%
+der RPM-Dateien als Pakete verwendet.
+
+\label{portagepktmgmt}%
+Bei Gentoo heißt der Paketmanager \emph{Portage},
+\index{Portage}%
+aber es werden keine zu RPM vergleichbaren Paketdateien genutzt.
+Hier liegt auch der grundsätzliche Unterschied zwischen einer auf
+vorkompilierten Programmpaketen basierenden Distribution
+\index{Distribution!vorkompiliert}%
+wie Debian oder SUSE und einer quellbasierten Distribution
+\index{Distribution!quellbasiert}%
+wie Gentoo. Grundlage eines Paketes ist bei beiden Distributions\-typen
+die Paketdefinition,
+\index{Paket!definition}%
+die alle notwendigen Informationen für die Installation einer Software
+enthält. Dazu gehören z.\,B.\ der Link zu den Quellen,
+spezifische Anweisungen für das Entpacken und das Kompilieren des
+Paketes sowie Informationen zu Abhängigkeiten von anderen Paketen.
+
+Ein binäres RPM-Paket wird vom Hersteller einer Distribution erstellt,
+indem die Software auf Basis dieser Paketdefinition
+\index{Paket!definition}%
+vorkompiliert und als installierbares Paket
+\index{Paket!installierbar}%
+zusammengepackt wird. Dem Nutzer kann das fertige Paket dann zum
+Download und der Installation in der eigenen Distribution zur
+Verfügung gestellt werden. Beim Kompilieren der Software entstehen
+zwangsläufig zusätzliche Abhängigkeiten,
+\index{Paket!-abhängigkeiten}%
+die der Paketmanager auf der Seite des Nutzers zwingend einhalten
+muss.
+
+Im Gegensatz dazu besteht ein Gentoo-Paket eigentlich nur aus der
+Paketdefinition.
+\index{Paket!definition}%
+Das Kompilieren der Software wird auf die Seite des Benutzers
+verlagert, und die Distribution liefert nur die Definitionen auf
+Source-Code-Ebene. Die binären Abhängigkeiten
+\index{Paket!-abhängigkeiten}%
+\label{bindeps}%
+entstehen bei der Installation auf dem System des Nutzers und sind
+damit zwangsläufig erfüllt. Der Paketmanager Portage braucht sich
+nicht bzw.\ kaum
+um sie zu kümmern. Dies sorgt im Vergleich zu den bekannten
+Distributionen, bei denen vorkompilierte Pakete
+\index{Paket!vorkompiliert}%
+ausgeliefert werden, für eine deutlich höhere Flexibilität.
+
+
+
+So folgt ein Gentoo-System dem Prinzip: "`Install once, never
+reinstall."' Die Aktualisierung des Systems findet kontinuierlich
+statt, und es gibt keinen Zustand, an denen Updates eine vollständige
+Neuinstallation des Systems notwendig machen. Man darf zwar nicht
+vergessen, dass die Aktualisierungen bei Gentoo in kleinen Häppchen
+über einen längeren Zeitraum verteilt werden und somit der Zeitbedarf
+auch nicht zwingend geringer ist als der für die gelegentliche
+Neuinstallation. Aber der Prozess ist deutlich flexibler und vielfach
+besser handhabbar, was vor allem für den Betrieb von Produktivsystemen
+ein wichtiger Vorteil sein kann. Möglich wird dieses Vorgehen dadurch,
+dass selbst die zentralen Bestandteile eines Linux-Systems
+(\cmd{glibc}, \cmd{gcc} etc.) nicht fest voneinander abhängen und so
+nicht in regelmäßigen Abständen gemeinsam aktualisiert werden müssen.
+
+Das bedingt generell eine bessere Erweiterbarkeit des Systems. Die
+Kompatibilität verschiedener Softwareversionen ist deutlich größer,
+wenn aus dem Source-Code kompiliert wird, so dass sich ein stabiles
+Grundsystem aus etwas älteren Softwareversionen durchaus mit den
+neuesten Paketen in einem ausgewählten Bereich verträgt. Man muss sich
+nicht -- wie z.\,B.\ bei Debian -- für ein stabiles oder ein eher
+experimentelles Grundsystem entscheiden; möchte man einzelne Software
+in der allerneuesten Version nutzen, muss man sich nicht mit
+generellen Problemen eines insgesamt wenig getesteten Systems
+beschäftigen, sondern verlässt sich auf eine stabile Basis und wählt
+instabile Pakete nur in Bereichen, in denen man hoffentlich selbst das
+nötige Wissen besitzt, um mit Problemen umzugehen.
+
+Die Paketdefinitionen auf Source-Code-Basis ermöglichen es außerdem,
+eigene Modifikationen einzubringen. Damit bietet sich das System vor
+allem für Entwickler an, die bei Bedarf in alle Teile des Systems
+eingreifen. Da dies bei Gentoo geht, ohne das Paketmanagementsystem zu
+umgehen, bleiben solche Änderungen nicht reine Hacks, die beim
+nächsten Update verloren gehen; stattdessen lassen sie sich in die
+Paketdefinition einarbeiten und stehen auch längerfristig zur
+Verfügung. Das funktioniert selbst bei zentralen Bibliotheken recht
+gut.
+
+Darüber hinaus ist die sehr gute Dokumentation zu erwähnen: Einerseits
+die Einführung des Gentoo-Dokumentationsprojekts auf der 
+Projekt-Web\-site\footnote{\cmd{http://www.gentoo.org/doc/}}, die die
+Installation und die grundlegende Benutzung  abdeckt.
+Zudem findet man im
+englischen\footnote{\cmd{http://gentoo-wiki.com/Main\_Page}} und im
+deutschen\footnote{\cmd{http://de.gentoo-wiki.com/Hauptseite}}
+Gentoo-Wiki eine \index{Wiki}%
+gute Auswahl aktueller Artikel zu verschiedenen Aspekten des
+Gentoo-Systems. Die dort gesammelten Informationen sind an vielen
+Stellen nicht mehr Gentoo-spezifisch, sondern als allgemeine
+Linux-Referenz brauchbar. Ebenfalls erwähnt seien die gut
+frequentierten Gentoo-Foren,\footnote{\cmd{http://forums.gentoo.org/}}
+\index{Forum}%
+%\index{Fragen!zu Gentoo|see{Forum}}%
+in denen Anfänger wie Profis Antworten auf ihre Fragen finden.
+
+Nicht zuletzt stellt Gentoo ein ideales Lernsystem für Linux dar.  Da
+jedes Paket aus dem Source-Code erstellt wird, hat der Nutzer die
+Möglichkeit, in wirklich jeden Teilbereich des Linux-Systems
+hineinzuschauen und den Ablauf zu verstehen. Bei binären
+Distributionen geht der Distributor den Schritt vom Source-Code zum
+binären Paket außerhalb des normalen Paketmanagements.  Nutzer solcher
+Distributionen können ihn daher nur mit erhöhtem Aufwand
+nachvollziehen, während dieser Schritt bei Gentoo integraler Bestandteil
+der Paketinstallation ist.
+
+Vor allem der letztgenannte Aspekt hat mich persönlich zu Gentoo
+geführt. Nachdem mir der erste Schritt von Windows zu SuSE geglückt
+und stabiles und konstantes Arbeiten unter Linux möglich war, ohne für
+bestimmte Anwendungen das Betriebssystem zu wechseln, überraschte mich
+die Erkenntnis, dass sich meine Erwartung, bei Linux alle Elemente des
+Systems verstehen zu können, nicht ganz erfüllte.  Es war für mich als
+Linux-Anfänger nicht einfach zu verstehen, welche Grundkomponenten das
+System eigentlich ausmachen.
+
+In dieser Situation fand ich das Projekt \emph{Linux from
+  Scratch}\footnote{\cmd{http://www.linuxfromscratch.org/}}
+\index{Linux!from Scratch}%
+sehr hilfreich.  Dessen Ziel ist eine Anleitung, ein System von Null
+auf Basis des Quellcodes zu erstellen. Hier bekam ich das erste Mal
+eine Ahnung davon, wie sich ein Linux-System eigentlich zusammensetzt.
+
+Das löste zwar eine gewisse Begeisterung aus und hat mein Verständnis
+für Linux nachhaltig vorangebracht, aber das Vorhaben, meine Rechner
+mit Linux from Scratch zu installieren und zu pflegen, erwies sich
+schnell als Ding der Unmöglichkeit. Versucht man einmal, Linux ohne
+Paketmanagement zu verwenden, wird einem schnell klar, warum diese Art
+von Tools essentiell für den nervenschonenden Betrieb eines
+Linux-Systems sind.
+
+Das war der Moment, in dem ich Gentoo für mich entdeckt habe und
+plötzlich vollauf zufrieden war, da ich in jeden Teilbereich des
+Systems schauen und auch eingreifen konnte. Gleichzeitig ist das
+System komfortabel zu verwalten und das Software-Angebot hochaktuell.
+
+Der ersten Gentoo-Maschine folgten schnell weitere, und aus diesen
+anfänglichen Schritten entstand eine feste Bindung an diese
+Linux-Variante, die mich letztlich dazu führte, mich als aktiver
+Entwickler an der Erstellung der Distribution zu beteiligen.
+
+
+\section*{Die Nachteile}
+
+Natürlich bringt Gentoo auch handfeste Nachteile mit sich: Der hohe
+Zeitaufwand
+\index{Zeit!für das Kompilieren}%
+für das Kompilieren der Software wurde bereits genannt. Gerade bei
+Desktop-Maschinen passt es selten, dass das Update einen halben Tag
+lang den Großteil der Rechnerressourcen belegt. Während sich die
+Aktualisierung kleinerer Pakete aufteilen lässt,
+geht das vor allem bei Desktop-Applikationen wie dem X-Server,
+\index{X-Server}%
+KDE, OpenOffice oder Firefox, die wahre Zeitfresser sind, nicht.
+OpenOffice und Firefox lassen sich zwar auch als binäre Pakete
+installieren, für den X-Server
+\index{X-Server}%
+und KDE gilt das aber nicht.
+
+Als weiteres Problem erweisen sich häufig der natürliche Spieltrieb
+und 
+\index{Spieltrieb}%
+der Wunsch nach den neuesten Softwarekomponenten. Sicher viele haben
+im ersten Übermut begonnen, ihr System mit dem Keyword
+\index{\textasciitilde{}x86}%
+\cmd{{\textasciitilde}x86} zu installieren (siehe Kapitel
+\ref{portagekeywords} ab Seite \pageref{portagekeywords}). Damit
+bekommt man zwar ein technisch hochaktuelles System, aber spätestens
+beim zwanzigsten Bug, der dazu führt, dass man sich mit den Innereien
+einer obskuren Bibliothek beschäftigen muss, lässt die Freude am
+System deutlich nach. Wer mit Gentoo produktiv arbeiten möchte ist
+gezwungen, seinen Spieltrieb im Zaum zu halten und als Basis die
+stabilen Pakete zu wählen.
+
+Die instabilen Varianten sind nicht ohne Grund als instabil markiert:
+\index{Paket!instabil}%
+Während das Paket für sich genommen meist sogar funktioniert, führt
+die Interaktion mit anderen installierten Paketen zu Kollisionen.
+Selbst mit großem Linux-Know-how macht es wenig Spaß -- und ist auch
+nicht besonders sinnvoll --, sich mit solch abseitigen Problemen
+herumzuärgern.
+
+Darum sei hier einleitend vermerkt, dass man mit Gentoo unter keinen
+Umständen ein instabiles System betreiben sollte, denn damit beraubt
+man sich letztlich auch des Gentoo-spezifischen Vorteils, stabile und
+instabile Pakete miteinander kombinieren zu können und Probleme auf
+Bereiche zu beschränken, die man auch beherrscht.
+\index{Gentoo!Vergleich zu anderen Distributionen|)}%
+
+
+
+\section*{Gentoo für wen?}
+
+Nicht jeder Nutzer wird Gentoo in der Handhabung lieben. Wie bei
+vielen Software-Systemen hängt dies im Wesentlichen vom eigenen,
+bevorzugten Arbeitsmodus ab.
+
+Wer gerne in die Innereien eines Systems schaut und schon
+etwas Erfahrung mit Linux besitzt, wird sich vermutlich schnell
+heimisch fühlen. 
+
+Entwickler, die an verschiedenen Komponenten arbeiten, ohne das
+Paketmanagementsystem verlassen zu wollen, und die ihre Arbeit gerne
+auch Nutzern komfortabel zur Verfügung stellen, dürften Gentoo rasch
+schätzen lernen.
+
+Schließlich dürften viele Linux-Nutzer in Gentoo eine interessante
+Alternative zu den Paketmanagementsystemen anderer Distributionen
+finden.
+
+Und zuletzt sollte nicht unerwähnt bleiben, dass auch handfeste
+wirtschaftliche Gründe für Gentoo sprechen können -- schließlich
+laufen alle Server meiner Firma unter eben diesem einen
+Betriebssystem.
+
+Aus welchen Gründen auch immer Sie sich mit Gentoo beschäftigen, ich
+hoffe, dieses Buch ist Ihnen ein guter Begleiter!
+
+
+\section*{Dank}
+
+Bedanken möchte ich mich bei den Menschen, die mich zur Arbeit an
+diesem Buch ermutigt und die auf ganz unterschiedliche Weise Anteil an
+seinem Erscheinen haben.
+
+Dazu gehören allen voran meine Lektoren Dr. Markus Wirtz und Patricia
+Jung, von denen nicht nur die Idee zu diesem Buch ausging.  Ich habe
+es zugegebenermaßen genossen, mein Fachchinesisch in lesbaren Text
+umformuliert zu bekommen. Bedanken möchte ich zudem für die Geduld,
+die sie mir bei der Bearbeitung des Manuskriptes entgegengebracht
+haben.
+
+Auf Gentoo-Seite möchte ich mich bei Renat Lumpau und Stuart Herbert
+bedanken. Beide haben vor Jahren meine ersten Schritte als
+Gentoo"=Entwickler begleitet und mir mit Rat und Tat zur Seite gestanden.
+
+Darüber hinaus gilt mein Dank aber auch jedem einzelnen, der an Gentoo
+beteiligt ist -- seien es nun die Entwickler oder die Nutzer, so dass
+der Dank im Grunde die gesamte "`freie-Software-Gemeinde"' einschließt.
+Denn dass für mich ein Traum in Erfüllung gegangen ist und ich mit dem
+Programmieren freier Software meinen Lebensunterhalt verdienen kann
+erfüllt mich gelegentlich immer noch mit Staunen. Und das verdanke ich
+jedem, der -- in welcher Weise auch immer -- zu freier Software
+beiträgt.
+
+Durch das Projekt begleitet und liebevoll unterstützt hat mich
+außerdem das Nordlicht, das hier oben in Hamburg auf seine ganz eigene
+Weise erstrahlt.
+
+\bigskip
+
+Gunnar Wrobel \hfill Hamburg, Januar 2008
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

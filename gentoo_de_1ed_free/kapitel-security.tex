@@ -1,0 +1,766 @@
+\chapter{\label{security}Sicherheit}
+
+Das Wichtigste ist geschafft: Portage sollte uns soweit vertraut sein,
+dass wir unser System so ausstatten können, wie wir es uns wünschen.
+
+Viel der Konfigurationsarbeit, die jetzt noch vor uns liegen mag, wird
+mit dem Verwendungszweck unseres Systems zu tun haben und eben die
+Pakete betreffen, für deren Installation wir uns
+entscheiden. Sicherlich wird sich in dem einen oder anderen Bereich
+noch einiges finden, das Gentoo anders als alternative Distributionen
+löst. Aber wir können an dieser Stelle nicht alle Linux-relevanten
+Themenbereiche abhandeln ohne den Rahmen dieses Buches zu sprengen.
+
+Wir wollen uns also nur noch auf zwei allgemeinere Themen beschränken:
+Zum einen - in diesem Kapitel - die Sicherheit des Systems und im
+nächsten Kapitel dann der Frage, wie wir wiederkehrende Aufgaben über
+\cmd{cron} einrichten können.
+
+Gerade im Serverbereich ist Sicherheit eines der wichtigsten
+Themen. Für Gentoo zahlt sich auch im Sicherheitsbereich das Fehlen
+binärer Abhängigkeiten aus: Neue Versionen mit sicherheitsrelevanten
+Korrekturen können sehr schnell bereit gestellt werden. 
+
+Um den eigenen Server sicher einzurichten muss aber natürlich auch die
+Konfiguration lückenlos sein. Es ist an dieser Stelle sicherlich nicht
+möglich das Thema umfassend zu diskutieren, aber wir werden einige
+grundlegende Themen besprechen und, soweit passend, aus der
+Gentoo-Perspektive betrachten.
+
+\section{Benutzer}
+
+Wir haben bisher durchgehend als \cmd{root} gearbeitet. Da wir uns
+primär um das Paketmanagment gekümmert haben, war das auch
+größtenteils angemessen.
+
+Aber generell ist zu empfehlen als normaler Nutzer an der Maschine zu
+arbeiten und nur auf das Administratorkonto zurück zu greifen, wenn es
+zwingend erforderlich ist. Zum einen vermeiden wir damit, das
+fehlerhafte Befehle unser System lahmlegen und vermindern auch das
+Risiko, das ein externer Angreifer Kontrolle über das System erlangen
+kann. Die eingeschränkten Rechte normaler Nutzer erlauben keine
+Änderungen am eigentlichen System.
+
+\subsection{\label{createusers}Nutzer anlegen}
+
+Benutzer werden unter Gentoo, wie auch auf anderen Linux-Systemen, mit
+\cmd{useradd} hinzugefügt. Als Beispiel erzeugen wir hier einen ersten
+Benutzer mit dem Namen \cmd{gentoo}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{useradd -m gentoo}
+\end{ospcode}
+
+Die Option \cmd{-m} (bzw.\ \cmd{-{}-create-home}) führt dazu, das
+\cmd{useradd} automatisch das Benutzerverzeichnis \cmd{/home/gentoo}
+erstellt.
+
+Jeder Benutzer muss Mitglied wenigstens einer Gruppe
+sein. Standardmäßig wird die Gruppe \cmd{users} ausgewählt.  Wir
+hätten \cmd{useradd} auch explizit eine Gruppe mit der Option
+\cmd{-{}-gid} (bzw.\ \cmd{-g}) mitgeben können.
+
+Die meisten Benutzer wird man mehreren Gruppen zuordnen wollen, da
+über die Gruppenzugehörigkeit eine ganze Reihe von Berechtigungen
+geregelt werden. 
+
+Hier einige der zentralen Gruppen, die man auf einem Gentoo-System
+(und vielfach auch auf anderen Linux-Systemen) finden wird, und die
+Berichtigungen für die Mitglieder der jeweiligen Gruppe:
+
+\begin{osplist}
+\item \cmd{audio}: Der Zugriff auf Audio-Geräte ist gestattet.
+\item \cmd{cdrom}: Auf CDROM-Laufwerke kann zugegriffen werden.
+\item \cmd{cron}: Es können wiederkehrende Aufgaben als Jobs im
+  \cmd{cron}-System angelegt werden.
+\item \cmd{dialout}: Der Modem-Zugriff ist gestattet.
+\item \cmd{floppy}: Das Diskettenlaufwerk darf verwendet werden.
+\item \cmd{games}: Spiele können gestartet werden.
+\item \cmd{lp}: Zugriff auf den Parallel-Port gestattet (Drucker,
+  Scanner, etc.)
+\item \cmd{portage}: Es dürfen einige Funktionen des Paketmanagements
+  verwendet werden (z.\,B.\ können Mitglieder dieser Gruppe mit
+  \cmd{emerge -{}-fetch} Quellpakete herunterladen. Die Installation
+  von Paketen ist \emph{nicht} möglich, sondern \cmd{root}
+  vorbehalten.
+\item \cmd{usb}: Zugriff auf USB-Geräte gewährt.
+\item \cmd{video}: Videogeräte und Grafikbeschleunigung dürfen
+  verwendet werden.
+\item \cmd{wheel}: Benutzer dieser Gruppe dürfen mittels \cmd{su} das
+  Administratorkonto verwenden.
+\end{osplist}
+
+Wir können zusätzliche Gruppen schon bei der Erstellung des Benutzers
+mit \cmd{useradd} als Komma-getrennte Liste mit der Option
+\cmd{-{}-groups} (bzw.\ \cmd{-G}) angeben. Haben wir den Benutzer
+bereits erstellt, weisen wir neue Gruppen mit der \cmd{-a} zu bzw.\
+entfernen diese wieder mit \cmd{-d}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{gpasswd -a gentoo wheel}
+\rprompt{\textasciitilde}\textbf{gpasswd -a gentoo portage}
+\rprompt{\textasciitilde}\textbf{gpasswd -a gentoo audio}
+\rprompt{\textasciitilde}\textbf{gpasswd -a gentoo video}
+\rprompt{\textasciitilde}\textbf{gpasswd -a gentoo games}
+\rprompt{\textasciitilde}\textbf{gpasswd -a gentoo usb}
+\end{ospcode}
+
+Wichtig ist vor allem, dass einer der Benutzer der Gruppe \cmd{wheel}
+zugewiesen wird. Dieser kann dann mit Hilfe von \cmd{su} auf das
+\cmd{root}-Konto wechseln.
+
+Wenn wir unser System das nächste Mal hochfahren, sollten wir dann mit
+einem der neu erstellten, unprivilegierten Benutzer einloggen. 
+
+\subsection{\cmd{sudo}}
+
+Um so wenig wie möglich unter dem \cmd{root}-Kommando arbeiten zu
+müssen, sollte man das Programm \cmd{sudo} verwenden. Hat man es
+entsprechend konfiguriert erlaubt es bestimmten Benutzern einzelne
+Befehle mit \cmd{root}-Rechten auszuführen.
+
+Dabei geht es weniger darum das System wirksam vor Hackern zu
+schützen, als sich selbst vor Fehlern zu bewahren. Wer konstant unter
+dem \cmd{root}-Account arbeitet tippt möglicherweise doch irgendwann
+einmal übermüdet den Befehl \cmd{rm -rf *} ein, drückt die
+\cmd{Return}-Taste und merkt zu spät, dass er sich in einem wichtigen
+Systemverzeichnis befand. Anstatt nur mal kurz ein paar alte Dateien
+zu löschen, kann man sich so das eigene System recht effektiv
+lahmgelegen.
+
+Die Berechtigungen für einzelne Nutzer werden in der Datei
+\cmd{/etc/sudoers} festgelegt.
+
+Es wird empfohlen die Datei nur mit dem Programm \cmd{visudo} zu
+editieren. Es wird den mit der Variablen \cmd{EDITOR} festgelegten
+Standardeditor zum Editieren der Datei aufrufen, aber bietet noch ein
+paar Absicherungen gegen unabsichtliche Fehler beim Editieren der
+Datei.
+
+Innerhalb der \cmd{sudoers}-Datei lassen sich dann die einzelnen
+Benutzerberechtigungen festlegen.
+
+Standardmäßig ist nur folgende Berechtigung gegeben:
+
+\begin{ospcode}
+root ALL=(ALL) ALL
+\end{ospcode}
+
+Das heißt hier nur, dass \cmd{root} über \cmd{sudo} alle
+Berechtigungen hat. Letztlich verändert das nichts, denn \cmd{root}
+hat schließlich per Definition \cmd{root}-Rechte und wird nie den
+Umweg über \cmd{sudo} wählen müssen.
+
+In der ersten Spalte definieren wir den Benutzer bzw.\ die Gruppe, die
+Zugriff bekommen soll. Gruppen müssen ein Prozentzeichen vorangestellt
+bekommen. Danach folgt der Host, von dem der Benutzer eingeloggt sein
+muss, damit er den Befehl ausführen darf. \cmd{ALL} umfasst hier alle
+Maschinen. \cmd{localhost} bezeichnet dagegen die Situation, dass der
+Benutzer wirklich physisch vor der Maschine sitzt und sich z.\,B.\
+nicht per SSH verbindet.
+
+Nach dem Gleichheitszeichen kann - muss aber nicht - beschränkt
+werden, als welche Benutzer ein Kommando ausgeführt werden
+soll. \cmd{ALL} symbolisiert wieder, dass der Benutzer frei wählen
+darf und mit der Option \cmd{-u} \cmd{sudo} anweisen kann auf den
+angegebenen Benutzer zu wechseln. Ohne Angabe ist der Standardwert
+hier \cmd{root}, so dass der Befehl nur als \cmd{root} ausgeführt
+werden kann.
+
+Es folgt in der vierten und letzten Spalte der erlaubte Befehl. Es
+kann auch eine Komma-getrennte Liste an verschiedenen Befehlen
+folgen. \cmd{ALL} ist wieder ein Platzhalter für alle denkbaren
+Befehle.
+
+Mit diesem Eintrag erlauben wir z.\,B.\ allen Benutzer, die lokal an
+der Maschine eingeloggt sind, sie auch wirklich herunter zu fahren:
+
+\begin{ospcode}
+%users localhost=/sbin/shutdown
+\end{ospcode}
+
+Wenn wir einem bestimmten User erlauben wollen, \cmd{emerge} zu
+verwenden, dann können wir das folgendermaßen erreichen:
+
+\begin{ospcode}
+gentoo localhost=/usr/bin/emerge
+\end{ospcode}
+
+Diese Erlaubnis ist problematisch, da \cmd{emerge} die Möglichkeit
+hat, das System beliebig zu modifizieren.  Für einen Benutzer, der das
+Privileg hat, \cmd{emerge} mit \cmd{root}-Rechten auszuführen, wäre es
+damit ein Leichtes sich vollen Zugriff auf \cmd{root}-Account zu
+verschaffen.
+
+Deshalb empfehlen wir an dieser Stelle \cmd{sudo} eher zur eigenen
+Absicherung, als für eine generelle Absicherung des Systems. Wenn wir
+die Rechte an \cmd{emerge} nur für den Zweck vergeben, um nicht
+ständig als \cmd{root} arbeiten zu müssen, dann macht das Sinn. Wenn
+wir Benutzer erwarten, die unser System schädigen wollen, dann sollten
+wir zu anderen Methoden der Absicherung greifen.
+
+\section{Gentoo Security Team}
+
+Für die Sicherheit der Distribution ist das \emph{Gentoo Linux
+  Security Project} - ein eigenes Gentoo Unterprojekt - zuständig.
+
+Erster Anlaufpunkt in Bezug auf Sicherheitsfragen ist die Projektseite
+\cmd{http://www.gentoo.org/proj/en/security/}.
+
+Die Hauptaufgabe des Team besteht darin Sicherheitsprobleme möglichst
+zeitnah zu beurteilen und eventuell ein sogenanntes \emph{Gentoo Linux
+  Security Advisory} (\emph{GLSA}) herauszugeben. 
+
+\subsection{Gentoo Linux Security Advisories}
+
+Ein \emph{GLSA} beschreibt das Problem, die betroffenen
+Software-Versionen, die möglichen Auswirkungen und vor allem auch die
+notwendigen Aktionen, um das Problem zu beseitigen. Sie stellen damit
+die wichtigste Informationsquelle dar, wenn man selbst an einem
+sicheren System interessiert ist.
+
+GLSAs können sowohl über die Mailing-Liste \emph{gentoo-announce}
+(siehe \cmd{http://www.gentoo.org/main/en/lists.xml}) erhalten werden
+bzw.\ stehen auch als RSS-Feed unter
+\cmd{http://www.gentoo.org/rdf/en/glsa-index.rdf} zur Verfügung. Eine
+vollständige und kontinuierlich aktualisierte Webseite befindet sich
+auch unter \cmd{http://www.gentoo.org/security/en/glsa/index.xml}.
+
+Natürlich ist Sicherheit für jede Distribution ein essentielles
+Thema. Die aktive Verfolgung von Sicherheitslücken kostet aber auch
+eine nicht unerhebliche Menge Zeit. Um das Sicherheitsteam also nicht
+über Gebühr zu belasten, wird nicht gleich jede Rechnerarchitektur
+und jeder Ebuild gleichermaßen betreut.
+
+Die derzeit gültigen Richtlinien für das Sicherheitsteam finden sich
+auf der Seite
+\cmd{http://www.gentoo.org/security/en/vulnerability-policy.xml}.
+Wir wollen hier nur die wichtigsten Aspekte beleuchten.
+
+So werden derzeit z.\,B.\ folgende Architekturen unterstützt:
+
+\begin{osplist}
+\item \cmd{x86}
+\item \cmd{ppc}
+\item \cmd{sparc}
+\item \cmd{amd64}
+\item \cmd{alpha}
+\item \cmd{ppc64}
+\item \cmd{hppa}
+\end{osplist}
+
+Es ist allerdings nicht so, dass Architekturen wie \cmd{arm} oder
+\cmd{mips}, die in dieser Liste nicht aufgeführt sind, keinerlei
+Sicherheitsupdates erfahren würden. Ein Paketupdate auf den
+unterstützten Architekturen führt natürlich auch zu einem Update auf
+den Architekturen, die offiziell nicht vom Sicherheitsteam unterstützt
+werden.
+
+Allerdings bestände für das Sicherheitsteam z.\,B.\ keine
+Verpflichtung, ein \cmd{GLSA} herauszugeben, wenn es eine
+\cmd{mips}-spezifische Sicherheitslücke gäbe. Auf diesen Architekturen
+ist man also selbst stärker in der Verpflichtung, sich um die
+Sicherheit zu kümmern.
+
+In Bezug auf die einzelnen Ebuilds ist die wichtigste und gravierenste
+Unterscheidung die Tatsache, ob der Ebuild als stabil markiert ist
+oder nicht.
+
+\label{instablesec}%
+Wenn ein Paket auf keiner Architektur als stabil markiert ist oder
+keine als stabil markierte Version von der Sicherheitslücke betroffen
+ist, wird \emph{kein} GLSA herausgegeben. Damit ist der Benutzer für
+die Sicherheit jedes einzelnen instabilen Paketes, das er installiert,
+selbst verantwortlich. Ein nicht ganz unwichtiger Aspekt, den man
+bedenken sollte, bevor man eine instabile Version wählt.
+
+Gibt es stabile Versionen, dann richtet sich die zu erwartende
+Reaktionszeit im Wesentlichen nach der Schwere der Sicherheitslücke
+und der Zahl der Nutzer eines Paketes. Bei weit verbreiteten Paketen
+wird für kritische Probleme, über die ein externer Angreifer z.\,B.\
+\cmd{root}-Rechte erhalten könnte, ein Zeitrahmen von ein bis drei
+Tagen vorgegeben. Diese Art von Fehlern sind glücklicherweise sehr
+selten.
+
+Die maximale Reaktionszeit bei wenig verbreiteten Paketen und 
+geringfügigen Sicherheitsproblemen (z.\,B.\ \emph{Cross Site
+  Scripting} bei Webanwendungen) liegt dann bei 40 Tagen.
+Bei diesen weniger relevanten Fällen ist das Sicherheitsteam auch
+nicht verpflichtet ein GLSA herauszugeben. Im Normalfall wird unter
+den Mitgliedern des Teams abgestimmt, ob sie es für erforderlich
+halten oder nicht.
+
+Die genauen Richtlinien finden sich wie gesagt unter
+\cmd{http://www.gentoo.org/security/en/vulnerability-policy.xml}
+
+Kommen wir jetzt zu einem Werkzeug, das unser Sicherheitsmanagement
+sehr vereinfacht, indem es uns erlaubt, unser System automatisch auf
+die veröffentlichen GLSAs hin zu überprüfen.
+
+\subsection{\label{glsa-check}\cmd{glsa-check}}
+
+Wir hatten schon im Kapitel \ref{gentoolkit} \cmd{glsa-check} als
+Bestandteil des Paketes \cmd{app-portage/gentoolkit} erwähnt.
+
+\cmd{glsa-check} überprüft unser System automatisiert auf unsichere
+Pakete und ist damit ein unverzichtbares Skript um das System sicher
+zu halten. Es erlaubt uns zügig alle Pakete mit Sicherheitslücken zu
+identifizieren.
+
+Diese Sichertsheits-Informationen sind für den Betrieb eines System
+essentiell, da sie die Pakete definieren, die in jedem Fall ein Update
+erfahren sollten, um die Wahrscheinlichkeit für einen erfolgreichen
+Angriff von außen so gering wie möglich zu halten.
+
+Der Befehl \cmd{glsa-check -{}-list} korreliert jedes herausgegebene
+\emph{GLSA} mit den auf dem System installierten Paketen und listet
+alle Advisories mit einem entsprechenden Code (\cmd{[U]}: nicht
+betroffen, \cmd{[N]}: betroffen) auf. Auf folgende Weise lassen sich
+alle Packete mit Sicherheitsproblemen und deren Kurz-Zusammenfassung
+anzeigen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check --list | grep "{\textbackslash}[N{\textbackslash}]"}
+[A] means this GLSA was already applied,
+[U] means the system is not affected and
+[N] indicates that the system might be affected.
+
+200611-06 [N] OpenSSH: Multiple Denial of Service vulnerabilities ( net-misc/openssh )
+200609-13 [N] gzip: Multiple vulnerabilities ( app-arch/gzip )
+200609-17 [N] OpenSSH: Denial of Service ( net-misc/openssh )
+200610-07 [N] Python: Buffer Overflow ( dev-lang/python )
+\end{ospcode}
+
+Die gleiche Information, aber reduziert auf die ID der GLSA, liefert
+\cmd{glsa-check} mit der Kombination \cmd{glsa-check -{}-test all}
+(bzw.\ \cmd{-t all}).
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check -t all}
+This system is affected by the following GLSAs:
+200611-06
+200609-13
+200609-17
+200610-07
+\end{ospcode}
+
+Um detailliertere Informationen zu einem Problem zu bekommen läßt sich
+\cmd{glsa-check} mit der Option \cmd{--dump} verwenden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check --dump 200610-07}
+                  GLSA 200610-07: 
+Python: Buffer Overflow                  
+============================================================================
+Synopsis:          A buffer overflow in Python's "repr()" function can be
+                   exploited to cause a Denial of Service and potentially
+                   allows the execution of arbitrary code.
+Announced on:      October 17, 2006
+Last revised on:   October 17, 2006: 02
+
+Affected package:  dev-lang/python
+Affected archs:    All
+Vulnerable:        <2.4.3-r4
+Unaffected:        >=2.4.3-r4 >=~2.3.5-r3
+
+
+Related bugs:      149065
+
+Background:        Python is an interpreted, interactive, object-oriented,
+                   cross-platform programming language.
+                   
+Description:       Benjamin C. Wiley Sittler discovered a buffer overflow in
+                   Python's "repr()" function when handling UTF-32/UCS-4
+                   encoded strings.
+                   
+Impact:            If a Python application processes attacker-supplied data
+                   with the "repr()" function, this could potentially lead
+                   to the execution of arbitrary code with the privileges of
+                   the affected application or a Denial of Service.
+                   
+Workaround:        There is no known workaround at this time.
+                   
+Resolution:        All Python users should update to the latest version:
+                   
+                   # emerge --sync
+                   # emerge --ask --oneshot --verbose
+                   ">=dev-lang/python-2.4.3-r4"
+
+References:       
+                   CVE-2006-4980: http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-4980
+\end{ospcode}
+
+\cmd{glsa-check} ist in der Lage aus einer GLSA die notwendigen
+Schritte für das Absichern des Systems abzuleiten und automatisch
+durchzuführen. In einem ersten Schritt sollte man sich die
+vorgeschlagenen Aktionen mit der \cmd{-{}-pretend} Option (bzw.\
+\cmd{-p}) anzeigen lassen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check -p \$(glsa-check -t all)}
+This system is affected by the following GLSAs:
+Checking GLSA 200611-06
+The following updates will be performed for this GLSA:
+     net-misc/openssh-4.4_p1-r6 (4.3_p2-r1)
+
+Checking GLSA 200609-13
+The following updates will be performed for this GLSA:
+     app-arch/gzip-1.3.5-r9 (1.3.5-r8)
+
+Checking GLSA 200609-17
+The following updates will be performed for this GLSA:
+     net-misc/openssh-4.3_p2-r5 (4.3_p2-r1)
+
+Checking GLSA 200610-07
+The following updates will be performed for this GLSA:
+     dev-lang/python-2.4.3-r4 (2.4.3-r1)
+\end{ospcode}
+
+Und schließlich werden die Korrekturen mit \cmd{-{}-fix}
+(bzw. \cmd{-f}) durchgeführt.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check -f \$(glsa-check -t all)}
+\end{ospcode}
+
+Im wesentlichen wird hier automatisch \cmd{emerge} aufgerufen. So
+gerüstet sollte es deutlich einfacher sein, das eigene System sicher
+zu halten.
+
+\section{\label{sshdconfig}SSH-Server Konfiguration}
+
+Kommen wir damit zu den eher allgemeinen Themen der Sicherheit bei
+Linux. Wir wollen hier nur kurz auf den SSH-Server, die
+PAM-Bibliothek und das Thema Dateirechte eingehen und greifen damit
+einige wichtige Themen aus dem Gentoo Sicherheitshandbuch
+(\cmd{http://www.gentoo.org/doc/de/security/security-handbook.xml}). Das
+Handbuch geht noch darüber hinaus und wird dem sicherheitsbewussten
+Administrator in jedem Fall als Lektüre empfohlen.
+
+Gentoo bietet schon auf dem Grundsystem standardmäßig einen SSH-Server
+an. Dieser hilft, um ein System auch komfortabel über das Netzwerk zu
+installieren bzw. konfigurieren.
+
+Sobald man einen Server aber frei zugänglich im Internet betreibt,
+wundert man sich nach kurzer Zeit vielleicht über die hohe Zahl an
+Login-Versuchen.
+
+Hier versuchen externe Angreifer den Server zu knacken, indem sie
+Standardkombinationen an Benutzernamen und Passworten miteinander
+kombinieren. Am traurigsten bei der Sache ist vermutlich, dass sie
+damit immer wieder Erfolg haben, denn sonst würde die Zahl dieser
+Login-Versuche nicht unvermindert hoch bleiben.
+
+Das Problem ist eben auch, dass ein Server sehr schnell vollständig
+kompromittiert ist, wenn einem Angreifer der Login auf die
+Kommandozeile gelingt. Umwege über eine unsichere Web-Applikation und
+einen schlecht konfigurierten Apache sind da schon deutlich
+komplizierter.
+
+Daher hier eine wichtige Grundregel für die Konfiguration des
+\cmd{net-misc/openssh} Paketes: Deaktivieren sie in
+\cmd{/etc/ssh/sshd\_config} die Möglichkeit nur mit einem Passwort
+einzuloggen.
+
+Konkret sind die folgenden zwei Zeilen wichtig:
+
+\begin{ospcode}
+PasswordAuthentication no
+PermitRootLogin no
+\end{ospcode}
+
+Die erste Zeile verhindert, dass ein Login mit einem Passwort möglich
+ist und die zweite Zeile verhindert, dass der \cmd{root}-Benutzer
+direkt einloggen kann.
+
+Wir wollen nicht weiter in die Tiefen der Konfiguration einsteigen
+oder erläutern wie der Login ohne Passwort sondern mit SSH-Schlüsseln
+funktioniert, da wir den Themenbereich Gentoo damit verlassen
+würden. Die Authentifizierung über SSH-Schlüssel zu konfigurieren wird
+an vielen Stellen beschrieben. Und auch wenn sie etwas aufwendiger
+ist, so ist der Sicherheitsgewinn doch unverzichtbar.
+
+\section{PAM: \emph{pluggable authentication modules}}
+
+Der restlich Teil des Kapitels ist vor allem dann relevant, wenn sie
+verschiedene Benutzer auf ihrem System einrichten und sichergehen
+wollen, dass diese keinen Unfug anstellen können. Ein wichtiger
+Bestandteil ist hier die PAM-Bibliothek.
+
+Die \cmd{PAM}-Bibliothek (für Linux-Systeme das Paket
+\cmd{sys-libs/pam}) ist ein Grundbestandteil jedes Linux-Systems und
+auch die USE Flag \cmd{pam} ist standardmäßig aktiviert, so dass alle
+Pakete, die \cmd{PAM} verwenden können, dies auch tun.
+
+\cmd{PAM} liefert Routinen, um Benutzer zu authentifizieren, ihren
+Account zu verwalten, das Passwort zu modifizieren und Login-Aufgaben
+abzuhandeln. Das ausgefeilte Konfigurationssystem liefert hier
+vielfältige Möglichkeiten, um den Zugriff auf das System den eigenen
+Bedürfnissen anzupassen.
+
+\subsection{Das Verzeichnis \cmd{/etc/pam.d}}
+
+In dem Verzeichnis \cmd{/etc/pam.d} findet sich die Konfiguration zu
+allen Programmen, die \cmd{PAM} verwenden. Das Paket
+\cmd{sys-libs/pam} selbst liefert hier nur zwei Basis-Dateien,
+\cmd{/etc/pam.d/system-auth} und \cmd{/etc/pam.d/other}.
+
+\cmd{/etc/pam.d/other} stellt die Standardeinstellung für alle
+Programme ohne spezielle Konfiguration dar und verweigert mit der
+Angabe \cmd{pam\_deny.so} jeglichen Zugriff auf Services, die durch
+\cmd{PAM} geliefert werden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/pam.d/other}
+#\%PAM-1.0
+
+auth       required	pam_deny.so
+account    required	pam_deny.so
+password   required	pam_deny.so
+session    required	pam_deny.so
+\end{ospcode}
+
+\cmd{/etc/pam.d/system-auth} liefert die Grund-Konfiguration für die
+meisten anderen Services.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/pam.d/system-auth}
+#\%PAM-1.0
+
+auth       required	pam_env.so
+auth       sufficient	pam_unix.so likeauth nullok
+auth       required	pam_deny.so
+
+account    required	pam_unix.so
+
+password   required	pam_cracklib.so difok=2 minlen=8 dcredit=2 ocredit=2 retry=3
+password   sufficient	pam_unix.so nullok md5 shadow use_authtok
+password   required	pam_deny.so
+
+session    required	pam_limits.so
+session    required	pam_unix.so
+\end{ospcode}
+
+Wir wollen hier nicht ins Detail gehen, da die \cmd{PAM}-Konfiguration
+durchaus komplex werden kann. Aber ein kurzer Überblick über die
+Gentoo-Standard-Konfiguration ist angebracht.
+
+Jede Datei in \cmd{/etc/pam.d} konfiguriert jede der vier
+\cmd{PAM}-Module \cmd{auth}, \cmd{account}, \cmd{password} und
+\cmd{session}. Bleibt ein Modul undefiniert, gilt die
+Standardeinstellung aus \cmd{other}: \cmd{pam\_deny}.
+
+\cmd{system-auth} startet bei der Authentifizierung (\cmd{auth}) mit
+\cmd{required pam\_env.so} und erlaubt damit Umgebungsvariabeln über
+die Datei \cmd{/etc/security/pam\_env.conf} festzulegen. Standardmäßig
+enthält diese Konfigurationsdatei allerdings keine
+Einstellungen. \cmd{sufficient pam\_unix.so} liefert dann die unter
+Linux übliche Benutzerauthentifizierung über \cmd{/etc/passwd} und
+\cmd{/etc/shadow}. Ist diese erfolgreich, wird dem Nutzer der Zugriff
+gewährt (angezeigt durch die Option \cmd{sufficient}). Sollte sie
+scheitern, dient \cmd{required pam\_deny.so} als Auffangbefehl und
+verweigert den Zugriff.
+
+Für die Überprüfung des Accounts (\cmd{account}) wird wieder dase auf
+\cmd{/etc/passwd} und \cmd{/etc/shadow} basierende \cmd{pam\_unix.so}
+verwendet. Dies beinhaltet eigentlich nur die Überprüfung, ob das
+Passwort des Benutzers möglicherweise abgelaufen ist.
+
+Beim Setzen des Passwortes (Modul \cmd{password}) verwendet Gentoo
+über das Modul \cmd{pam\_cracklib.so} standardmäßig die \cmd{cracklib},
+die zu einfache Passwörter ablehnt. Das eigentliche Setzen des
+Passwortes erledigt dann wieder \cmd{pam\_unix.so}. Versagt dieses
+Modul (z.\,B.\ weil der User nicht existiert), dann wird das neue
+Passwort über \cmd{pam\_deny.so} abgelehnt.
+
+Das \cmd{session} Modul ist dafür zuständig Aufgaben zu erledigen, die
+beim Ein- und Ausloggen der Benutzer anfallen. \cmd{pam\_limits.so} ist
+dafür zuständig die Ressourcen der Benutzer entsprechend der Datei
+\cmd{/etc/security/limits.conf} zu limitieren, während das Standard
+\cmd{pam\_unix.so} für eine kurze Notiz im Syslog der Maschine sorgt
+und damit festhält wer wann Zugriff auf die Maschine erhalten hat.
+
+Eine einfache Definition, die auf \cmd{system-auth} aufbaut, verwendet
+z.\,B.\ das Programm \cmd{sudo}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/pam.d/sudo}
+auth     include system-auth
+account  include system-auth
+password include system-auth
+session  include system-auth
+\end{ospcode}
+
+Alle Module werden einfach entsprechend von \cmd{system-auth}
+übernommen.
+
+\subsection{Begrenzen der Nutzerressourcen}
+
+PAM bietet eine Möglichkeit die Ressourcen, die einzelne Benutzer
+verwenden dürfen, zu begrenzen. Dazu dient die Datei
+\cmd{/etc/security/limits.conf}.
+
+Hier können wir z.\,B.\ festlegen, dass nur drei User gleichzeitig
+eingeloggt sein dürfen:
+
+\begin{ospcode}
+@users      -       maxlogins       3
+\end{ospcode}
+
+\cmd{@users} bezeichnet die Gruppe \cmd{users}. Einfache Benutzernamen
+trägt man ohne das vorangestellte \cmd{@}-Zeichen ein. Das \cmd{-}
+zeigt an, dass es sich um ein festes Limit handelt. Die Benutzer sind
+so nicht in der Lage diesen Wert zu modifizieren. \cmd{maxlogins} und
+die folgende Zahl \cmd{3} spezifiziert als limitierte Ressource eben
+die Zahl an gleichzeitigen Logins für Benutzer dieser Gruppe. Sobald
+diese Zahl erreicht ist, werden weitere Logins abgelehnt.
+
+Es gibt hier noch eine Vielzahl an weiteren Möglichkeiten, auf die wir
+nicht detailliert eingehen wollen. Die Datei
+\cmd{/etc/security/limits.conf} ist gut dokumentiert und liefert einen
+ersten Einblick, was hier möglich ist.
+
+Man sollte allerdings aufpassen, dass man die Nutzer nicht soweit
+einschränkt, dass sie z.\,B.\ normale Programme nicht mehr ausführen
+können.
+
+\section{Dateirechte}
+
+Auf einem Linux-System gibt es grundsätzlich zwei problematische
+Datei-Zugriffsrechte: Zum einen Dateien, bei denen jeder Benutzer
+Schreibrechte hat, zum Anderen Programme, die unter der Nutzer-ID des
+Datei-Besitzers laufen (SUID-Recht).
+
+\subsection{Globale Schreibrechte}
+
+Wenn eine Datei von jedem Benutzer beschrieben werden kann, gibt es
+keinerlei Garantie dafür, was diese Datei an Daten enthält. Im
+schlimmsten Fall ist die Datei als ausführbar markiert und wird somit
+gelegentlich als Programm aufgerufen. Wenn jeder Nutzer den Inhalt der
+Datei modifizieren kann, lässt sich so problemlos Schadcode
+einschleusen. Gesetzt den Fall, die Datei wird ohne vorherige
+Überprüfung zu einem späteren Zeitpunkt von einem anderen Nutzer
+ausgeführt, so kann man damit problemlos Zugriff auf den Account des
+anderen Nutzers erlangen.
+
+Aber auch nicht-ausführbare, global beschreibbare Dateien können zu
+Problemen führen. Viele Programme verarbeiten Input aus einer Datei
+nicht besonders sicher. Wird eine global beschreibbare Datei von einem
+Programm geöffnet, das Probleme mit der sicheren Handhabung von
+externen Dateien hat, lässt sich so ebenfalls der Account eines
+anderen Nutzers, im schlimmsten Fall des root-Benutzers, übernehmen.
+
+Ein Gentoo-System braucht keine global beschreibbare Datei. Manchmal
+bieten sich solche Dateien vielleicht zum Datenaustausch zwischen
+verschiedenen Nutzern an, aber auch in solchen Fällen ist es immer
+noch besser die am Datenaustausch beteiligten Nutzer in einer Gruppe
+zusammen zu fassen und dann nur der Gruppe Schreibrechte zu geben.
+
+Denn bei global schreibbaren Dateien haben auch Services wie der
+Apache, ein FTP-Server oder MySQL Schreibrechte. Finden sich in
+solchen Services Lücken, die ein externer Angreifer nutzen kann, um
+auf das Dateisystem zuzugreifen, können global beschreibbare Dateien
+den nächsten Angriffspunkt liefern.
+
+Zur eigenen Sicherheit sollte man gelegentlich die Festplatte nach
+solchen Dateien durchsuchen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{find / -xdev -type f -perm /o=w -exec ls -la {} {\textbackslash}; > /tmp/world-writeable.txt}
+\end{ospcode}
+
+Dabei bezeichnet \cmd{/} den Suchpfad, in diesem Fall die gesamte
+Festplatte, und \cmd{-xdev} schließt andere Dateisysteme aus. So wird
+z.\,B.\ \cmd{/proc} nicht ebenfalls durchsucht. Allerdings auch keine
+über NFS gemounteten Verzeichnisse. Wer hier sicher gehen möchte,
+entfernt die \cmd{-xdev} Option. 
+
+\cmd{-type f} beschränkt die Suche auf Dateien (keine Verzeichnisse)
+und \cmd{-perm /o=w} liefert nur Dateien mit globalen Schreibrechten.
+
+\cmd{-exec ls -la {} \textbackslash;} führt für jede gefundene Datei
+den Befehl \cmd{ls -la} aus und liefert den Rückgabewert.
+
+Die Datei \cmd{/tmp/world-writeable.txt} sollte keine Ergebnisse
+erhalten. Wenn doch, sollte man die Dateien entsprechend modifizieren,
+dass die globalen Schreibrechte entfernt werden.
+
+\subsection{SUID/SGID}
+
+Dateien, bei denen das \cmd{SUID}- oder \cmd{SGID}-Bit (\emph{set
+  user/group ID}) gesetzt ist, haben bei der Ausführung die vollen
+Rechte des Eigners der Datei. Ein Programm, dass \cmd{root} gehört,
+wird also mit vollen \cmd{root}-Rechten ausgeführt, auch wenn der
+Benutzer des Programmes nur ein normaler Benutzer des Systems ist.
+
+Diese Art der Rechtevergabe ist zwar für manche Programme zwingend
+notwendig, aber damit stellen diese Programme auch ein hohes
+Sicherheitsrisiko dar. Die Zahl entsprechend markierter Programme
+sollte also möglichst gering sein.
+
+Um entsprechende Dateien aufzuspüren, läßt sich der folgende Befehl
+verwenden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{find / -xdev -type f -perm /ug=s -exec ls -la {} {\textbackslash}; > /tmp/suid-bit.txt}
+\end{ospcode}
+
+Modifiziert ist hier nur die \cmd{-perms}-Option, die mit \cmd{/ug=s}
+Dateien auswählt, die entweder das \cmd{SUID}- oder das \cmd{SGID}-Bit
+gesetzt haben.
+
+Die Datei \cmd{/tmp/suid-bit.txt} enthält diesmal einige Ergenisse,
+die jedoch von System zu System unterschiedlich sind. Als Referenz sei
+hier einmal die Liste eines typischen Servers abgebildet:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{find / -xdev -type f -perm /ug=s -exec qfile {} {\textbackslash};}
+net-analyzer/netselect (/usr/bin/netselect)
+net-libs/liblockfile (/usr/bin/dotlockfile)
+net-misc/iputils (/bin/ping)
+net-misc/openssh (/usr/lib/misc/ssh-keysign)
+net-www/apache (/usr/sbin/suexec2)
+app-admin/sudo (/usr/bin/sudo)
+app-admin/sudo (/usr/bin/sudoedit)
+sys-apps/man (/usr/bin/man)
+sys-apps/util-linux (/bin/mount)
+sys-apps/util-linux (/bin/umount)
+sys-apps/util-linux (/usr/bin/write)
+sys-apps/shadow (/bin/passwd)
+sys-apps/shadow (/bin/su)
+sys-apps/shadow (/usr/bin/chfn)
+sys-apps/shadow (/usr/bin/chage)
+sys-apps/shadow (/usr/bin/chsh)
+sys-apps/shadow (/usr/bin/expiry)
+sys-apps/shadow (/usr/bin/gpasswd)
+sys-apps/shadow (/usr/bin/newgrp)
+sys-apps/slocate (/usr/bin/slocate)
+sys-libs/glibc (/usr/lib/misc/glibc/pt_chown)
+sys-process/fcron (/usr/bin/fcrondyn)
+sys-process/fcron (/usr/bin/fcronsighup)
+sys-process/fcron (/usr/bin/fcrontab)
+\end{ospcode}
+
+Anstatt wie oben angegeben, geben wir in diesem Fall nicht die
+Dateiattribute mit \cmd{ls -la} aus, sondern listen die
+Paketzugehörigkeit über \cmd{qfile}. Im Normalfall helfen die
+Dateiattribute jedoch eher dabei, Probleme zu erkennen und \cmd{qfile}
+kann dann im Einzelfall verwendet werden, um zu überprüfen, woher eine
+eventuell problematische Datei überhaupt stammt.
+
+Finden sich hier Programme, bei denen man sich sicher ist, dass man
+sie nie verwendet, dann kann das entsprechende \cmd{SUID}- oder
+\cmd{SGID}-Bit entfernen. Dabei ist aber Vorsicht geboten:
+\emph{verwenden} bedeutet in diesem Kontext durchaus auch, dass die
+Programme auch innerhalb von Skripten verwendet werden könnten. Man
+sollte sich bei Modifikationen an den entsprechenden Programmen
+wirklich sicher sein, dass man sein System damit nicht lahm
+legt. Einfacher ist die Entscheidung, wenn man sich sicher ist, dass
+man das zugehörige Paket nicht benötigt. In diesem Fall sollte man das
+Paket einfach deinstallieren und hat damit ein Sicherheitsrisiko
+weniger.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

@@ -1,0 +1,291 @@
+\appendixchapter{\label{xinstall}Die grafische Installation}
+
+Der grafische Installationsprozess %
+\index{Installation!grafisch|(}%
+verpackt zwar viele notwendige Installationsschritte recht hübsch,
+verlangt aber dennoch Gentoo-Grundwissen, das wir in diesem Buch in
+den Kapiteln \ref{noxinstall} bis \ref{makeconf}
+vermitteln. Wenigstens das Installationskapitel \ref{noxinstall} ab
+Seite \pageref{noxinstall} sollte bekannt sein, bevor man sich an die
+grafische Installation macht.
+
+\section{Booten der LiveDVD}
+
+Diesmal starten wir das System von der beiliegenden LiveDVD und
+betätigen bei der ersten Eingabeaufforderung (\cmd{boot:}) die
+Enter-Taste.
+
+Wir gelangen so über die Abfrage der Keymap %
+\index{Keymap!Abfrage}%
+(siehe Kapitel \ref{bootkeymap} ab \pageref{bootkeymap}) und den
+Gentoo-Bootscreen in das grafische X-System. %
+\index{X-Server}%
+Sollte es Probleme geben, bevor der Bootscreen erscheint, wählt man
+den Kernel ohne Framebuffer-Unterstützung %
+\index{Framebuffer}%
+(\cmd{gentoo-nofb}). %
+\index{gentoo-nofb (Option)}%
+Die grafische Benutzeroberfläche sollte später trotzdem starten, aber
+man verzichtet auf den hübschen Bootscreen.
+
+Sobald der X-Server läuft, loggt einen das System automatisch als User
+\cmd{gentoo} %
+\index{gentoo (Benutzer)}%
+ein.
+
+Leider informiert die Keymap-Abfrage während des Boot-Vorgangs unsere
+Benutzeroberfläche nicht darüber, dass wir eine deutsche Tastatur %
+\index{Tastatur}%
+besitzen, und so müssen wir diesen Vorgang wiederholen. Die
+entsprechende Einstellung findet sich im Menü  \menu{System} bei
+den \menu{Preferences} (\menu{Einstellungen}) im Unterpunkt
+\menu{Keyboard}. Hier lässt sich unter \menu{Layouts} mit \menu{Add} die
+deutsche Tastaturbelegung hinzufügen und als \menu{Default} markieren.
+Haben wir das erledigt, müssen wir die Sonderzeichen nicht mehr
+erraten.
+
+\section{Der Gentoo Linux Installer}
+
+Der grafische Installer ist deutlich komfortabler als die
+Kommandozeile. Man sollte allerdings im Hinterkopf behalten, dass es
+sich bei dem Installer  um eine recht junge Software handelt, die nicht
+jede Installation einwandfrei abschließen wird.
+
+Bei Bedarf wechselt man mit der Tastenkombination \taste{Strg} +
+\taste{Alt} + \taste{F1} jederzeit auf die Kommandozeile %
+\index{Kommandozeile!LiveDVD}%
+der LiveDVD.  Vor allem bei Problemen sucht es sich hier leichter nach
+Ursachen.  Die grafische Benutzer\-oberfläche erhält man mit der
+Kombination \taste{Strg} + \taste{Alt} + \taste{F7} zurück.
+
+Wir starten den Installer über einen Doppelklick auf das Icon
+\menu{Gentoo Linux Installer (GTK+)}.
+
+\subsubsection{Installationsvariante}
+
+Der Installer lässt uns zunächst den gewünschten Installationstyp
+wählen. Wir beschreiben hier nur die Standard-Variante und wählen
+entsprechend \menu{Standard}.
+
+Die \menu{Networkless}-Variante benötigt während der Installation
+keinen Zugriff auf das Netzwerk, und wir nutzen sie für eine lokale
+Installation, %
+\index{Installation!ohne Netzwerk}%
+während \menu{Advanced} dem Gentoo-Experten mehr Optionen bietet. Für
+diese Methode finden Sie die notwendigen Hintergrundinformationen in
+den ersten Kapiteln dieses Buches.
+
+Mit \menu{Next} gelangen wir zum nächsten Schritt der Installation.
+
+\subsubsection{Partitionierung, Mountpoints und Netzwerkverzeichnisse}
+
+Wir gelangen zur grafischen Partitionierung %
+\index{Partition!-ierung, grafisch}%
+des Systems und orientieren uns an den Vorgaben des
+Installationskapitels (siehe Seite
+\pageref{partitions}). Üblicherweise entfernen wir aktuell vorhandene
+Partitionen über \menu{Clear partitions}, um anschließend neue Schritt
+für Schritt hinzufügen.
+
+Im nachfolgenden Bildschirm sind mit \menu{Add} die notwendigen
+Mount"=Verzeichnisse festzulegen.
+Unter \menu{Device} wählt man jeweils eine der zuvor angelegten
+Partitionen  und setzt das gewünschte Mount-Verzeichnis. Die
+Swap-Partition benötigt  keinen Mount-Punkt.
+
+Schließlich lassen sich Netzwerk-NFS-Verzeichnisse %
+\index{NFS}%
+in den Dateibaum %
+\index{Dateibaum}%
+einbinden.  Dies ist jedoch keine Voraussetzung, und wir überspringen
+diesen Punkt hier.
+
+\subsubsection{Stage und Portage-Baum}
+
+Wir könnten nun eine Stage %
+\index{Stage}%
+aus dem Internet herunterladen, doch nutzen wir zunächst einmal die
+Stage der DVD %
+\index{Stage!DVD}%
+(\menu{Build stage from files on Live\-DVD}). Es geht schneller, und
+da wir das System später ohnehin aktualisieren, spielt die Stage keine
+große Rolle.
+
+Zudem müssen wir im nächsten Schritt keine weiteren Angaben zur
+Herkunft des Portage-Baums %
+\index{Portage!Baum}%
+machen, denn diesen übernimmt der Installer ebenfalls von der DVD.
+
+Anschließend ist der Installer etwas länger beschäftigt und erstellt
+die Basis unseres neuen Gentoo-Systems.
+
+\subsubsection{Einstellungen zur make.conf}
+
+\index{make.conf (Datei)|(}%
+\index{etc@/etc!make.conf|(}%
+Im nächsten Schritt konfiguriert man die Datei \cmd{/etc/make.conf}.
+Das betrifft vor allem die Einstellung der \cmd{CFLAGS}, %
+\index{CFLAGS (Variable)}%
+%\index{make.conf (Datei)!CFLAGS|see{CFLAGS (Variable)}}%
+die wir genauer unter \ref{Compiler-Flags} ab Seite
+\pageref{Compiler-Flags} beschrieben haben. Für die zur Bestimmung der
+korrekten \cmd{CFLAGS} notwendigen Prozessor-Informationen wechselt
+man mit \taste{Strg} + \taste{Alt} + \taste{F1} auf die Kommandozeile
+und liest die Angaben wie auf Seite \pageref{cpuinfo} beschrieben aus:
+\index{CPU!des Rechners ermitteln}%
+\index{proc@/proc/!cpuinfo}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /proc/cpuinfo}
+\end{ospcode}
+
+Zurück mit \taste{Strg} + \taste{Alt} + \taste{F7}.
+
+Auf dieser Seite lassen sich auch die USE-Flags %
+\index{USE-Flag}%
+festlegen. Details dazu finden Sie unter \ref{Compiler-Flags} ab
+Seite \pageref{Compiler-Flags}. Hier sei  jedoch
+empfohlen, die Standardeinstellung unverändert zu lassen und nur bei
+konkretem Bedarf später einzelne USE-Flags zu aktivieren.
+
+Die unter \menu{Other} gelisteten Einstellungen sollte man -- bis auf
+die \cmd{MAKEOPTS} %
+\index{MAKEOPTS (Variable)}%
+%\index{make.conf (Datei)!MAKEOPTS|see{MAKEOPTS (Variable)}}%
+(siehe hierzu \ref{makeopts} ab Seite \pageref{makeopts}) -- nicht
+verändern.
+
+Vor allem raten wir davon ab, die kleine Checkbox \menu{Use unstable
+  ({\textasciitilde}arch)} zu verwenden. Mehr dazu unter
+\ref{unstable} ab Seite \pageref{unstable}.
+\index{make.conf (Datei)|)}%
+\index{etc@/etc!make.conf|)}%
+
+\subsubsection{Das root-Passwort}
+
+Nun setzen wir noch das \cmd{root}-Passwort, %
+\index{root (Benutzer)!Passwort}%
+das wir zur Sicherheit zweimal eingeben.
+
+\subsubsection{Zeitzone}
+
+Wir wählen unseren Standort und können dazu sogar auf die Karte
+klicken, wobei es nicht ganz einfach ist, Berlin mit dem Mauszeiger zu
+treffen. Alternativ wählt man die gewünschte Stadt über die Scrollbox
+aus.
+
+\subsubsection{Kernel}
+
+Auch wenn als Standard \menu{Build your own from sources} angewählt
+ist, machen wir es uns für eine Erstinstallation einfach; schließlich
+funktioniert der Kernel %
+\index{Kernel!LiveDVD}%
+der LiveDVD für den eigenen Rechner einwandfrei, wenn man bis an diese
+Stelle der Installation gelangt ist. Also kopieren wir ihn einfach auf
+unser neues System hinüber, indem wir die Option \menu{Use the kernel,
+  initramfs, and modules from the LiveDVD} wählen. So erhalten wir
+erst einmal ein funktionsfähiges System und können später immer noch
+einen abgespeckten Kernel erstellen. Die nötige Anleitung dazu findet
+sich in Kapitel \ref{kernel} ab Seite \pageref{kernel}.
+
+\subsubsection{Netzwerk}
+
+War die Hardwareerkennung erfolgreich, sind nun die identifizierten
+Netzwerkkarten auszuwählen.  Im einfachsten Fall wählt man das
+\menu{eth0}-Interface, belässt die Konfiguration auf \menu{DHCP} und
+speichert diese Karte über den \menu{Save}-Knopf. Für kompliziertere
+Varianten ziehen Sie das Netzwerk-Kapitel \ref{netconfig} ab Seite
+\pageref{netconfig} zu Rate.
+
+In der Sektion \menu{Hostname/Proxy information/Other} lässt sich
+derzeit nur der Host- und der Domain-Name eingeben. Dies sollte
+man tun, sofern man über ein entsprechend konfiguriertes Netzwerk
+verfügt.
+
+\subsubsection{Logger und cron-Daemon}
+
+Auf den nächsten beiden Seiten geht es um die bevorzugte
+\cmd{syslog}- %
+\index{syslog}%
+und \cmd{cron}-Software, %
+\index{cron}%
+die der Installer für das System bereitstellt.
+
+Anschließend werden einige weitere Werkzeuge für das Dateisystem
+automatisch installiert, bevor es schließlich zur Auswahl des
+Boot-Loaders geht.
+
+\subsubsection{Der Boot-Loader}
+
+Wir bleiben hier bei der Standard-Auswahl \menu{grub}, %
+\index{grub (Programm)}%
+das der Installer nach dem Klick auf \menu{Next} installiert und
+konfiguriert. In diesem Schritt erstellt das Programm auch gleich den
+Boot-Sektor.
+
+\subsubsection{Benutzer, Pakete und Services}
+
+Im ersten der nächsten drei Schritte erlaubt der Installer das Anlegen
+von Benutzern, %
+\index{Benutzer}%
+was aber nicht zwingend notwendig ist.
+
+Über eine anschließende Paketauswahl %
+\index{Paket!-auswahl}%
+lässt sich das System bereits weiter an die eigenen Bedürfnisse
+anpassen, es ist jedoch sinnvoller, zunächst die Installation
+abzuschließen und zu sehen, ob der Rechner auch einwandfrei
+startet. Weitere Pakete lassen sich jederzeit ergänzen.
+
+Zuletzt bestimmen wir die zu startenden Services. Es empfiehlt sich,
+zusätzlich den \cmd{sshd}-Daemon %
+\index{sshd (Programm)}%
+anzuwählen, damit man sich nach dem erfolgreichen Start des Rechners
+auch per SSH %
+\index{SSH}%
+einloggen kann.
+
+\subsubsection{/etc/conf.d/* und /etc/rc.conf}
+
+Es folgen einige notwendige Einstellungen für Uhrzeit, %
+\index{Uhr!-zeit}%
+Tastatur %
+\index{Tastatur}%
+und die grafische Benutzeroberfläche.  Ohne diese Benutzeroberfläche
+bleiben \menu{Display Manager} und \menu{XSession} unverändert.
+
+Bei der Einstellung \menu{Clock} fehlt -- wie häufig unter Gentoo --
+der Hinweis, dass bei gleichzeitiger Verwendung von Windows %
+\index{Windows}%
+auf dem Rechner die korrekte Einstellung \menu{local} lautet. Bei
+einem reinen Linux-Rechner sollte man allerdings \menu{UTC}
+bevorzugen.
+
+Bei der Wahl des Editors %
+\index{Editor}%
+ist darauf zu achten, dass dieser auch tatsächlich installiert
+ist. Standardmäßig steht nur \cmd{nano} %
+\index{nano (Programm)}%
+zur Verfügung.
+
+Die \menu{Windowkeys} setzen wir, wie schon in der Einleitung
+besprochen, auf \menu{No}, als \menu{Console Font} wählen wir
+\menu{lat9-16} und als \menu{Keymap} %
+\index{Keymap}%
+die \menu{de-latin1-nodead\-keys}.  Die \menu{Extended Keymaps}
+bleiben ungesetzt.
+
+\subsubsection{Finale}
+
+Der Installer sollte sich daraufhin mit \menu{Your install is
+  complete!} verabschieden. Wir starten nun den Rechner neu, nehmen
+die DVD aus dem Laufwerk und prüfen, ob der Rechner problemlos
+hochfährt.
+\index{Installation!grafisch|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

@@ -1,0 +1,293 @@
+\appendixchapter{\label{dualboot}Eine Maschine mit Windows teilen}
+
+\index{Dual Boot|(}%
+\index{Windows|(}%
+Trotz der Fortschritte, die Linux in den letzten Jahren erlebt
+hat, bleibt es eine Tatsache, dass Windows das am weitesten
+verbreitete Betriebssystem ist. Entsprechend häufig wird es schon auf
+dem Rechner vorinstalliert und die Option, die Festplatte
+komplett zu löschen, nicht wirklich akzeptabel sein.
+
+\index{NTFS!Partition verkleinern|(}%
+\index{Partition!verkleinern|(}%
+Wir wollen hier nur einen ganz kurzen Leitfaden liefern, wie man eine
+Windows-NTFS-Partition (Windows XP, Windows Vista, \ldots) verkleinert
+und so Platz für Gentoo schafft. Ausführlichere Informationen dazu
+finden sich  auf den entsprechenden Seiten des
+deutschen\footnote{\cmd{http://de.gentoo-wiki.com/Dual\_Boot}} oder
+des englischen
+Wikis\footnote{\cmd{http://gentoo-wiki.com/HOWTO\_Dual\_boot}}.
+
+Eine Warnung vorweg: Es gibt keine Garantie, dass sich die
+Windows"=Partition problemlos verkleinern lässt, und man geht ein hohes
+Risiko ein, die Daten der Windows-Installation vollständig zu
+verlieren. Ein Backup der entsprechenden Daten ist darum
+selbstverständlich.
+
+\section{Windows verkleinern}
+
+Unter Windows %
+\index{Windows!Vista}%
+Vista greift man auf die Werkzeuge des Betriebssystems zurück und
+verkleinert Partitionen über das Festplattenmanagement in der
+Systemsteuerung. %
+\index{Windows!Systemsteuerung}%
+Das ist auch der empfohlene Weg, denn Windows weiß am ehesten, wie es
+mit seinen Partitionen umzugehen hat.
+
+Windows %
+\index{Windows!XP}%
+XP bietet diese Funktionalität leider nicht, und um hier die
+Windows"=Partition zu verkleinern, verwenden wir das Programm
+\cmd{ntfsresize}, %
+\index{ntfsresize (Programm)}%
+das ebenfalls auf der LiveDVD %
+\index{LiveDVD}%
+zur Verfügung steht. In den neueren Versionen kann dieses Werkzeug
+Windows-Partitionen %
+\index{Windows!Partitionen}%
+auch ohne vorherige Defragmentierung %
+\index{Windows!Defragmentierung}%
+der Festplatte verkleinern. Früher war dieser Schritt unumgänglich, um
+keine Daten auf der Partition zu verlieren.
+
+Angenommen unsere Windows-Partition befindet sich auf der Festplatte,
+die sich über die Gerätedatei \cmd{/dev/hda} %
+\index{hda (Festplatte)}%
+ansprechen lässt, und stellt dort die erste Partition
+\cmd{/dev/hda1} %
+\index{hda1 (Partition)}%
+dar, so holen wir uns mit \cmd{ntfsresize} %
+\index{ntfsresize (Programm)}%
+zunächst einmal einige wichtige Informationen über diese Partition:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{ntfsresize --info /dev/hda1}
+ntfsresize v1.13.1 (libntfs 9:0:0)
+Device name        : /dev/hda1
+NTFS volume version: 3.1
+Cluster size       : 4096 bytes
+Current volume size: 298594595328 bytes (298595 MB)
+Current device size: 298594598912 bytes (298595 MB)
+Checking filesystem consistency ...
+100.00 percent completed
+Accounting clusters ...
+Space in use       : 28833 MB (9.7%)
+Collecting resizing constraints ...
+You might resize at 28832407552 bytes or 28833 MB (freeing 269762 MB).
+Please make a test run using both the -n and -s options before real
+resizing!
+\end{ospcode}
+\index{ntfsresize (Programm)!info (Option)}%
+
+Im hier gezeigten Beispiel belegt die Partition ca. 300~GB, von denen
+aber nur ca. 30~GB in Benutzung sind. Wir wollen die Windows-Partition
+auf 40~GB verkleinern.
+
+Wir starten \cmd{ntfsresize} %
+\index{ntfsresize (Programm)}%
+in einem "`Trockendurchlauf"', um zu sehen, ob alles problemlos
+funktionieren wird. Dass wir uns in einem Probelauf befinden, teilen
+wir \cmd{ntfsresize} über die Option \cmd{-{}-no-action} (bzw.\
+\cmd{-n}) %
+%\index{ntfsresize (Programm)!n (Option)|see{ntfsresize (Programm), no-action (Option)}}%
+\index{ntfsresize (Programm)!no-action (Option)}%
+mit; die gewünschte Größe spezifizieren wir mit \cmd{-{}-size} (bzw.\
+\cmd{-s}). %
+%\index{ntfsresize (Programm)!s (Option)|see{ntfsresize (Programm), size (Option)}}%
+\index{ntfsresize (Programm)!size (Option)}%
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{ntfsresize --no-action --size 40G /dev/hda1}
+ntfsresize v1.13.1 (libntfs 9:0:0)
+Device name        : /dev/hda1
+NTFS volume version: 3.1
+Cluster size       : 4096 bytes
+Current volume size: 298594595328 bytes (298595 MB)
+Current device size: 298594598912 bytes (298595 MB)
+New volume size    : 39999996416 bytes (40000 MB)
+Checking filesystem consistency ...
+100.00 percent completed
+Accounting clusters ...
+Space in use       : 28833 MB (9.7%)
+Collecting resizing constraints ...
+Needed relocations : 3113915 (12755 MB)
+Schedule chkdsk for NTFS consistency check at Windows boot time ...
+Resetting \$LogFile ... (this might take a while)
+Relocating needed data ...
+100.00 percent completed
+Updating \$BadClust file ...
+Updating \$Bitmap file ...
+Updating Boot record ...
+The read-only test run ended successfully.
+\end{ospcode}
+
+Wenn hier alles glatt läuft, entfernen wir die
+\cmd{-{}-no-action}-Option %
+\index{ntfsresize (Programm)!no-action (Option)}%
+und wagen uns an die tatsächliche Verkleinerung. Während der Aktion
+sollten wir natürlich unter keinen Umständen unterbrechen.  Da
+\cmd{ntfsresize} diesmal wirklich in Aktion tritt, werden wir
+nochmals gefragt, ob die Aktion auch wirklich
+durchgeführt werden soll:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{ntfsresize --size 40G /dev/hda1}
+\ldots
+WARNING: Every sanity check passed and only the dangerous operations
+left.
+Make sure that important data has been backed up! Power outage or
+computer
+rash may result major data loss!
+Are you sure you want to proceed (y/[n])? y
+\ldots
+Successfully resized NTFS on device '/dev/sda1'.
+You can go on to shrink the device for example with Linux fdisk.
+IMPORTANT: When recreating the partition, make sure that you
+  1)  create it at the same disk sector (use sector as the unit!)
+  2)  create it with the same partition type (usually 7, HPFS/NTFS)
+  3)  do not make it smaller than the new NTFS filesystem size
+  4)  set the bootable flag for the partition if it existed before
+Otherwise you won't be able to access NTFS or can't boot from the
+disk!
+If you make a mistake and don't have a partition table backup then you
+can recover the partition table by TestDisk or Parted's rescue mode.
+\end{ospcode}
+
+Nach Abschluss der Verkleinerung erhalten wir Instruktionen, wie wir
+nun mit \cmd{fdisk} %
+\index{fdisk (Programm)}%
+vorgehen müssen, um die Partitionsgröße %
+\index{Partition!-größe}%
+anzupassen. Diese Aktion wird \cmd{ntfsresize} %
+\index{ntfsresize (Programm)}%
+nicht automatisch übernehmen!
+
+Wir starten also \cmd{fdisk}:% %
+\index{fdisk (Programm)}%
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{fdisk /dev/hda}
+\end{ospcode}
+
+Erst einmal lassen wir uns das aktuelle Layout anzeigen und notieren
+Start- und End-Zylinder der zu verkleinernden Partition. 
+
+\begin{ospcode}
+Command (m for help): \textbf{p}
+[...]
+   Device Boot      Start         End      Blocks   Id  System
+/dev/hda1   *           1       36303   291596288    7  HPFS/NTFS
+Partition 1 does not end on cylinder boundary.
+/dev/hda2           36303       38913    20971360+   f  W95 Ext'd
+(LBA)
+/dev/hda5           36303       38913    20971329    b  W95 FAT32
+\end{ospcode}
+
+In dem gezeigten Fall beginnt \cmd{/dev/hda1} %
+\index{hda1 (Partition)}%
+bei Zylinder 1 und läuft bis Zylinder 36303. Wir sehen hier auch an
+dem Hinweis \cmd{Partition 1 does not end on cylinder boundary}, dass
+\cmd{ntfsresize} seine Arbeit erledigt hat. Wir löschen die erste
+Partition mit \cmd{d}, gefolgt von \cmd{1}, und legen sie gleich
+danach, aber diesmal verkleinert, wieder an. Dafür verwenden wir
+\cmd{n}, \cmd{p} für eine primäre Partition und wieder die \cmd{1}, da
+wir nochmals die erste Partition belegen. Wir werden nach dem
+Start-Zylinder gefragt und geben wieder die \cmd{1} an, gefolgt von
+der gewünschten Größe der Partition, hier \cmd{+40000M}:
+
+\begin{ospcode}
+First cylinder (1-38913, default 1): 1
+Last cylinder or +size or +sizeM or +sizeK (1-36302, default 36302): +40
+000M
+\end{ospcode}
+
+Bleibt noch der Partitionstyp %
+\index{Partition!-styp}%
+mit der Kombination \cmd{t}, \cmd{1} und \cmd{7} für NTFS %
+\index{NTFS}%
+zu vergeben und die erste Partition mit \cmd{a} sowie \cmd{1} als
+Boot-Partition zu markieren (das ist nur für den Windows-Bootloader %
+\index{Windows!Bootloader}%
+wirklich notwendig). Geben wir die Partitionstabelle %
+\index{Partition!-stabelle}%
+zur Sicherheit noch einmal aus:
+
+\begin{ospcode}
+Command (m for help): \textbf{p}
+[...]
+   Device Boot      Start         End      Blocks   Id  System
+/dev/hda1   *           1        4864    39070048+   7  HPFS/NTFS
+/dev/hda2           36303       38913    20971360+   f  W95 Ext'd
+(LBA)
+/dev/hda5           36303       38913    20971329    b  W95 FAT32
+\end{ospcode}
+
+Das sieht soweit gut aus, und wir haben Platz zwischen den Zylindern
+4864 und 36303 gewonnen -- gute 260~GB. Wir könnten in dem neu
+entstandenen Zwischenraum die neuen
+Gentoo-Partitionen entsprechend der Anleitung in Kapitel
+\ref{noxinstall} anlegen. Besser ist es aber, die neue
+Partitionstabelle zunächst einmal zu schreiben und zu
+sehen, ob Windows noch problemlos startet.
+
+Sollte es nämlich zu Problemen kommen, kann man an dieser Stelle immer
+noch zurück und die Partitionstabelle %
+\index{Partition!-stabelle}%
+wieder entsprechend der vorher notierten Werte zurücksetzen. Zwar
+lässt sich die Aktion von \cmd{ntfsresize} %
+\index{ntfsresize (Programm)}%
+nicht rückgängig machen, aber eventuelle Fehler an der
+Partitionstabelle lassen sich so korrigieren.
+
+Also schreiben wir die neue Partitionstabelle mit \cmd{w} und starten
+unser System neu:
+
+\begin{ospcode}
+\cdprompt{\textasciitilde}\textbf{reboot}
+\end{ospcode}
+
+Selbstverständlich ist bei einem Neustart die LiveDVD rechtzeitig aus
+dem Laufwerk zu entfernen.  
+\index{Partition!verkleinern|)}%
+\index{NTFS!Partition verkleinern|)}%
+\index{Dual Boot|)}%
+\index{Windows|)}%
+
+Ist dieser Test erfolgreich, booten wir wieder mit der
+LiveDVD und fahren entsprechend den Installationsanweisungen in
+Kapitel \ref{noxinstall} fort. Wir kehren später an diesen Punkt
+zurück, wenn es darum geht, den Boot-Sektor zu schreiben.
+
+\section{\label{dualbootgrub}Der Boot-Sektor}
+
+Die notwendige Konfiguration des Bootloaders für ein
+Dual-Boot-System %
+\index{Dual Boot}%
+ist denkbar einfach. Wir müssen nur folgende Zeilen an die Datei
+\cmd{/boot/grub/""grub.conf} %
+\index{grub.conf (Datei)}%
+%\index{boot@/boot!grub!grub.conf|see{grub.conf (Datei)}}%
+anhängen:
+
+\begin{ospcode}
+title=Windows
+rootnoverify (hd0,0)
+makeactive
+chainloader +1
+\end{ospcode}
+\index{grub.conf (Datei)!chainloader (Option)}%
+\index{grub.conf (Datei)!makeactive (Option)}%
+\index{grub.conf (Datei)!rootnoverify (Option)}%
+\index{grub.conf (Datei)!title (Option)}%
+
+So erscheint beim Start eine Auswahl u.\,a. für \menu{Windows},
+die das Betriebssystem startet.
+
+\ospvacat
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

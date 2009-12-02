@@ -1,0 +1,2022 @@
+\chapter{\label{diverstools}Tools}
+
+Bevor wir uns nun anschicken, Anwendungssoftware zu installieren und
+die Maschine ihrer eigentlichen Bestimmung zuzuführen, schauen wir uns
+einige Werkzeuge an, die speziell für Gentoo entwickelt wurden und
+den täglichen Umgang mit dem System erleichtern.
+
+\section{\label{gentoolkit}Das Paket app-portage/gentoolkit}
+
+\index{gentoolkit (Paket)|(}%
+\index{gentoolkit (Paket)}%
+%\index{app-portage (Kategorie)!gentoolkit|see{gentoolkit (Paket)}}%
+Dieses Paket haben wir bereits für die Arbeit mit \cmd{euse}
+installiert (siehe \ref{euse}). Auch \cmd{revdep-rebuild} %
+\index{revdep-rebuild (Programm)}%
+stammt aus diesem Paket (siehe \ref{revdeprebuild}). Es enthält
+darüber hinaus vier weitere Skripte für die Administration eines
+Gentoo-Systems: \cmd{equery}, %
+\index{equery (Programm)}%
+\cmd{glsa-check}, %
+\index{glsa-check (Programm)}%
+\cmd{eclean} %
+\index{eclean (Programm)}%
+und \cmd{eread}.% %
+\index{eread (Programm)}%
+
+Wir wollen uns diese Werkzeuge %
+\index{glsa-check (Programm)}%
+im Folgenden genauer anschauen und auf das vielseitige \cmd{equery}
+sowie das Skript \cmd{glsa-check} das Hauptaugenmerk
+legen. \cmd{equery} liefert Zusatzinformationen zum
+Paketmanagement, und \cmd{glsa-check} %
+\index{glsa-check (Programm)}%
+ist für das Testen des eigenen Systems auf Sicherheitslücken ein
+unverzichtbares Werkzeug.
+
+\subsection{\label{equery}equery}
+
+\index{equery (Programm)|(}%
+\cmd{equery} ergänzt das Paketmanagement
+\index{Paketmanagement!ergänzen}%
+und liefert wichtige Paketinformationen, wie z.\,B.\ eine Liste der
+Dateien, %
+\index{Paket!Dateiliste}%
+\index{Paket!Inhalt}%
+die zu einem Paket gehören. Um die Ausgabe kurz zu halten, fragen wir
+an dieser Stelle einmal, welche Dateien das kleine Paket
+\cmd{sys-apps/which} %
+\index{which (Paket)}%
+%\index{sys-apps (Kategorie)!which|see{which (Paket)}}%
+installiert, und übergeben \cmd{equery} %
+\index{equery (Programm)}%
+die Aktion \cmd{files}, %
+\index{equery (Programm)!files (Option)}%
+gefolgt vom Paketnamen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery files sys-apps/which}
+[ Searching for packages matching sys-apps/which... ]
+* Contents of sys-apps/which-2.16:
+/usr
+/usr/bin
+/usr/bin/which
+/usr/share
+/usr/share/doc
+/usr/share/doc/which-2.16
+/usr/share/doc/which-2.16/AUTHORS.bz2
+/usr/share/doc/which-2.16/EXAMPLES.bz2
+/usr/share/doc/which-2.16/NEWS.bz2
+/usr/share/doc/which-2.16/README.alias.bz2
+/usr/share/doc/which-2.16/README.bz2
+/usr/share/info
+/usr/share/info/which.info.bz2
+/usr/share/man
+/usr/share/man/man1
+/usr/share/man/man1/which.1.bz2
+\end{ospcode}
+\index{equery (Programm)!files (Option)}%
+
+\index{Paket!Inhalt(}%
+Die Aktion \cmd{files}, kombiniert mit der Option
+\cmd{-{}-filter}, %
+\index{equery (Programm)!filter (Option)}%
+zeigt z.\,B., welche Tools das Paket
+\cmd{app-portage/gentoolkit} %
+\index{gentoolkit (Paket)}%
+%\index{app-portage (Kategorie)!gentoolkit|see{gentoolkit (Paket)}}%
+\index{Paket!Programme}%
+\index{Paket!ausführbare Dateien}%
+eigentlich installiert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery files --filter=cmd app-portage/gentoolkit}
+[ Searching for packages matching app-portage/gentoolkit... ]
+* Contents of app-portage/gentoolkit-0.2.3:
+/usr/bin/eclean
+/usr/bin/eclean-dist -> eclean
+/usr/bin/eclean-pkg -> eclean
+/usr/bin/equery
+/usr/bin/eread
+/usr/bin/euse
+/usr/bin/glsa-check
+/usr/bin/revdep-rebuild
+\end{ospcode}
+\index{equery (Programm)!filter (Option)!cmd (Option)}%
+
+Die Filter-Funktion erlaubt hier mit der Auswahl \cmd{cmd} die
+Selektion von Dateien, die innerhalb der Variablen \cmd{PATH} %
+\index{PATH (Variable)}%
+%\index{Variable!PATH|see{PATH Variable}}%
+liegen
+(also Dateien, die in einem der Verzeichnisse liegen, die das System
+nach ausführbaren Dateien durchsucht). Die Filter-Funktion bietet
+einige weitere Optionen, die die Man-Page beschreibt.
+\index{Paket!Inhalt|)}%
+
+Häufig stellt sich die Frage, welches Paket eigentlich welche Datei
+installiert hat. %
+\index{Datei!Paketzugehörigkeit}%
+\index{Programm!Paketzugehörigkeit}%
+Nutzt man z.\,B.\ das Tool \cmd{equery}, weiß aber eigentlich gar
+nicht, woher es stammt, kann man es selbst über die Aktion
+\cmd{belongs} %
+\index{equery (Programm)!belongs (Option)}%
+gefolgt vom Dateipfad befragen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{which equery}
+/usr/bin/equery
+\rprompt{\textasciitilde}\textbf{equery belongs `which equery`}
+[ Searching for file(s) /usr/bin/equery in *... ]
+app-portage/gentoolkit-0.2.3 (/usr/bin/equery)
+\end{ospcode}
+\index{which (Programm)}%
+\index{equery (Programm)!belongs (Option)}%
+
+Da eine Datei im Normalfall nur zu einem Paket gehört, ist es
+sinnvoll, die Aktion \cmd{belongs} mit der Option \cmd{-e} %
+\index{equery (Programm)!belongs (Option)}%
+zu versehen. \cmd{equery} %
+\index{equery (Programm)}%
+bricht dann ab, sobald es die erste
+Übereinstimmung gefunden hat, und wühlt sich nicht noch durch die
+übrige Paketliste.
+
+\index{Gentoo!Vergleich zu anderen Distributionen|(}%
+\index{Paket!-inhalt|(}%
+\index{Datei!Paketzugehörigkeit|(}%
+\index{Programm!Paket finden|(}%
+Gelegentlich findet sich in den Gentoo-Foren auch die Frage, in
+welchem Paket sich denn das Programm \cmd{xyz} %
+\index{Paket!-suche}%
+befindet. Mancher hat ein Programm auf einer anderen
+Linux-Variante lieb gewonnen, findet sich aber nicht gleich im
+Portage-Baum zurecht und würde gerne nach dem Dateinamen
+suchen, um  das passende Paket zu ermitteln.
+
+Unter Gentoo lassen sich -- im Gegensatz zu RPM-basierten
+Distributionen -- nicht installierte Pakete leider nicht durchsuchen. %
+\index{Paket!RPM}%
+\index{RPM}%
+\index{RPM!Inhalt}%
+Unter Gentoo wird jedes Paket %
+\index{Paket}%
+nur durch den Ebuild repräsentiert, und dieser ist schließlich kein
+gepacktes Archiv zu installierender Dateien, sondern eine allgemeine
+Installationsanweisung. Der Ebuild lädt das Quellpaket %
+\index{Quellarchiv}%
+selbst erst herunter, und die meisten Programmdateien erstellt Portage
+erst während des Kompilierens. Es kann bei diesem Verfahren folglich
+kein "`Vorwissen"' über die zu installierenden Dateien geben.
+
+Daher sind unter Gentoo gewisse Umwege notwendig:
+
+\begin{osplist}
+\item Kennt man das gesuchte Werkzeug von einer anderen
+  Linux-Distribution, sollte man überprüfen,
+  aus welchem Paket das Programm dort stammt. In vielen Fällen findet
+  man unter Gentoo ein Paket gleichen Namens.
+
+\item Die Suche im Internet sollte normalerweise den Weg zu dem
+  Software-Projekt weisen, das ein Programm mit dem gesuchten Namen
+  anbietet. Das passende Gentoo-Paket %
+  \index{Paket!-suche}%
+  sollte sich dann mit den in Kapitel \ref{chaptersearch}
+  beschriebenen Methoden finden lassen.
+
+\item Als letzter, wenn auch vielleicht nicht schnellster
+  Rettungsanker bietet sich eine Anfrage in einem Gentoo-Forum %
+%  \index{Gentoo!Forum|see{Forum}}%
+  \index{Forum}%
+  an.
+\end{osplist}
+
+\index{Datei!Paketzugehörigkeit|)}%
+\index{Programm!Paket finden|)}%
+\index{Paket!-inhalt|)}%
+\index{Gentoo!Vergleich zu anderen Distributionen|)}%
+
+Unter \ref{slots} wollten wir bereits prüfen,
+welche Versionen eines Paketes %
+\index{Paket!-version|)}%
+installiert sind. Auch wenn sich dazu die interne Portage-Datenbank
+unter \cmd{/var/db/pkg} %
+\index{pkg (Verzeichnis)}%
+\index{var@/var!db!pkg}%
+befragen lässt, bietet \cmd{equery list} %
+\index{equery (Programm)!list (Option)}%
+einen eleganteren Weg, der auch eine übersichtlichere Ausgabe
+produziert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery list sys-devel/automake}
+[ Searching for package 'automake' in 'sys-devel' among: ]
+ * installed packages
+[I--] [  ] sys-devel/automake-1.9.6-r2 (1.9)
+[I--] [  ] sys-devel/automake-1.10 (1.10)
+[I--] [  ] sys-devel/automake-wrapper-3-r1 (0)
+\end{ospcode}
+
+Das initiale \cmd{I} markiert, dass das entsprechende Paket
+installiert %
+\index{Paket!installiert}%
+ist. Erweitert man den Befehl um die Option \cmd{-p} %
+\index{equery (Programm)!p (Option)}%
+durchsucht \cmd{equery} %
+\index{equery (Programm)}%
+den kompletten Portage-Baum. Diese Operation
+ist jedoch ähnlich langsam wie \cmd{emerge -{}-search} %
+\index{emerge (Programm)!search (Option)}%
+\index{emerge (Programm)!search (Option)!Geschwindigkeit}%
+(siehe Kapitel \ref{emergesearch}), und wieder ist der Befehl
+\cmd{esearch} %
+\index{esearch (Programm)}%
+vorzuziehen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery list -p sys-devel/automake}
+[ Searching for package 'automake' in 'sys-devel' among: ]
+ * installed packages
+[I--] [  ] sys-devel/automake-1.9.6-r2 (1.9)
+[I--] [  ] sys-devel/automake-1.10 (1.10)
+[I--] [  ] sys-devel/automake-wrapper-3-r1 (0)
+ * Portage tree (/usr/portage)
+[-P-] [  ] sys-devel/automake-1.4_p6 (1.4)
+[-P-] [  ] sys-devel/automake-1.5 (1.5)
+[-P-] [  ] sys-devel/automake-1.6.3 (1.6)
+[-P-] [  ] sys-devel/automake-1.7.9-r1 (1.7)
+[-P-] [  ] sys-devel/automake-1.8.5-r3 (1.8)
+[-P-] [  ] sys-devel/automake-wrapper-1-r1 (0)
+[-P-] [  ] sys-devel/automake-wrapper-2-r1 (0)
+\end{ospcode}
+\index{equery (Programm)!p (Option)}%
+
+Der Output zeigt in knapper Form, dass die entsprechenden Pakete
+nicht installiert, sondern nur innerhalb von Portage definiert sind
+(fehlendes \cmd{I}, Markierung \cmd{P}). %
+\index{Paket!-version}%
+Einige  Ebuilds sind auch als instabil maskiert %
+\index{Paket!instabil}%
+(\cmd{M\textasciitilde}).
+
+Geht einmal der Speicherplatz %
+\index{Speicherplatz}%
+der Festplatte %
+\index{Festplatte}%
+%\index{Festplatte!Speicherplatz|see{Speicherplatz}}%
+zur Neige, stellt sich schnell die Frage, welche Pakete wie viel
+Platz %
+\index{Paket!Platzbedarf}%
+benötigen, um mögliche Kandidaten zum Löschen %
+\index{Paket!löschen}%
+zu identifizieren. %
+\index{Optimieren!Speicherplatz}%
+Die Antwort liefert der Aufruf \cmd{equery size}:% %
+\index{equery (Programm)!size (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery size net-www/apache}
+[ Searching for packages matching net-www/apache... ]
+* size of net-www/apache-2.0.58-r2
+           Total files : 492
+           Total size  : 2721.27 KiB
+\end{ospcode}
+\index{equery (Programm)!size (Option)}%
+
+Treten Probleme bei einer Software auf, die vorher völlig
+unproblematisch lief, könnte eine mögliche Ursache darin liegen, dass
+man unabsichtlich Dateien des zugehörigen Paketes modifiziert %
+\index{Paket!modifiziert}%
+\index{Paket!defekt}%
+hat. In dem Fall kann es helfen, das gesamte Paket neu zu installieren
+und damit die Dateien wieder in ihren Ursprungszustand zu versetzen.
+
+Portage speichert die Checksummen aller installierten Dateien %
+\index{Datei!Checksumme}%
+\index{Paket!Checksummen}%
+eines Paketes, und \cmd{equery} %
+\index{equery (Programm)}%
+kann problemlos prüfen, ob sich das
+Paket noch im Originalzustand befindet.
+
+Beschädigen wir einmal mutwillig das Paket \cmd{sys-apps/which} %
+\index{which (Paket)}%
+%\index{sys-apps (Kategorie)!which|see{which (Paket)}}%
+und sehen uns die Ausgabe von \cmd{equery check} %
+\index{equery (Programm)!check (Option)}%
+an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mv /usr/share/doc/which-2.16/AUTHORS.bz2 /tmp/}
+\rprompt{\textasciitilde}\textbf{mv /usr/share/doc/which-2.16/EXAMPLES.bz2 /tmp/}
+\rprompt{\textasciitilde}\textbf{echo "hello world" > /usr/share/doc/which-2.16/EXAMPLES.bz2}
+\rprompt{\textasciitilde}\textbf{equery check sys-apps/which}
+[ Checking sys-apps/which-2.16 ]
+!!! /usr/share/doc/which-2.16/EXAMPLES.bz2 has incorrect md5sum
+!!! /usr/share/doc/which-2.16/AUTHORS.bz2 does not exist
+ * 14 out of 16 files good
+\end{ospcode}
+\index{equery (Programm)!check (Option)}%
+\index{Paket!falsche Checksumme}%
+\index{Paket!fehlende Datei}%
+
+Entsprechend zeigt \cmd{equery} %
+\index{equery (Programm)}%
+die fehlende und die modifizierte
+Datei als verändert an.
+
+Wenn wir die Veränderungen rückgängig machen, beruhigt sich
+\cmd{equery} %
+\index{equery (Programm)}%
+wieder:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mv /tmp/EXAMPLES.bz2 /usr/share/doc/which-2.16/}
+\rprompt{\textasciitilde}\textbf{mv /tmp/AUTHORS.bz2 /usr/share/doc/which-2.16/}
+\rprompt{\textasciitilde}\textbf{equery check which}
+[ Checking sys-apps/which-2.16 ]
+ * 16 out of 16 files good
+\end{ospcode}
+\index{equery (Programm)!check (Option)}%
+
+\label{equeryuse}%
+\cmd{equery} bietet zudem einige paketorientierte Funktionen in Bezug
+auf USE-Flags. So lassen sich über \cmd{equery uses} %
+\index{equery (Programm)!uses (Option)}%
+die Flags anzeigen, die für ein bestimmtes Paket %
+\index{Paket!USE-Flags}%
+\index{USE-Flag}%
+gerade aktiviert sind, bzw.\ die Flags, mit denen wir das Paket
+installiert haben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery uses net-www/apache}
+[ Searching for packages matching net-www/apache... ]
+[ Colour Code : set unset ]
+[ Legend : Left column  (U) - USE flags from make.conf              ]
+[        : Right column (I) - USE flags packages was installed with ]
+[ Found these USE variables for net-www/apache-2.0.58-r2 ]
+ U I
+ + + apache2        : Chooses Apache2 support when a package supports bo
+th Apache1 and Apache2
+ - - debug          : Enable extra debug codepaths, like asserts and ext
+ra output. If you want to get meaningful backtraces see http://www.gento
+o.org/proj/en/qa/backtraces.xml .
+ - - doc            : Adds extra documentation (API, Javadoc, etc)
+ + + ldap           : Adds LDAP support (Lightweight Directory Access Pr
+otocol)
+ - - mpm-itk        : (experimental) Itk MPM - child processes have sepe
+rate user/group ids
+ - - mpm-leader     : (experimental) Leader MPM - leaders/followers vari
+ent of worker MPM
+ - - mpm-peruser    : (experimental) Peruser MPM - child processes have 
+seperate user/group ids
+ + - mpm-prefork    : Prefork MPM - non-threaded, forking MPM - similiar
+ manner to Apache 1.3
+ - - mpm-threadpool : (experimental) Threadpool MPM - keeps pool of idle
+ threads to handle requests
+ + - mpm-worker     : Worker MPM - hybrid multi-process multi-thread MPM
+ - - selinux        : !!internal use only!! Security Enhanced Linux supp
+ort, this must be set by the selinux profile or breakage will occur
+ + + ssl            : Adds support for Secure Socket Layer connections
+ - - static-modules : Build modules into apache instead of having them l
+oad at run time
+ + - threads        : Adds threads support for various packages. Usually
+ pthreads
+\end{ospcode}
+
+Möchte man ein USE-Flag systemweit aktivieren oder deaktivieren, %
+\index{USE-Flag!global}%
+sollte man sich zuvor informieren, auf welche installierten Pakete
+dies überhaupt Einfluss haben kann. Diese Funktionalität bietet
+\cmd{equery hasuse}:% %
+\index{equery (Programm)!hasuse (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery hasuse ssl}
+[ Searching for USE flag ssl in all categories among: ]
+ * installed packages
+[I--] [  ] dev-lang/python-2.4.3-r4 (2.4)
+[I--] [  ] mail-mta/ssmtp-2.61-r2 (0)
+[I--] [  ] net-nds/openldap-2.3.30-r2 (0)
+[I--] [  ] dev-db/mysql-5.0.26-r2 (0)
+[I--] [  ] net-misc/wget-1.10.2 (0)
+[I--] [  ] net-www/apache-2.0.58-r2 (2)
+\end{ospcode}
+%\index{USE-Flag!ssl|see{ssl (USE-Flag)}}%
+\index{ssl (USE-Flag)}%
+\index{equery (Programm)!hasuse (Option)}%
+
+Dieser Test gilt allerdings nur für tatsächlich installierte Pakete
+und zeigt nicht sämtliche Pakete im Portage-Baum an,
+die das angegebene USE-Flag unterstützen. %
+\index{Paket!USE-Flag}%
+\index{USE-Flag!suchen}%
+Dafür lässt sich die Aktion \cmd{hasuse} wieder mit der Option
+\cmd{-p} %
+\index{equery (Programm)!p (Option)}%
+versehen, wodurch \cmd{equery} %
+\index{equery (Programm)}%
+den gesamten Portage-Baum nach
+USE-Flags
+\index{USE-Flag}%
+durchsucht, was aber die Operation stark
+verlangsamt. Für eine beschleunigte Variante, siehe Kapitel
+\ref{quse}.
+
+\label{preventrevdepbreak}%
+Um Situationen vorzubeugen, in denen wir, wie in Kapitel
+\ref{revdeprebuild} beschrieben, %
+\index{revdep-rebuild (Programm)}%
+Pakete beschädigen, indem wir eine wichtige Bibliothek neu
+installieren, können wir bei entsprechenden Änderungen im Voraus
+überprüfen, welche Pakete überhaupt von der Bibliothek abhängen %
+\index{Paket!-abhängigkeiten}%
+und so in Mitleidenschaft gezogen werden könnten. Hier hilft die
+Aktion \cmd{depends} %
+\index{equery (Programm)!depends (Option)}%
+des Befehls \cmd{equery}:% %
+\index{equery (Programm)}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery depends dev-libs/openssl}
+[ Searching for packages depending on dev-libs/openssl... ]
+app-misc/ca-certificates-20061027.2 (dev-libs/openssl)
+dev-db/mysql-5.0.26-r2 (ssl? >=dev-libs/openssl-0.9.6d)
+dev-lang/python-2.4.3-r4 (!build & ssl? dev-libs/openssl)
+mail-mta/ssmtp-2.61-r2 (ssl? dev-libs/openssl)
+net-misc/openssh-4.5_p1-r1 (>=dev-libs/openssl-0.9.6d)
+net-misc/wget-1.10.2 (ssl? >=dev-libs/openssl-0.9.6b)
+net-nds/openldap-2.3.30-r2 (!minimal & samba? dev-libs/openssl)
+                           (!minimal&smbkrb5passwd? dev-libs/openssl)
+                           (ssl? dev-libs/openssl)
+net-www/apache-2.0.58-r2 (ssl? dev-libs/openssl)
+\end{ospcode}
+\index{equery (Programm)!depends (Option)}%
+
+Wir bekommen alle derzeit installierten Pakete genannt, die von
+OpenSSL abhängen. %
+\index{Paket!-abhängigkeiten}%
+Entsprechende Checks sind auch dann sinnvoll, wenn man ein Paket aus
+dem System entfernen möchte %
+\index{Paket!entfernen}%
+und nicht sicher ist, ob man damit andere
+Pakete beschädigt. %
+\index{Paket!beschädigen}%
+
+
+Umgekehrt lassen sich die Abhängigkeiten %
+\index{Paket!-abhängigkeiten}%
+eines Paketes über die Aktion \cmd{depgraph} %
+\index{equery (Programm)!depgraph (Option)}%
+ausgeben. Wir limitieren hier die Ausgabe etwas, indem wir \cmd{grep}
+verwenden, %
+\index{grep (Programm)}%
+um einige überflüssige Informationen zu verstecken:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{equery depgraph -U sys-apps/which | grep -v "^{\textbackslash}["}
+sys-apps/which-2.16:
+`-- sys-apps/which-2.16
+ `-- sys-apps/texinfo-4.8-r5
+  `-- sys-libs/ncurses-5.5-r3
+   `-- sys-libs/gpm-1.20.1-r5
+  `-- virtual/libintl-0 (virtual/libintl)
+   `-- sys-devel/gettext-0.16.1
+    `-- virtual/libiconv-0 (virtual/libiconv)
+    `-- dev-libs/expat-1.95.8
+\end{ospcode}
+\index{equery (Programm)!depgraph (Option)}%
+
+\label{equeryspeed}%
+Damit haben wir die Funktionalität von \cmd{equery} %
+\index{equery (Programm)}%
+ausreichend beschrieben. Es bleibt noch anzumerken, dass dieses Skript
+auch einen Nachteil hat: Es ist bei manchen Operationen leider recht
+langsam. %
+\index{equery (Programm)!Geschwindigkeit}%
+Das hat einige Entwickler so sehr gestört, dass sie einen Teil der
+Funktionen von \cmd{equery} %
+\index{equery (Programm)}%
+in C %
+\index{C}%
+neu geschrieben haben. Dieses sehr schnelle Set an Programmen ist mit
+dem Paket \cmd{app-portage/portage-utils} %
+\index{portage-utils (Paket)}%
+%\index{app-portage (Kategorie)!portage-utils|see{portage-utils    (Paket)}}%
+\index{portage-utils (Paket)!Geschwindigkeit}%
+erhältlich. Wir besprechen es etwas weiter unten in Abschnitt
+\ref{portageutils}.% %
+\index{equery (Programm)|)}%
+
+\subsection{Gentoo-Sicherheit und glsa-check}
+
+\index{Sicherheit|(}%
+Das zweite wichtige Werkzeug des Paketes \cmd{app-portage/gentoolkit},
+das wir hier besprechen wollen heißt \cmd{glsa-check} und fokussiert
+sich auf die Sicherheit unseres Systems.
+
+Für die Sicherheit der Distribution ist das \emph{Gentoo Linux
+  Security Project} -- ein eigenes Gentoo-Unterprojekt -- zuständig.
+Erster Anlaufpunkt in Bezug auf Sicherheitsfragen ist die
+Projektseite.\footnote{\cmd{http://www.gentoo.org/proj/en/security/}}
+Die Hauptaufgabe des Teams besteht darin, Sicherheitsprobleme %
+\index{Sicherheit!Problem}%
+möglichst zeitnah zu beurteilen und eventuell ein sogenanntes
+\emph{Gentoo Linux Security Advisory} (GLSA) herauszugeben.
+
+\subsubsection{Gentoo Linux Security Advisories}
+
+\index{GLSA|(}%
+%\index{Gentoo Linux Security Advisories|see{GLSA}}%
+Ein GLSA beschreibt das Problem, die betroffenen Software-Versionen,
+die möglichen Auswirkungen und vor allem auch die notwendigen
+Aktionen, um das Problem %
+\index{Sicherheit!Problem}%
+zu beseitigen. Sie stellen damit die wichtigste Informationsquelle
+dar, wenn man an einem sicheren System interessiert ist.
+
+GLSAs können über die Mailing-Liste %
+\index{Mailingliste}%
+\cmd{gentoo-announce}\footnote{\cmd{http://www.gentoo.org/main/en/lists.xml}} %
+\index{gentoo-announce (Mailingliste)}%
+bezogen werden und stehen auch als RSS-Feed %
+\index{RSS}%
+zur
+Verfügung.\footnote{\cmd{http://www.gentoo.org/rdf/en/glsa-index.rdf}}
+Eine vollständige und kontinuierlich aktualisierte Liste %
+\index{GLSA!Liste}%
+an GLSAs gibt es
+ebenfalls.\footnote{\cmd{http://www.gentoo.org/security/en/glsa/index.xml}}
+
+Natürlich ist Sicherheit für jede Distribution ein essentielles
+Thema. Die aktive Verfolgung von Sicherheitslücken kostet aber auch
+eine nicht unerhebliche Menge Zeit. Um das Sicherheitsteam %
+\index{Sicherheit!-steam}%
+also nicht über Gebühr zu belasten, wird nicht gleich jede
+Rechnerarchitektur %
+und jeder Ebuild gleichermaßen betreut.
+
+Die derzeit gültigen Richtlinien für das Sicherheitsteam %
+\index{Sicherheit!-steam}%
+finden sich auf der
+Webseite.\footnote{\cmd{http://www.gentoo.org/security/en/vulnerability-policy.xml}}
+Wir wollen hier nur die wichtigsten Aspekte beleuchten.
+
+Derzeit werden folgende Architekturen unterstützt:
+
+\begin{osplist}
+\item \cmd{x86} %
+\index{x86 (Architektur)}%
+\item \cmd{ppc} %
+\index{ppc (Architektur)}%
+\item \cmd{sparc} %
+\index{sparc (Architektur)}%
+\item \cmd{amd64} %
+\index{amd64 (Architektur)}%
+\item \cmd{alpha} %
+\index{alpha (Architektur)}%
+\item \cmd{ppc64} %
+\index{ppc64 (Architektur)}%
+\item \cmd{hppa} %
+\index{hppa (Architektur)}%
+\end{osplist}
+
+Es ist allerdings nicht so, dass Architekturen %
+\index{Architektur}%
+wie \cmd{arm} %
+\index{arm (Architektur)}%
+oder \cmd{mips}, %
+\index{mips (Architektur)}%
+die in dieser Liste nicht aufgeführt sind, keinerlei
+Sicherheitsupdates %
+\index{Sicherheit!-supdates}%
+erfahren würden. Ein Paketupdate auf den unterstützten Architekturen
+führt natürlich auch zu einem Update auf den Architekturen, die
+offiziell nicht vom Sicherheitsteam %
+\index{Sicherheit!-steam}%
+unterstützt werden.
+
+Allerdings bestünde für das Sicherheitsteam z.\,B.\ keine
+Verpflichtung, ein GLSA herauszugeben, wenn es eine
+\cmd{mips}-spezifische %
+\index{mips (Architektur)}%
+Sicherheitslücke gäbe. Auf diesen Architekturen ist man also selbst
+stärker in der Pflicht, sich um die Sicherheit zu kümmern.
+
+In Bezug auf die einzelnen Ebuilds ist das entscheidende Kriterium, ob
+der Ebuild als stabil %
+\index{Paket!stabil}%
+markiert ist oder nicht.
+\label{instablesec}%
+Wenn ein Paket auf keiner Architektur als stabil markiert ist oder
+keine als stabil markierte Version von der Sicherheitslücke betroffen
+ist, wird \emph{kein} GLSA herausgegeben. Damit ist der Benutzer für
+die Sicherheit jedes einzelnen instabilen %
+\index{Paket!instabil}%
+Paketes, das er installiert, selbst verantwortlich. Ein nicht ganz
+unwichtiger Aspekt, den man bedenken sollte, bevor man eine instabile
+Version wählt.
+
+Gibt es stabile Versionen, dann richtet sich die zu erwartende
+Reaktionszeit %
+\index{Sicherheit!Reaktionszeit}%
+im Wesentlichen nach der Schwere der Sicherheitslücke und der Zahl der
+Nutzer eines Paketes. Bei weit verbreiteten Paketen wird für kritische
+Probleme, über die ein externer Angreifer z.\,B.\ \cmd{root}-Rechte
+erhalten könnte, ein Zeitrahmen von ein bis drei Tagen %
+\index{Sicherheit!Reaktionszeit, minimal}%
+vorgegeben. Diese Art von Fehlern sind glücklicherweise sehr selten.
+
+Die maximale Reaktionszeit %
+\index{Sicherheit!Reaktionszeit, maximal}%
+bei wenig verbreiteten Paketen und geringfügigen Sicherheitsproblemen
+(z.\,B.\ \emph{Cross Site Scripting} %
+\index{Cross Site Scripting (XSS)}%
+bei Web-Anwendungen) liegt bei 40 Tagen.  Bei diesen
+weniger relevanten Fällen ist das Sicherheitsteam auch nicht
+verpflichtet, ein GLSA herauszugeben. Im Normalfall wird unter den
+Mitgliedern des Teams abgestimmt, ob sie es für erforderlich halten
+oder nicht.
+
+Kommen wir jetzt zu einem Werkzeug, das unser Sicherheitsmanagement
+sehr vereinfacht, indem es uns erlaubt, unser System automatisch auf
+die veröffentlichen GLSAs hin zu überprüfen.
+
+\subsubsection{\label{glsa-check}glsa-check}
+
+\index{glsa-check (Programm)|(}%
+\cmd{glsa-check} überprüft unser System automatisiert auf unsichere
+Pakete und ist damit ein unverzichtbares Skript, um das System sicher
+zu halten. Es erlaubt die schnelle Identifizierung aller Pakete mit
+Sicherheitslücken. %
+\index{Sicherheit!-slücken suchen}%
+Diese Sichertsheitsinformationen sind für den Systemadministrator %
+\index{System!-administrator}%
+essentiell, da sie die Pakete definieren, die in jedem Fall ein Update
+erfahren sollten, um die Wahrscheinlichkeit für einen erfolgreichen
+Angriff %
+\index{Angriff}%
+von außen so gering wie möglich zu halten.
+
+Der Befehl \cmd{glsa-check -{}-list} %
+\index{glsa-check (Programm)!list (Option)}%
+gleicht jedes herausgegebene GLSA mit den auf dem System installierten
+Paketen ab und listet alle Advisories mit einem entsprechenden Code
+(\cmd{[U]}: nicht betroffen, \cmd{[N]}: betroffen). Auf folgende Weise
+lassen sich alle Pakete mit Sicherheitsproblemen und deren
+Kurzzusammenfassung anzeigen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check --list | grep "{\textbackslash}[N{\textbackslash}]"}
+[A] means this GLSA was already applied,
+[U] means the system is not affected and
+[N] indicates that the system might be affected.
+
+200611-06 [N] OpenSSH: Multiple Denial of Service vulnerabilities ( net-
+misc/openssh )
+200609-13 [N] gzip: Multiple vulnerabilities ( app-arch/gzip )
+200609-17 [N] OpenSSH: Denial of Service ( net-misc/openssh )
+200610-07 [N] Python: Buffer Overflow ( dev-lang/python )
+\end{ospcode}
+
+Die gleiche Information, aber reduziert auf die ID der GLSA, liefert
+\cmd{glsa"=check} mit der Kombination \cmd{glsa-check -{}-test all} %
+\index{glsa-check (Programm)!test (Option)}%
+(bzw.\ \cmd{-t all}).% %
+\index{glsa-check (Programm)!test (Option)}%
+%\index{glsa-check (Programm)!t|see{glsa-check (Programm), test (Option)}}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check -t all}
+This system is affected by the following GLSAs:
+200611-06
+200609-13
+200609-17
+200610-07
+\end{ospcode}
+
+Um detailliertere Informationen zu einem Problem zu bekommen, lässt
+sich \cmd{glsa"=check} mit der Option \cmd{-{}-dump} %
+\index{glsa-check (Programm)!dump (Option)}%
+verwenden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check --dump 200610-07}
+                  GLSA 200610-07: 
+Python: Buffer Overflow                  
+=========================================================================
+Synopsis:          A buffer overflow in Python's "repr()" function can be
+                   exploited to cause a Denial of Service and potentially
+                   allows the execution of arbitrary code.
+Announced on:      October 17, 2006
+Last revised on:   October 17, 2006: 02
+
+Affected package:  dev-lang/python
+Affected archs:    All
+Vulnerable:        <2.4.3-r4
+Unaffected:        >=2.4.3-r4 >=~2.3.5-r3
+
+
+Related bugs:      149065
+
+Background:        Python is an interpreted, interactive, 
+                   object-oriented, cross-platform programming language.
+                   
+Description:       Benjamin C. Wiley Sittler discovered a buffer overflow 
+                   in Python's "repr()" function when handling 
+                   UTF-32/UCS-4 encoded strings.
+                   
+Impact:            If a Python application processes attacker-supplied 
+                   data with the "repr()" function, this could  
+                   potentially lead to the execution of arbitrary code  
+                   with the privileges of the affected application or a  
+                   Denial of Service.
+                   
+Workaround:        There is no known workaround at this time.
+                   
+Resolution:        All Python users should update to the latest version:
+                   
+                   # emerge --sync
+                   # emerge --ask --oneshot --verbose
+                   ">=dev-lang/python-2.4.3-r4"
+
+References:       
+                   CVE-2006-4980: http://cve.mitre.org/cgi-bin/cvename.c
+gi?name=CVE-2006-4980
+\end{ospcode}
+
+\cmd{glsa-check} ist in der Lage, aus einer GLSA die notwendigen
+Schritte für das Absichern des Systems %
+\index{System!Absichern}%
+abzuleiten und automatisch durchzuführen. In einem ersten Schritt
+sollte man sich die vorgeschlagenen Aktionen mit der
+\cmd{-{}-pretend}-Option %
+\index{glsa-check (Programm)!pretend (Option)}%
+(bzw.\ \cmd{-p}) %
+\index{glsa-check (Programm)!pretend (Option)}%
+%\index{glsa-check (Programm)!p (Option)|see{glsa-check    (Programm), pretend (Option)}}%
+anzeigen lassen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check -p \$(glsa-check -t all)}
+This system is affected by the following GLSAs:
+Checking GLSA 200611-06
+The following updates will be performed for this GLSA:
+     net-misc/openssh-4.4_p1-r6 (4.3_p2-r1)
+
+Checking GLSA 200609-13
+The following updates will be performed for this GLSA:
+     app-arch/gzip-1.3.5-r9 (1.3.5-r8)
+
+Checking GLSA 200609-17
+The following updates will be performed for this GLSA:
+     net-misc/openssh-4.3_p2-r5 (4.3_p2-r1)
+
+Checking GLSA 200610-07
+The following updates will be performed for this GLSA:
+     dev-lang/python-2.4.3-r4 (2.4.3-r1)
+\end{ospcode}
+
+Und schließlich werden die Korrekturen mit \cmd{-{}-fix}
+(bzw. \cmd{-f}) durchgeführt.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{glsa-check -f \$(glsa-check -t all)}
+\end{ospcode}
+
+Im Wesentlichen geht es darum, automatisch \cmd{emerge} %
+\index{emerge (Programm)}%
+aufzurufen. So gerüstet, sollte es deutlich einfacher sein, das eigene
+System sicher zu halten.% %
+\index{Sicherheit|)}%
+\index{GLSA|)}%
+\index{glsa-check (Programm)|)}%
+
+\subsection{\label{eclean}eclean}
+
+\index{Optimieren!Speicherplatz|(}%
+\index{Festplatte!Speicherplatz|(}%
+\index{Aufräumen|(}%
+\index{eclean (Programm)|(}%
+Kommen wir zu den beiden Skripten \cmd{eclean} %
+\index{eclean (Programm)}%
+und
+\cmd{eread}. %
+\index{eread (Programm)}%
+Das erste hilft dabei, das eigene System aufzuräumen.
+
+Wie bereits unter \ref{spacedistfiles} angesprochen, hat das
+Verzeichnis \cmd{/usr/portage/""distfiles} %
+\index{distfiles (Verzeichnis)}%
+\index{usr@/usr!portage!distfiles}%
+(bzw.\ der Pfad in \cmd{DISTDIR} %
+\index{DISTDIR (Variable)}%
+%\index{Variable!DISTDIR|see{DISTDIR Variable}}%
+in der Datei \cmd{/etc/make.conf}) %
+\index{make.conf (Datei)}%
+\index{etc@/etc!make.conf}%
+die Tendenz, im Leben eines Gentoo-Systems deutlich anzuwachsen.
+Einige der dort abgelegten Quellarchive
+\index{Quellarchiv}%
+\index{Paket!Quellcode}%
+haben einen beachtlichen Umfang, und vor allem bei Desktop-Systemen
+können durch \cmd{DISTDIR} %
+\index{DISTDIR (Variable)}%
+%\index{Variable!DISTDIR|see{DISTDIR Variable}}%
+einige Gigabyte Speicherplatz verloren
+gehen.
+
+Es gibt mehrere Varianten, diesen Speicherplatz %
+\index{Speicherplatz}%
+zu sparen. Die sicherlich einfachste besteht darin, das Verzeichnis in
+regelmäßigen Abständen zu leeren. Die wohl radikalste -- die Sie
+an dieser Stelle nicht durchführen sollten -- ist folgende:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{rm /usr/portage/distfiles/*}
+\end{ospcode}
+
+Damit reduziert man den Speicherverbrauch deutlich, zwingt Portage
+jedoch auch dazu, bei jedem \cmd{emerge}-Vorgang %
+\index{emerge (Programm)}%
+die Quellen erneut
+herunterzuladen. %
+\index{Quellarchiv!herunterladen}%
+Wer die höhere Belastung des Netzwerks vermeiden möchte, verwendet
+\cmd{eclean} %
+\index{eclean (Programm)}%
+für einen Mittelweg.
+
+\cmd{eclean} identifiziert im Standard-Modus all jene Quellarchive, zu
+denen es keinen passenden Ebuild mehr im Portage-Baum gibt, %
+\index{Quellarchiv!alt}%
+und löscht diese veralteten Pakete.
+
+Um sich in einem ersten Schritt die Dateien anzeigen zu lassen, die
+\cmd{eclean} %
+\index{eclean (Programm)}%
+entfernen würde, lassen wir das Skript, wie bei den
+meisten Portage-Tools, mit der Option \cmd{-{}-pretend} %
+\index{eclean (Programm)!pretend (Option)}%
+(bzw.\ \cmd{-p}) %
+%\index{eclean (Programm)!p (Option)|see{eclean (Programm), pretend    (Option)}}%
+laufen und geben mit \cmd{distfiles} %
+\index{eclean (Programm)!distfiles (Option)}%
+an, dass wir uns um die Dateien im \cmd{DISTDIR} %
+\index{DISTDIR (Variable)}%
+%\index{Variable!DISTDIR|see{DISTDIR Variable}}%
+kümmern
+möchten. Abhängig von der Zahl der zu überprüfenden Dateien kann
+dieser Vorgang eine Weile dauern und zeigt dann zuletzt die Menge
+Speicherplatz, die eingespart %
+\index{Festplatte!Speicherplatz sparen}%
+würde. Wir zeigen hier das Listing von einem anderen System, das schon
+etwas länger unter Gentoo arbeitet und ein paar alte Quellarchive
+angesammelt hat:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eclean -p distfiles}
+ * Building file list for distfiles cleaning...
+ * Here are distfiles that would be deleted:
+ [    0L B ] .keep
+ [   3.9 K ] 01-add-2.6-devfs-and-sysfs-to-lirc_dev.patch
+ [  63.4 K ] 20021129-cvs.diff.bz2
+ [   2.6 K ] 3qe-1.0.tar.bz2
+ [  37.4 M ] AdobeReader_enu-7.0.1-1.i386.rpm
+...
+ [ 180.6 K ] zina-0.12.10.tar.gz
+ [ 363.0 K ] zlib-1.2.2.tar.bz2
+ [  21.6 K ] zoo-2.10-gcc33-issues-fix.patch
+ [ 510.2 K ] zvbi-0.2.4.tar.bz2
+ * Total space that would be freed in distfiles directory: 2.0 G
+\end{ospcode}
+\index{eclean (Programm)!pretend (Option)}%
+\index{eclean (Programm)!distfiles (Option)}%
+
+Der zweite Lauf ohne die Option \cmd{-{}-pretend} %
+\index{eclean (Programm)!pretend (Option)}%
+räumt das System auf. Die dabei entfernten Quellarchive
+sind in jedem Fall überflüssiger Ballast, da es keinen Ebuild mehr
+gibt, der diese Quellen je benutzen würde.
+
+Wem der so gewonnene Speicherplatz nicht genügt, der kann \cmd{eclean}
+auch %
+\index{eclean (Programm)}%
+mit der Option \cmd{-{}-destructive} %
+\index{eclean (Programm)!destructive (Option)}%
+(bzw.\ \cmd{-d}) %
+%\index{eclean (Programm)!d (Option)|see{eclean (Programm), destructive    (Option)}}%
+aufrufen. In diesem Fall erhält \cmd{eclean} nur die Quellarchive, die
+zu aktuell installierten Paketen gehören. %
+\index{Quellarchiv!alt}%
+Damit ist Portage beim Downgrade eines Paketes gezwungen, das
+Quellpaket erneut herunterzuladen. Da dieses Ereignis nicht zu häufig
+eintritt, erhöht der Verlust dieser Quellarchive die Netzlast im
+Normalfall nur minimal.
+
+Wie sich das Aufräumen automatisieren lässt, erläutern wir im Kontext
+von \cmd{cron} im Kapitel \ref{dailyclean}.
+\index{Optimieren!Speicherplatz|)}%
+\index{Festplatte!Speicherplatz|)}%
+\index{Aufräumen|)}%
+\index{eclean (Programm)|)}%
+
+\subsection{\label{eclean}eread}
+
+\index{eread (Programm)|(}%
+\index{Portage!Logs lesen|(}%
+Damit bleibt noch das kleine Werkzeug \cmd{eread} vorzustellen, %
+\index{eread (Programm)}%
+das dem Auswerten von
+Portage-Log-Dateien %
+dient. Dafür ist es allerdings notwendig (wie in Kapitel \ref{logging}
+beschrieben), \cmd{PORT\_LOGDIR} %
+\index{PORT\_LOGDIR (Variable)}%
+%\index{Variable!PORT\_LOGDIR|see{PORT\_LOGDIR Variable}}%
+zu definieren und unter
+\cmd{PORTAGE\_ELOG\_SYSTEM} %
+\index{PORTAGE\_ELOG\_SYSTEM (Variable)}%
+%\index{Variable!PORTAGE\_ELOG\_SYSTEM|see{PORTAGE\_ELOG\_SYSTEM Variable}}%
+den Wert \cmd{save} hinzuzufügen.
+
+Die Installationsmeldungen eines jeden Paketes speichert
+\cmd{emerge} %
+\index{emerge (Programm)}%
+dann in \cmd{\$PORT\_LOGDIR/elog}, %
+\index{elog (Verzeichnis)}%
+und wir können sie mit \cmd{eread} %
+\index{eread (Programm)}%
+lesen bzw.\ verwalten.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{grep "PORT.*LOG" /etc/make.conf}
+PORT_LOGDIR="/var/log/portage"
+PORTAGE_ELOG_SYSTEM="save_summary save"
+\rprompt{\textasciitilde}\textbf{emerge app-portage/gentoolkit}
+\ldots
+\rprompt{\textasciitilde}\textbf{eread}
+
+This is a list of portage log items. Choose a number to view that file o
+r type q to quit.
+
+1) summary.log
+2) app-portage:gentoolkit-0.2.3:20080131-071004.log
+Choice? \cmdvar{2}
+LOG: postinst
+
+Another alternative to qpkg and equery are the q applets in
+app-portage/portage-utils
+
+
+WARN: postinst
+The qpkg and etcat tools are deprecated in favor of equery and
+are no longer installed in /usr/bin in this release.
+They are still available in /usr/share/doc/gentoolkit-0.2.3/deprecated/
+if you *really* want to use them.
+
+app-portage:gentoolkit-0.2.3:20080131-071004.log lines 1-12/12 (END) \cmdvar{q}
+Delete file? [y/N] \cmdvar{y}
+Deleted app-portage:gentoolkit-0.2.3:20080131-071004.log
+
+This is a list of portage log items. Choose a number to view that file o
+r type q to quit.
+
+1) summary.log
+Choice? \cmdvar{q}
+Quitting
+\end{ospcode}
+
+Hier die Log-Information der Installation von
+\cmd{app-portage/gentoolkit}. %
+\index{gentoolkit (Paket)}%
+%\index{app-portage (Kategorie)!gentoolkit|see{gentoolkit (Paket)}}%
+Nach der Auswahl der Log-Datei mit
+\cmd{[1]} befinden wir uns im Viewer-Programm \cmd{less} %
+\index{less (Programm)}%
+und verlassen
+den Modus mit \cmd{[Q]} wieder. \cmd{eread} %
+\index{eread (Programm)}%
+fragt uns dann, ob wir die
+Datei behalten oder löschen möchten. Da sie keine interessanten
+Informationen enthält, löschen %
+\index{Portage!Logs löschen}%
+wir sie mit \cmd{[Y]} und verlassen das Programm anschließend mit
+\cmd{[Q]}.% %
+\index{Portage!Logs lesen|)}%
+\index{eread (Programm)|)}%
+\index{gentoolkit (Paket)|)}%
+
+\section{\label{portageutils}Das Paket app-portage/portage-utils}
+\index{portage-utils (Paket)}%
+%\index{app-portage (Kategorie)!portage-utils|see{portage-utils (Paket)}}%
+
+\index{portage-utils (Paket)|(}%
+Wir haben uns weiter oben ausführlich mit \cmd{equery} %
+\index{equery (Programm)}%
+beschäftigt und
+festgestellt, dass dieses Skript bei
+manchen Operationen nicht eben schnell ist.
+
+\cmd{app-portage/portage-utils} %
+\index{portage-utils (Paket)}%
+%\index{app-portage (Kategorie)!portage-utils|see{portage-utils    (Paket)}}%
+liefert einige kleine Werkzeuge, die in C %
+\index{C}%
+geschriebene, beschleunigte Varianten mancher Funktionen von
+\cmd{equery} bereitstellen. %
+\index{equery (Programm)}%
+Das Paket ist nicht dazu gedacht, \cmd{equery} %
+\index{equery (Programm)}%
+zu ersetzen, sondern legt bei reduziertem Funktionsumfang Wert auf
+deutlich höhere Geschwindigkeit. Damit sind die Tools aus diesem Paket
+ideal für die Verwendung in eigenen Skripten.
+
+\cmd{qlist} %
+\index{qlist (Programm)}%
+\index{Paket!Dateiliste}%
+\index{Paket!Inhalt}%
+ist z.\,B.\ der Ersatz für \cmd{equery files}, %
+\index{equery (Programm)!files (Option)}%
+liefert allerdings keine eigene Filterfunktion. %
+\index{Paket!Inhalt}%
+Um zu erfahren, welche Werkzeuge das Paket installiert, kombinieren
+wir den \cmd{qlist} %
+\index{qlist (Programm)}%
+Aufruf mit dem \cmd{grep}-Befehl:% %
+\index{grep (Programm)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlist app-portage/portage-utils | grep /usr/bin}
+/usr/bin/q
+/usr/bin/qpkg
+/usr/bin/qmerge
+/usr/bin/qpy
+/usr/bin/quse
+/usr/bin/qdepends
+/usr/bin/qlop
+/usr/bin/qlist
+/usr/bin/qfile
+/usr/bin/qatom
+/usr/bin/qcheck
+/usr/bin/qtbz2
+/usr/bin/qgrep
+/usr/bin/qsearch
+/usr/bin/qglsa
+/usr/bin/qxpak
+/usr/bin/qsize
+/usr/bin/qcache
+\end{ospcode}
+\index{qlist (Programm)}%
+\index{grep (Programm)}%
+
+Nicht alle diese Werkzeuge sind für den täglichen Gebrauch gedacht,
+aber auf die wichtigsten wollen wir kurz eingehen.
+
+\cmd{qfile} %
+\index{qfile (Programm)}%
+ist z.\,B.\ ein flinker Ersatz für \cmd{equery belongs}:% %
+\index{Datei!Paketzugehörigkeit}%
+\index{equery (Programm)!belongs (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qfile /usr/bin/qfile}
+app-portage/portage-utils (/usr/bin/qfile)
+\end{ospcode}
+
+\label{quse}
+\cmd{quse} %
+\index{quse (Programm)}%
+führt den mit \cmd{equery hasuse -p foo} %
+\index{equery (Programm)!p (Option)}%
+\index{Paket!USE-Flags}%
+\index{USE-Flag}%
+vergleichbaren Suchvorgang deutlich schneller durch, bietet dafür aber
+auch nur diese Funktionalität und beschränkt sich nicht auf die
+installierten Pakete.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{quse ssl}
+use: Updating ebuild cache ... 
+use: Finished 22852 entries in 127.489846 seconds
+app-admin/conserver/conserver-8.1.14.ebuild pam ssl tcpd debug 
+app-admin/gkrellm/gkrellm-2.2.10.ebuild gnutls lm_sensors nls ssl X 
+app-admin/gkrellm/gkrellm-2.2.5.ebuild X nls ssl 
+app-admin/gkrellm/gkrellm-2.2.9-r1.ebuild gnutls nls ssl X 
+\ldots
+www-servers/webfs/webfs-1.20.ebuild ssl 
+www-servers/webfs/webfs-1.21.ebuild ssl threads 
+x11-misc/qterm/qterm-0.4.0.ebuild arts esd ssl 
+x11-misc/x11vnc/x11vnc-0.8.2-r1.ebuild jpeg zlib threads ssl crypt v4l x
+inerama 
+x11-misc/x11vnc/x11vnc-0.8.3.ebuild jpeg zlib threads ssl crypt v4l xine
+rama 
+x11-misc/x11vnc/x11vnc-0.8.4.ebuild jpeg zlib threads ssl crypt v4l xine
+rama 
+xfce-extra/xfce4-mailwatch/xfce4-mailwatch-1.0.1.ebuild ssl 
+\end{ospcode}
+\index{quse (Programm)}%
+%\index{USE-Flag!ssl|see{ssl (USE-Flag)}}%
+\index{ssl (USE-Flag)}%
+
+\label{qsearch}%
+\cmd{qsearch} %
+\index{qsearch (Programm)}%
+erlaubt es, nach bestimmten Zeichenketten in den
+Paketnamen %
+\index{Paket!suchen}%
+zu suchen, und entspricht damit 
+\cmd{emerge -{}-search}. %
+\index{emerge (Programm)!search (Option)}%
+Mit der Suche nach Paketen beschäftigen wir uns
+allerdings erst in Kapitel \ref{emergesearch} ab Seite
+\pageref{qsearch}. Dort gehen wir auch noch auf \cmd{qgrep} %
+\index{qgrep (Programm)}%
+ein.
+
+Die Ausgabe von \cmd{qsearch} %
+\index{qsearch (Programm)}%
+ist sehr reduziert:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qsearch automake}
+sys-devel/automake Used to generate Makefile.in from Makefile.am
+sys-devel/automake-wrapper wrapper for automake to manage multiple autom
+ake versions
+\end{ospcode}
+\index{qsearch (Programm)}%
+\index{Paket!suchen}%
+
+\cmd{qsize} %
+\index{qsize (Programm)}%
+ist mit \cmd{equery size} %
+\index{equery (Programm)!size (Option)}%
+vergleichbar, \cmd{qcheck} %
+\index{qcheck (Programm)}%
+erwartungsgemäß mit \cmd{equery check}. % %
+\index{equery (Programm)!check (Option)}%
+\cmd{qdepends} %
+\index{qdepends (Programm)}%
+dagegen informiert im Standardmodus nicht wie
+\cmd{equery depends} %
+\index{equery (Programm)!depends (Option)}%
+darüber, welche Pakete vom dem angegebenen Ebuild abhängen, sondern
+zeigt dessen Abhängigkeiten %
+\index{Paket!-abhängigkeiten}%
+an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qdepends dev-libs/openssl}
+dev-libs/openssl-0.9.8d: sys-apps/diffutils >=dev-lang/perl-5
+\end{ospcode}
+
+Die zu \cmd{equery depends} %
+\index{equery (Programm)!depends (Option)}%
+\index{Paket!-abhängigkeiten}%
+analoge Funktionalität erhält man erst, indem man die Option
+\cmd{-{}-query} %
+\index{qdepends (Programm)!query (Option)}%
+(bzw.\ \cmd{-Q}) %
+%\index{qdepends (Programm)!Q (Option)|see{qdepends (Programm), query    (Option)}}%
+hinzufügt.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qdepends -Q dev-libs/openssl}
+dev-lang/python-2.4.3-r4
+dev-db/mysql-5.0.26-r2
+net-nds/openldap-2.3.30-r2
+mail-mta/ssmtp-2.61-r2
+net-www/apache-2.0.58-r2
+net-misc/wget-1.10.2
+net-misc/openssh-4.5_p1-r1
+\end{ospcode}
+
+\index{qlop (Programm)|(}%
+Zuletzt zu \cmd{qlop}: %
+\index{qlop (Programm)}%
+Dieses Programm analysiert die Log-Datei %
+\index{emerge (Programm)!Logs}%
+\index{Portage!Logs}%
+von \cmd{emerge}
+(\cmd{/var/log/emerge.log}).% %
+\index{emerge (Programm)}%
+\index{emerge.log (Datei)}%
+\index{var@/var!log!emerge.log}%
+
+Zum einen können wir uns mit der Option \cmd{-{}-list} %
+\index{qlop (Programm)!list (Option)}%
+(bzw.\ \cmd{-l}) %
+%\index{qlop (Programm)!l (Option)|see{qlop (Programm), list (Option)}}%
+ansehen, welche Pakete wir installiert haben. Umgekehrt liefert uns
+\cmd{-{}-unlist} %
+\index{qlop (Programm)!unlist (Option)}%
+(bzw.\ \cmd{-u}) %
+%\index{qlop (Programm)!u (Option)|see{qlop (Programm), unlist    (Option)}}%
+die Pakete, die wir deinstalliert haben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlop -l}
+\ldots
+Wed Jan 30 13:51:04 2008 >>> app-portage/portage-utils-0.1.23
+Wed Jan 30 13:51:35 2008 >>> app-arch/unzip-5.52-r1
+Wed Jan 30 13:51:44 2008 >>> dev-java/java-config-wrapper-0.12-r1
+Wed Jan 30 13:51:58 2008 >>> dev-java/java-config-2.0.31
+Wed Jan 30 13:52:11 2008 >>> dev-java/java-config-1.3.7
+Wed Jan 30 14:36:13 2008 >>> dev-libs/openssl-0.9.8d
+Thu Jan 31 08:10:07 2008 >>> app-portage/gentoolkit-0.2.3
+\rprompt{\textasciitilde}\textbf{qlop -u}
+Tue Jan 29 20:25:59 2008 <<< dev-libs/openssl-0.9.8d
+Wed Jan 30 08:33:21 2008 <<< dev-libs/openssl-0.9.7l
+\end{ospcode}
+% GW: Emacs font lock >>
+
+Wann wir den Portage-Baum synchronisiert %
+\index{Aktualisieren}%
+haben, zeigt \cmd{qlop} %
+\index{qlop (Programm)}%
+mit der Option \cmd{-{}-sync} %
+\index{qlop (Programm)!sync (Option)}%
+(bzw.\ \cmd{-s}). %
+%\index{qlop (Programm)!s (Option)|see{qlop (Programm), sync (Option)}}%
+Auch hier stammt das Beispiel von einem anderen System, da wir ja
+(noch) nicht synchronisiert haben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlop -s}
+\ldots
+Sun Jan 27 08:25:41 2008 >>> rsync://88.198.224.205/gentoo-portage
+Mon Jan 28 11:17:22 2008 >>> rsync://88.198.224.205/gentoo-portage
+Tue Jan 29 09:43:04 2008 >>> rsync://193.190.198.20/gentoo-portage
+Wed Jan 30 09:53:21 2008 >>> rsync://147.32.127.222/gentoo-portage
+\end{ospcode}
+
+Falls wir gerade dabei sind, ein Paket zu installieren, %
+\index{Paket!aktuell}%
+würde \cmd{qlop} %
+\index{qlop (Programm)}%
+mit der Option \cmd{-{}-current} %
+\index{qlop (Programm)!current (Option)}%
+(bzw.\ \cmd{-c}) %
+%\index{qlop (Programm)!c (Option)|see{qlop (Programm), current    (Option)}}%
+darüber Auskunft geben, um welches es sich handelt.
+
+Sehr nützlich ist \cmd{qlop}, %
+\index{qlop (Programm)}%
+um vorab zu erfahren, wie lange
+\cmd{emerge} %
+\index{emerge (Programm)}%
+für das Aktualisieren eines Paketes vermutlich brauchen
+wird. %
+\index{Paket!Zeitbedarf}%
+%\index{Zeitbedarf!Installation|see{Paket, Zeitbedarf}}%
+%\index{Dauer!Installation|see{Paket, Zeitbedarf}}%
+Voraussetzung ist zwar, dass man dieses Paket zuvor schon einmal
+kompiliert hat, aber wenn dies der Fall ist, liefert \cmd{qlop} %
+\index{qlop (Programm)}%
+mit
+der Option \cmd{-{}-time} %
+\index{qlop (Programm)!time (Option)}%
+(bzw.\ \cmd{-t}) %
+%\index{qlop (Programm)!t (Option)|see{qlop (Programm), time (Option)}}%
+eine hilfreiche Zusammenfassung:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlop -H -t dev-libs/openssl}
+openssl: 11 minutes, 30 seconds for 4 merges
+\end{ospcode}
+\index{qlop (Programm)!time (Option)!human (Option)}%
+\index{gcc (Paket)!Zeitbedarf}%
+
+Die Option \cmd{-{}-human} %
+\index{qlop (Programm)!human (Option)}%
+(bzw.\ \cmd{-H}) %
+%\index{qlop (Programm)!H (Option)|see{qlop (Programm), human    (Option)}}%
+listet die Zeitangabe in Stunden und Minuten statt in Sekunden und
+macht die Zusammenfassung damit verständlicher.
+
+Wir haben hier \cmd{dev-libs/openssl} %
+\index{openssl (Paket)}%
+%\index{dev-libs (Kategorie)!openssl|see{openssl (Paket)}}%
+offensichtlich schon vier Mal auf dem System kompiliert. Wer die
+einzelnen Zeiten angezeigt bekommen möchte, greift zu der Option
+\cmd{-{}-gauge} %
+\index{qlop (Programm)!gauge (Option)}%
+(bzw.\ \cmd{-g}):% %
+%\index{qlop (Programm)!g (Option)|see{qlop (Programm), gauge    (Option)}}%
+
+\label{openssltimes}%
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qlop -H -g dev-libs/openssl}
+openssl: Tue Jan 29 20:16:51 2008: 9 minutes, 8 seconds
+openssl: Wed Jan 30 08:18:00 2008: 15 minutes, 21 seconds
+openssl: Wed Jan 30 10:09:51 2008: 8 minutes, 40 seconds
+openssl: Wed Jan 30 14:23:20 2008: 12 minutes, 53 seconds
+openssl: 4 times
+\end{ospcode}
+
+So lässt sich schnell abschätzen, ob man das Update %
+\index{Aktualisierung}%
+einer Software noch einschieben kann, bevor man den Rechner
+herunterfahren möchte.% %
+\index{qlop (Programm)|)}%
+
+Damit haben wir die wichtigsten Werkzeuge, die externe Pakete für das
+Paketmanagement unter Gentoo liefern, behandelt. Nun noch zu drei
+erwähnenswerten Skripten im zentralen Paket \cmd{sys-apps/portage}. %
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+\index{portage-utils (Paket)|)}%
+
+\section{Das Paket sys-apps/portage}
+
+\index{portage (Paket)|(}%
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+Eigentlich haben wir uns schon ausgiebig mit \cmd{sys-apps/portage} %
+\index{portage (Paket)}%
+%\index{sys-apps (Kategorie)!portage|see{portage (Paket)}}%
+beschäftigt, liefert es doch \cmd{emerge}, %
+\index{emerge (Programm)}%
+unser primäres Tool für das
+Paketmanagement.
+
+Es installiert zudem Programme wie \cmd{env-update} %
+\index{env-update (Programm)}%
+(Kapitel
+\ref{env-update}), \cmd{emerge"=webrsync} %
+\index{emerge-webrsync (Programm)}%
+(Kapitel
+\ref{emerge-webrsync}), \cmd{ebuild} %
+\index{ebuild (Programm)}%
+(Kapitel \ref{ebuildtool}) und
+\cmd{etc-update} %
+\index{etc-update (Programm)}%
+bzw. \cmd{dispatch-conf} %
+\index{dispatch-conf (Programm)}%
+(beide Kapitel
+\ref{etc-update}). Drei weitere, \cmd{emaint}, \cmd{regenworld}
+und \cmd{quickpkg}, haben wir bisher noch nicht  vorgestellt und wollen dies nun nachholen.
+
+\subsection{emaint}
+
+\index{emaint (Programm)|(}%
+\cmd{emaint} %
+\index{emaint (Programm)}%
+erledigt Instandhaltungsaufgaben -- derzeit beherrscht es
+allerdings noch nicht allzu viele davon. Um genau zu sein: nur eine
+einzige.  Es kann die \cmd{world}-Datei %
+\index{world (Datei)}%
+(siehe Kapitel \ref{worldfile} auf Seite \pageref{worldfile})
+überprüfen.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emaint --check world}
+Checking world for problems
+Finished
+\end{ospcode}
+\index{emaint (Programm)!check (Option)}%
+\index{world (Datei)!überprüfen}%
+
+Im Normalfall sollte das Ergebnis wie oben aussehen. Falls sich nicht
+existente Paketnamen in der Datei befinden, bemängelt \cmd{emaint}
+dies und kann das Problem mit der Option \cmd{-{}-fix} %
+\index{emaint (Programm)!fix (Option)}%
+\index{world (Datei)!korrigieren}%
+beheben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo "broken}
+> \textbf{" >> /var/lib/portage/world}
+\rprompt{\textasciitilde}\textbf{emaint --check world}
+Checking world for problems
+
+'broken' is not a valid atom
+
+
+Finished
+\rprompt{\textasciitilde}\textbf{emaint --fix world}
+Attempting to fix world
+Finished
+\rprompt{\textasciitilde}\textbf{emaint --check world}
+Checking world for problems
+Finished
+\end{ospcode}
+\index{emaint (Programm)!fix (Option)}%
+\index{emaint (Programm)!check (Option)}%
+
+Wir haben hier als Beispiel der Datei \cmd{/var/lib/portage/world} %
+\index{world (Datei)}%
+\index{var@/var!lib!portage!world}%
+einfach eine Zeile mit dem Inhalt \cmd{broken} hinzugefügt. Das
+entspricht keinem existierenden Paket und wird folglich von
+\cmd{emaint} %
+\index{emaint (Programm)}%
+moniert bzw.\ entfernt.% %
+\index{emaint (Programm)|)}%
+
+\subsection{regenworld}
+
+\index{regenworld (Programm)|(}%
+Mit der \cmd{world}-Datei %
+\index{world (Datei)}%
+beschäftigt sich auch \cmd{regenworld}. Dieses Programm arbeitet sich
+durch die Log-Datei \cmd{/var/log/emerge.log} %
+\index{emerge.log (Datei)}%
+\index{var@/var!log!emerge.log}%
+und identifiziert alle Pakete, die der Benutzer jemals manuell
+installiert %
+\index{Paket!installiert}%
+hat. Fehlen Elemente in der \cmd{world}-Datei, kann \cmd{regenworld}
+diese %
+\index{regenworld (Programm)}%
+hinzufügen.% %
+\index{world (Datei)!rekonstruieren}%
+
+Da \cmd{regenworld} vor dem Einsatz ein Backup empfiehlt, kopieren wir
+die Datei zunächst einmal:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{regenworld --help}
+This script regenerates the portage world file by checking the portage
+logfile for all actions that you've done in the past. It ignores any
+arguments except --help. It is recommended that you make a backup of
+your existing world file (var/lib/portage/world) before using this tool.
+\rprompt{\textasciitilde}\textbf{cp /var/lib/portage/world /var/lib/portage/world.backup}
+\end{ospcode}
+\index{regenworld (Programm)!help (Option)}%
+\index{world (Datei)!Backup}%
+
+Anschließend klauen wir der \cmd{world}-Datei mit Hilfe von \cmd{grep}
+den %
+\index{grep (Programm)}%
+\cmd{app-por\-tage/gentoolkit}-Eintrag %
+\index{gentoolkit (Paket)}%
+%\index{app-portage (Kategorie)!gentoolkit|see{gentoolkit (Paket)}}%
+und lassen \cmd{regenworld} %
+\index{regenworld (Programm)}%
+danach laufen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /var/lib/portage/world.backup | grep -v "gentoolkit" > \textbackslash}
+> \textbf{/var/lib/portage/world}
+\rprompt{\textasciitilde}\textbf{regenworld}
+add to world: app-portage/gentoolkit
+\end{ospcode}
+\index{grep (Programm)}%
+
+\cmd{regenworld} %
+\index{regenworld (Programm)}%
+identifiziert das entfernte Paket als fehlend und
+fügt es automatisch wieder zur \cmd{world}-Datei hinzu.% %
+\index{world (Datei)!rekonstruieren}%
+\index{regenworld (Programm)|)}%
+
+\subsection{\label{quickpkg}quickpkg}
+
+\index{quickpkg (Programm)|(}%
+Dieses kleine Hilfsmittel kümmert sich darum, von einem installierten
+Paket einen Snapshot zu erstellen, den wir in Notfällen auch wieder
+dazu verwenden können, ein zerstörtes System wieder zu beleben.% %
+\index{System!reparieren}%
+
+So kann man z.\,B.\ \cmd{sys-libs/glibc} %
+\index{glibc (Paket)}%
+%\index{sys-libs (Kategorie)!glibc|see{glibc (Paket)}}%
+sichern:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{quickpkg sys-libs/glibc}
+ * Building package for glibc-2.5 ...           [ ok ]
+
+ * Packages now in /usr/portage/packages:
+ * glibc-2.5: 11M
+\end{ospcode}
+
+Das fertig gepackte Paket erstellt \cmd{quickpkg} %
+\index{quickpkg (Programm)}%
+in
+\cmd{/usr/portage/packages} %
+\index{packages (Verzeichnis)}%
+\index{usr@/usr!portage!packages}%
+(bzw. \cmd{PKGDIR}; %
+\index{PKGDIR (Variable)}%
+%\index{Variable!PKGDIR|see{PKGDIR Variable}}%
+siehe Kapitel \ref{pkgdir} auf Seite
+\pageref{pkgdir}). Dafür muss das Verzeichnis allerdings auch
+existieren.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /usr/portage/packages/sys-libs/}
+glibc-2.5.tbz2
+\end{ospcode}
+\index{glibc-2.5-r4.tbz2 (Datei)}%
+\index{usr@/usr!portage!packages!sys-libs!glibc-2.5-r4.tbz2}%
+
+Dieses Archiv enthält jetzt ein exaktes Abbild der Dateien des
+installierten Paketes %
+\index{Paket!binär, erstellen}%
+\index{Paket!sichern}%
+und wir können es so nutzen, um unser System wieder herzustellen, %
+\index{System!wieder herstellen}%
+wenn wir \cmd{sys-apps/glibc} %
+\index{glibc (Paket)}%
+%\index{sys-apps (Kategorie)!glibc|see{glibc (Paket)}}%
+beschädigt haben sollten.
+
+Letzteres kann allerdings nur durch grobe Unachtsamkeit des Benutzers
+passieren, und wir wollen uns an dieser Stelle auch nicht mit den
+Details einer solchen Rettungsaktion %
+\index{Rettungsaktion}%
+befassen. Das Gentoo-Forum
+und auch das Gentoo-Wiki %
+\index{Wiki}%
+liefert für diese Fälle detaillierte
+Anleitungen.% %
+\index{quickpkg (Programm)|)}%
+\index{portage (Paket)|)}%
+
+\section{\label{eselect}Das Paket app-admin/eselect}
+
+\index{System!konfigurieren|(}%
+\index{eselect (Paket)|(}%
+\index{eselect (Programm)|(}%
+%\index{app-admin (Kategorie)!eselect (Paket)|see{eselect (Paket)}}%
+Damit wechseln wir vom eigentlichen Paketmanagement zur Konfiguration
+des Systems und schließen das Kapitel mit einigen Bemerkungen zu
+\cmd{eselect}, %
+\index{eselect (Programm)}%
+einem noch relativ neuen, aber viel versprechenden Werkzeug.
+
+Wir haben \cmd{eselect} %
+\index{eselect (Programm)}%
+auch schon zweimal erwähnt: Einmal bei der
+Behandlung der Init-Skripte in Kapitel \ref{eselectrc} auf Seite
+\pageref{eselectrc} und bei der Profilwahl in Kapitel
+\ref{eselectprofile}.
+
+Wir können das Werkzeug mit dem Paket \cmd{app-admin/eselect} %
+\index{eselect (Paket)}%
+%\index{app-admin (Kategorie)!eselect|see{eselect (Paket)}}%
+installieren (siehe Seite \pageref{eselectinstall}):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-admin/eselect}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-admin/eselect-1.0.7  USE="-bash-completion -doc" 0 k
+B 
+
+Total: 1 package (1 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+
+\cmd{eselect} %
+\index{eselect (Programm)}%
+ist ein allgemeines Konfigurationstool und modular
+aufgebaut. Die Grundinstallation des Paketes \cmd{app-admin/eselect} %
+\index{eselect (Paket)}%
+%\index{app-admin (Kategorie)!eselect|see{eselect (Paket)}}%
+bringt schon einige Standard-Module mit. Wir können sie unter Angabe
+der Aktion \cmd{list"=modules} %
+\index{eselect (Programm)!list-modules (Option)}%
+anzeigen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect list-modules}
+Built-in modules:
+  help                      Display a help message
+  list-modules              Find and display available modules
+  usage                     Display a usage message
+  version                   Display version information
+
+Extra modules:
+  bashcomp                  Manage contributed bash-completion scripts
+  binutils                  Manage installed versions of sys-devel/binut
+ils
+  env                       Manage environment variables set in /etc/env
+.d/
+  java-nsplugin             Manage the Java plugin for Netscape-like Bro
+wsers
+  java-vm                   Manage the Java system and user VM
+  kernel                    Manage the /usr/src/linux symlink
+  mailer                    Manage the mailwrapper profiles in /etc/mail
+  profile                   Manage the /etc/make.profile symlink
+  rc                        Manage /etc/init.d scripts in runlevels
+\end{ospcode}
+\index{eselect (Programm)!Funktionen}%
+
+Interessant sind hier nur die \cmd{Extra modules}; die oberen vier
+Module sind generelle Funktionen von \cmd{eselect}.
+
+Die %
+\index{eselect (Programm)}%
+beiden Module \cmd{profile} und \cmd{rc} haben wir schon in
+Kapitel \ref{eselectprofile} bzw. \ref{eselectrc} besprochen.
+
+Bei jedem Modul erfahren wir etwas über die möglichen Option, indem
+wir \cmd{eselect} %
+\index{eselect (Programm)}%
+nur mit dem Modulnamen aufrufen, so z.\,B.\ für das
+\cmd{kernel}-Modul:% %
+\index{eselect (Programm)!kernel (Modul)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect kernel}
+Usage: eselect kernel <action> <options>
+
+Standard actions:
+  help                      Display help text
+  usage                     Display usage information
+  version                   Display version information
+
+Extra actions:
+  list                      List available kernel symlink targets
+  set <target>              Set a new kernel symlink target
+    target                    Target name or number (from 'list' action)
+  show                      Show the current kernel symlink
+\end{ospcode}
+
+Die meisten Module verrichten sehr einfache Aufgaben, die sich vor
+allem an Linux-Anfänger richten. Wer sich einigermaßen mit der
+Kommandozeile auskennt hat sicherlich kein Probleme damit, den
+Kernel-Symlink \cmd{/usr/src/linux} %
+\index{linux (Link)}%
+\index{usr@/usr!src!linux}%
+mit Hilfe von \cmd{ln} %
+\index{ln (Programm)}%
+selber zu setzten, wenn er eine neue Version
+der Kernel-Quellen installiert hat.
+
+\cmd{eselect} %
+\index{eselect (Programm)}%
+erlaubt es aber, Aktionen dieser Art in einem
+vereinheitlichten Format durchzuführen, und bietet sich damit auch als
+Backend für grafische Benutzeroberflächen zur Systemkonfiguration an.
+
+\subsection{Das Modul kernel}
+
+\index{eselect (Programm)!kernel (Modul)|(}%
+\index{Kernel!auswählen|(}%
+Das Kernel-Modul setzt den Symlink
+\cmd{/usr/src/linux} %
+\index{linux (Link)}%
+auf eine der installierten Kernel-Quellen.% %
+\index{Kernel!Symlink setzen)}%
+
+Die Aktion \cmd{list} %
+\index{eselect (Programm)!kernel - list (Option)}%
+zeigt die verfügbaren Kernel-Versionen an:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect kernel list}
+Available kernel symlink targets:
+  [1]   linux-2.6.19-gentoo-r5 *
+\end{ospcode}
+\index{eselect (Programm)!kernel - list (Option)}%
+
+Das Sternchen markiert die aktuell ausgewählte Version.
+
+Über die Aktion \cmd{set} %
+\index{eselect (Programm)!kernel - set (Option)}%
+lässt sich die Kernel-Version ändern:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect kernel set linux-2.6.19-gentoo-r5}
+\end{ospcode}
+
+Hier ist das wenig sinnvoll, da ohnehin nur eine Kernel-Version
+zur Verfügung steht, aber das Konzept sollte klar sein.
+\index{Kernel!auswählen|)}%
+\index{eselect (Programm)!kernel (Modul)|)}%
+
+\subsection{Das Modul bashcomp}
+
+\index{eselect (Programm)!bashcomp (Modul)|(}%
+\index{bash (Programm)!Vervollständigen|(}%
+Eine der sehr nützlichen Eigenschaften der Shell \cmd{bash} %
+\index{bash (Programm)}%
+ist das
+automatische Vervollständigen %
+%\index{Tippen!beschleunigen|see{bash (Programm), Vervollständigen}}%
+%\index{Optimieren!Tippen|see{bash (Programm), Vervollständigen}}%
+%\index{Optimieren!Vervollständigen|see{bash    (Programm)!Vervollständigen}}%
+begonnener Befehle. Möchte man z.\,B.\ die Datei
+\cmd{datei\_mit\_besonders\_langem\_dateinamen.txt} %
+\index{Datei!-name}%
+anzeigen %
+\index{Datei!anzeigen}%
+und befindet sich sonst keine Datei, deren Name mit dem Buchstaben
+\cmd{d} beginnt, im selben Verzeichnis, genügt die Angabe \cmd{cat d}
+gefolgt von einem Anschlag der Tabulatortaste.% %
+\index{bash (Programm)!Tabulator}%
+%\index{Kommandozeile!Vervollständigen|see{bash    (Programm)!Vervollständigen}}%
+
+\cmd{bash} %
+\index{bash (Programm)}%
+komplettiert dann automatisch zu \cmd{cat
+  datei\_mit\_besonders\_lan\-gem\_dateinamen.txt}, und man hat sich
+Einiges an Tipparbeit %
+\index{Tipparbeit}%
+gespart. Mit ein wenig Übung lohnt sich der
+Anschlag der Tabulatortaste %
+\index{Tabulatortaste}%
+dann auch schon, wenn nur noch zwei
+oder drei Buchstaben ausstehen.
+
+Gibt es mehr als eine Möglichkeit der Vervollständigung %
+\index{Vervollständigung}%
+(also z.\,B.\ eine zweite Datei mit dem Anfangsbuchstaben \cmd{d}),
+zeigt \cmd{bash} %
+\index{bash (Programm)}%
+beim zweiten Anschlag der Tabulatortaste alle möglichen
+Komplettierungen an.
+
+\cmd{bash} %
+\index{bash (Programm)}%
+komplettiert in der Grundeinstellung  nur
+Dateinamen, %
+\index{bash (Programm)!Dateinamen}%
+doch lässt sich die Komplettierung benutzerspezifisch anpassen und
+erweitern.
+Dafür installieren wir zunächst das Paket
+\cmd{app-shells/gentoo-bashcomp}: %
+\index{gentoo-bashcomp (Paket)}%
+%\index{app-shells (Kategorie)!gentoo-bashcomp|see{gentoo-bashcomp (Paket)}}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-shells/gentoo-bashcomp}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-shells/bash-completion-20050121-r10  0 kB 
+[ebuild  N    ] app-shells/gentoo-bashcomp-20050516  0 kB 
+
+Total: 2 packages (2 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+ * Add the following to your ~/.bashrc to enable completion support.
+ * NOTE: to avoid things like Gentoo bug #98627, you should set aliases
+ * after sourcing /etc/profile.d/bash-completion.
+ * 
+ * [[ -f /etc/profile.d/bash-completion ]] && 
+ *     source /etc/profile.d/bash-completion
+ * 
+ * Additional completion functions can be enabled by installing
+ * app-admin/eselect and using the included bashcomp module.
+\ldots
+\end{ospcode}
+
+In den älteren Versionen des Paketes ist es noch notwendig, das Paket
+manuell in die eigene Konfiguration einzubinden, indem wir die oben
+abgebildete Zeile in \cmd{{\textasciitilde}/.bashrc}
+übernehmen. Das ist mit den neueren Versionen auf einem aktualisierten
+System nicht mehr notwendig.
+
+Hier editieren wir \cmd{{\textasciitilde}/.bashrc} %
+\index{.bashrc (Datei)}%
+%\index{\textasciitilde@{\textasciitilde}!.bashrc|see{.bashrc    (Datei)}}%
+also einmal kurz mit \cmd{nano} %
+\index{nano (Programm)}%
+und lesen die Datei mit \cmd{source}
+ein, damit sich die neue Einstellung in unserer aktiven Shell
+bemerkbar macht. Dann kopieren wir noch das Standard-\cmd{bash}-Profil
+(\cmd{/etc/skel/.bash\_profile}), %
+\index{.bash\_profile (Datei)}%
+\index{etc@/etc!skel!.bash\_profile}%
+so dass die Bash \cmd{{\textasciitilde}/.bashrc} %
+\index{.bashrc (Datei)}%
+%\index{\textasciitilde@{\textasciitilde}!.bashrc|see{.bashrc    (Datei)}}%
+beim nächsten Login automatisch einliest:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat \textasciitilde/.bashrc}
+[[ -f /etc/profile.d/bash-completion ]] && source /etc/profile.d/bash
+-completion
+\rprompt{\textasciitilde}\textbf{source \textasciitilde/.bashrc}
+\rprompt{\textasciitilde}\textbf{cp /etc/skel/.bash_profile \textasciitilde/.bash_profile}
+\end{ospcode}
+
+
+Damit ist es dann z.\,B.\ möglich, auch \cmd{emerge}-Befehle
+zeitsparend %
+\index{emerge (Programm)}%
+einzutippen. %
+\index{bash (Programm)!Paketnamen}%
+\index{emerge (Programm)!Paketnamen vervollständigen}%
+Möchten wir z.\,B.\ das Kernel-Paket \cmd{sys-kernel/gentoo-sources} %
+\index{gentoo-sources (Paket)}%
+%\index{sys-kernel (Kategorie)!gentoo-sources|see{gentoo-sources    (Paket)}}%
+installieren und sind uns bei der Bezeichnung nicht ganz sicher
+bzw. wissen nur noch, dass der Name mit \cmd{gentoo} begann, dann
+starten wir mit \cmd{emerge gentoo}, gefolgt von zwei Anschlägen der
+Tabulatortaste:% %
+\index{emerge (Programm)!Tabulator}%
+
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge gentoo[Tab][Tab]}
+gentoo                  gentoo-guide-xml-dtd    gentoo-sources
+gentoo-artwork          gentoo-init             gentoo-syntax
+gentoo-artwork-livecd   gentoolkit              gentoo-vdr-scripts
+gentoo-bashcomp         gentoolkit-dev          gentoo-webroot-default
+gentoo-bugger           gentoo-rsync-mirror     gentoo-xcursors
+\end{ospcode}
+\index{gentoo-sources (Paket)}%
+
+Nun zeigt Bash automatisch alle Pakete, die mit \cmd{gentoo} beginnen;
+wenn wir den Eintrag \cmd{gentoo-sources} sehen, fällt uns hoffentlich
+wieder ein, dass dies der korrekte Name des Kernel-Paketes war. In dem
+Fall komplettieren wir auf \cmd{gentoo-so} und betätigen die
+Tabulatortaste, damit \cmd{bash} %
+\index{bash (Programm)}%
+den Rest des Namens hinzufügt.
+
+Zurück zum \cmd{bashcomp}-Modul für \cmd{eselect}:
+Die Bash-Komplettierung ist ebenfalls modular, und wir können
+verschiedene Sets an Komplettierungen für verschiedene Programme
+aktivieren. Einen Überblick erhalten wir erst einmal mit der Aktion
+\cmd{list}. %
+\index{eselect (Programm)!bashcomp - list (Option)}%
+Die Option \cmd{-{}-global} %
+\index{eselect (Programm)!bashcomp - list (Option)}%
+\index{eselect (Programm)!bashcomp - global (Option)}%
+zeigt mit einem Sternchen an, welche Module global für alle Benutzer
+aktiviert sind:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect bashcomp list --global}
+Available completions:
+  [1]   bitkeeper
+  [2]   bittorrent
+  [3]   cksfv
+  [4]   clisp
+  [5]   dsniff
+  [6]   freeciv
+  [7]   gcl
+  [8]   gentoo *
+  [9]   gkrellm
+  [10]  gnatmake
+  [11]  harbour
+  [12]  isql
+  [13]  larch
+  [14]  lilypond
+  [15]  lisp
+  [16]  mailman
+  [17]  mcrypt
+  [18]  mtx
+  [19]  p4
+  [20]  povray
+  [21]  ri
+  [22]  sbcl
+  [23]  sitecopy
+  [24]  snownews
+  [25]  unace
+  [26]  unrar
+\end{ospcode}
+
+Viele Module sind sehr spezifisch für bestimmte
+Programme. \cmd{gentoo} %
+\index{eselect (Programm)!bashcomp - gentoo (Modul)}%
+ist standardmäßig aktiviert und liefert eben
+z.\,B.\ die oben beschriebene Funktionalität für \cmd{emerge}.% %
+\index{emerge (Programm)!Paketnamen vervollständigen}%
+
+Bei neueren \cmd{eselect}-Versionen %
+\index{eselect (Programm)}%
+wird \cmd{eselect} %
+\index{eselect (Programm)}%
+hier auch ein
+Modul gleichen Namens %
+\index{eselect (Programm)!bashcomp - eselect (Module)}%
+anzeigen. Wir können dieses dann aktivieren und uns die Verwendung
+von \cmd{eselect} etwas vereinfachen.
+
+Aktivieren lässt sich ein Modul mit \cmd{enable} %
+\index{eselect (Programm)!bashcomp - enable (Option)}%
+und dem Modulnamen. Ohne die Option \cmd{-{}-global} %
+\index{eselect (Programm)!bashcomp - enable (Option)}%
+\index{eselect (Programm)!bashcomp - global (Option)}%
+aktivieren wir das Modul nur für den aufrufenden Benutzer. Mit der
+Option aktivieren wir es für alle Benutzer:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect bashcomp enable --global eselect}
+\end{ospcode}
+\index{eselect (Programm)!bashcomp - eselect (Module)}%
+\index{eselect (Programm)!bashcomp - enable (Option)}%
+\index{eselect (Programm)!bashcomp - global (Option)}%
+
+\vspace*{-3pt}
+
+\begin{netnote}
+  Das \cmd{bashcomp}-Modul mit Namen \cmd{eselect} können Sie nur dann
+  aktivieren, wenn Sie Ihr System bereits aktualisiert und
+  \cmd{app-admin/eselect} %
+  \index{eselect (Paket)}%
+%  \index{app-admin (Kategorie)!eselect|see{eselect (Paket)}}%
+  in der neuesten Version installiert haben.
+\end{netnote}
+
+Beim nächsten Aufruf sollte \cmd{eselect ba} %
+\index{eselect (Programm)!Optionen vervollständigen}%
+gefolgt
+von einem Anschlag der Tabulatortaste dann automatisch auf
+\cmd{eselect bashcomp} vervollständigen.
+Die Aktion \cmd{disable} %
+\index{eselect (Programm)!bashcomp - disable (Option)}%
+deaktiviert bei Bedarf ein Modul wieder.% %
+\index{bash (Programm)!Vervollständigen|)}%
+\index{eselect (Programm)!bashcomp (Modul)|)}%
+
+\subsection{Das Modul env}
+
+\index{eselect (Programm)!env (Modul)|(}%
+Dieses Modul bietet nur eine mögliche Aktion: \cmd{update}, %
+\index{eselect (Programm)!env - update (Option)}%
+das die gleiche Funktion bietet wie \cmd{env-update} %
+\index{env-update (Programm)}%
+(siehe Seite
+\pageref{env-update}).% %
+\index{eselect (Programm)!env (Modul)|)}%
+
+\subsection{Andere Module}
+
+\index{eselect (Programm)!binutils (Modul)|(}%
+Das Modul \cmd{binutils} erlaubt es unter den verschiedenen Versionen
+des Paketes \cmd{sys-devel/binutils} %
+\index{binutils (Paket)}%
+%\index{sys-devel (Kategorie)!binutils|see{binutils (Paket)}}%
+auszuwählen (sofern wirklich mehrere Versionen installiert sind).% %
+\index{eselect (Programm)!binutils (Modul)|)}%
+
+\index{eselect (Programm)!mailer (Modul)|(}%
+Und schließlich kann man über das Modul \cmd{mailer} zwischen
+verschiedenen Mailprogrammen für die Kommandozeile wählen.
+Standardmäßig ist aber nur \cmd{mail-mta/ssmtp} %
+\index{ssmtp (Paket)}%
+%\index{mail-mta (Kategorie)!ssmtp|see{ssmtp (Paket)}}%
+installiert und eine Wahl erübrigt sich.% %
+\index{eselect (Programm)!mailer (Modul)|)}%
+
+\subsection{Weitere Module installieren}
+
+\index{eselect (Programm)!Module installieren|(}%
+Wie gesagt ist \cmd{eselect} %
+\index{eselect (Programm)}%
+modular ausgelegt, und es gibt
+mittlerweile eine ganze Reihe an Ergänzungen für die
+verschiedenartigsten Konfigurationsaufgaben.
+
+Eine Übersicht liefert \cmd{qsearch} %
+\index{qsearch (Programm)}%
+(siehe Seite \pageref{qsearch}):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{qsearch eselect}
+app-admin/eselect Modular -config replacement utility
+app-admin/eselect-blas BLAS module for eselect
+app-admin/eselect-cblas C-language BLAS module for eselect
+app-admin/eselect-compiler Utility to configure the active toolchain com
+piler
+app-admin/eselect-esd Manages configuration of ESounD implementation or 
+PulseAudio wrapper
+app-admin/eselect-gnat gnat module for eselect.
+app-admin/eselect-lapack LAPACK module for eselect
+app-admin/eselect-oodict Manages configuration of dictionaries for OpenO
+ffice.Org.
+app-admin/eselect-opengl Utility to change the OpenGL interface being us
+ed
+app-admin/eselect-oracle Utility to change the Oracle SQL*Plus Instantcl
+ient being used
+app-admin/eselect-timidity Manages configuration of TiMidity++ patchsets
+app-admin/eselect-vi Manages the /usr/bin/vi symlink
+net-wireless/waveselect Waveselect is wireless lan connection tool for L
+inux using QT and wireless-tools.
+\end{ospcode}
+\index{app-admin (Kategorie)}%
+
+Die gebräuchlichste Erweiterung für Desktop-Systeme liefert 
+\cmd{app-admin/""eselect-opengl}, %
+\index{eselect-opengl (Paket)}%
+%\index{app-admin (Kategorie)!eselect-opengl|see{eselect-opengl (Paket)}}%
+\index{eselect (Programm)!opengl (Modul)}%
+mit dem man Treiber für die 3D-Beschleunigung auswählt.
+\index{eselect (Programm)!Module installieren|)}%
+\index{eselect (Programm)|)}%
+\index{eselect (Paket)|)}%
+\index{System!konfigurieren|)}%
+
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 

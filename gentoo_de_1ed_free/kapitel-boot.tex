@@ -1,0 +1,937 @@
+\chapter{\label{initsystem}Das Init-System}
+
+Mit dem Herzstück von Gentoo, dem Portage-System, haben wir uns jetzt
+ausgiebig vertraut gemacht und wir sollten problemlos in der Lage
+sein, neue Software exakt nach unseren Wünschen im System
+einzuspielen. Kein Linux-System besteht aber nur aus dem
+Paketmanagement-System, sondern bietet eine Vielzahl weiterer
+Konfigurationsmöglichkeiten. Die Kernel-Konfiguration und die
+Netzwerkeinstellungen haben wir schon in Kapitel \ref{kernel} und
+\ref{netconfig} beleuchtet, um in der Lage zu sein, neue Software
+herunter zu laden.
+
+In den folgenden zwei Kapiteln vertiefen wir die Konfiguration des
+Boot-Prozesses und der Lokalisation, um das Thema Systemeinstellungen
+dann in Kapitel \ref{diversconfig} mit einer Sammlung kleinerer, aber
+wichtigen, Konfigurationsoptionen abzuschließen.
+
+Um zu verstehen, wie der Systemstart unter Gentoo abläuft und wie wir
+ihn als Nutzer beeinflussen können, dienen die Abschnitte
+\ref{runleveldesc} bis \ref{initscripts}. Die Funktionsweise der
+Init-Skripte vertiefen wir dann ab Seite \pageref{initdeps}, wobei
+dieser Teil für die Erstkonfiguration unseres Systems nicht notwendig
+ist.
+
+\section{\label{runleveldesc}Runlevel}
+
+\index{Init-System|(}%
+Jedes Rechner-System durchläuft beim Booten eine spezifische
+Initialisierungssequenz, während der eine Reihe von Skripten dafür
+sorgt, dass die Maschine zuletzt die volle Funktionalität bietet.
+\index{Boot!-sequenz}%
+
+\index{Runlevel|(}%
+Die Skripte für die Initialisierung eines Gentoo-Systems befinden sich
+Li\-nux-Standard-Base-konform im Ordner \cmd{/etc/init.d}.
+\index{init.d (Verzeichnis)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls /etc/init.d/}
+apache2      depscan.sh    localmount    numlock       spind
+autoconfig   functions.sh  modules       reboot.sh     sshd
+bootmisc     gpm           mysql         rmnologin     syslog-ng
+checkfs      halt.sh       mysqlmanager  rsyncd        urandom
+checkroot    hdparm        net.eth0      runscript.sh  vixie-cron
+clock        hostname      net.lo        shutdown.sh
+consolefont  keymaps       netmount      slapd
+crypto-loop  local         nscd          slurpd
+\end{ospcode}
+\index{Boot!-skripte}%
+
+\index{Gentoo!Vergleich zu anderen Distributionen|(}%
+Es liegt jedoch beim Nutzer, welche dieser Skripte (und damit welche
+Dienste) er gestartet sehen möchte. Anders als bei Distributionen, die
+das System-V-Init-System
+\index{System-V-Init-System}%
+benutzen -- und das sind derzeit (noch) die meisten --, dient bei
+Gentoo das Verzeichnis \cmd{/etc/runlevels}
+\index{runlevels (Verzeichnis)}%
+\index{etc@/etc!runlevels}%
+der Auswahl der zu startenden Dienste.
+
+\index{Runlevel!numerischer|(}%
+Wie der Name vermuten lässt, werden hier die verschiedenen Runlevels
+des Systems definiert. Anders als von anderen Distributionen gewohnt,
+identifiziert Gentoo diese über lesbare Namen. Die
+Datei \cmd{/etc/inittab}
+\index{inittab (Datei)}%
+\index{etc@/etc!inittab}%
+verknüpft den Runlevel-Namen mit der bekannten Nummerierung von 0 bis
+6: %
+\index{Gentoo!Vergleich zu anderen Distributionen|)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/inittab}
+...
+rc::bootwait:/sbin/rc boot
+
+l0:0:wait:/sbin/rc shutdown 
+l1:S1:wait:/sbin/rc single
+l2:2:wait:/sbin/rc nonetwork
+l3:3:wait:/sbin/rc default
+l4:4:wait:/sbin/rc default
+l5:5:wait:/sbin/rc default
+l6:6:wait:/sbin/rc reboot
+...
+\end{ospcode}
+\index{rc (Programm)}%
+%\index{sbin@/sbin!rc|see{rc (Programm)}}%
+
+\cmd{man inittab} erklärt die Details dieser Einträge; an dieser
+Stelle reicht ein Blick auf den zweiten und den letzten Eintrag in
+jeder Zeile (als Trenner dient der Doppelpunkt). Die Ziffer in der
+zweiten Spalte bezeichnet den numerischen Runlevel,
+der Befehl in der letzten Spalte die zu startende Aktion.
+
+\cmd{/sbin/rc}
+\index{rc (Programm)}%
+dient unter Gentoo als Handler für das Init-System; das ihm übergebene
+Argument bezeichnet den Namen
+\index{Runlevel!Name}%
+des zu startenden Runlevels innerhalb von \cmd{/etc/runlevels}.
+\index{runlevels (Verzeichnis)}%
+
+So wird der Runlevel \cmd{boot}
+\index{Runlevel!boot}%
+aufgrund des fehlenden Eintrags in der zweiten Spalte für jeden der
+numerischen Runlevel von 0 bis 6 ausgeführt. Beim Wechsel in den
+Runlevel 3, 4 oder 5 starten zusätzlich die Dienste, die für den
+Gentoo-Runlevel \cmd{default}
+\index{Runlevel!default}%
+vorgesehen sind.
+
+Den numerischen Runlevel können wir unter Gentoo vergleichbar zu
+anderen Distributionen über die Kernel-Parameter %
+\index{Kernel!Runlevel (Option)}%
+beim Booten festlegen. Hierfür hängt man die entsprechende Zahl an
+den Boot-Eintrag in der Grub-Konfiguration an (siehe Seite
+\pageref{grub}). %
+\index{grub (Programm)}%
+
+Um den Runlevel 4
+\index{Runlevel!4}%
+über das Boot-Menü auszuwählen, kann z.\,B. folgender Eintrag
+dienen:
+
+\begin{ospcode}
+title=Gentoo Linux (Runlevel 4)
+root (hd0,0)
+kernel /kernel root=/dev/ram0 init=/linuxrc ramdisk=8192 real_root=/dev\textbackslash
+/hda3 udev 4
+initrd /initramfs
+\end{ospcode}
+\index{grub (Programm)!Runlevel (Option)}%
+
+Angenommen wir hätten unter \cmd{/etc/runlevels}
+\index{runlevels (Verzeichnis)}%
+einen neuen Runlevel mit dem Namen \cmd{graphical}
+\index{Runlevel!graphical}%
+erstellt, der uns nicht in die Kommandozeile befördert, sondern den
+X-Server
+\index{X-Server}%
+startet und eine grafische Benutzeroberfläche
+\index{Grafische!Benutzeroberfläche}%
+bereitstellt. Dann könnten wir diesen jetzt mit dem numerischen Runlevel 4
+verknüpfen, indem wir die entsprechende Zeile in der
+\cmd{/etc/inittab}
+\index{inittab (Datei)}%
+folgendermaßen modifizieren:
+
+\begin{ospcode}
+l4:4:wait:/sbin/rc graphical
+\end{ospcode}
+\index{Runlevel!numerischer|)}%
+
+Die Assoziation über die Nummern und den Umweg über die
+Datei \cmd{/etc/\osplinebreak{}inittab}
+\index{inittab (Datei)}%
+sind allerdings ein wenig umständlich; man kann sie sich sparen,
+indem man statt der Zahl den Parameter \cmd{softlevel=\cmdvar{runlevel}}
+%\index{Softlevel!Kernel-Parameter|see{Kernel, softlevel (Option)}}%
+\index{Kernel!softlevel (Option)|(}%
+\index{grub (Programm)!softlevel (Option)}%
+an die Bootparameter
+\index{Boot-Parameter}%
+anhängt.
+
+\begin{ospcode}
+title=Gentoo Linux (grafische Benutzeroberfläche)
+root (hd0,0)
+kernel /kernel root=/dev/ram0 init=/linuxrc ramdisk=8192 real_root=/dev\textbackslash
+/hda3 udev softlevel=graphical
+initrd /initramfs
+\end{ospcode}
+
+Modifikationen an  \cmd{inittab}
+\index{inittab (Datei)}%
+sind in diesem Fall nicht notwendig, da das \cmd{/sbin/rc}-Skript
+\index{rc (Programm)}%
+den angegebenen Wert \cmd{default} ignoriert und den unter
+\cmd{softlevel} angegebenen Runlevel auswählt.
+\index{Kernel!softlevel (Option)|)}%
+
+\label{softrunlevel}
+Beim Wechsel in den entsprechenden Runlevel führt \cmd{/sbin/rc} %
+\index{rc (Programm)}%
+die Skripte innerhalb des entsprechenden Unterverzeichnisses von
+\cmd{/etc/runlevels} %
+\index{runlevels (Verzeichnis)}%
+aus. Diese Runlevel-Verzeichnisse enthalten allerdings keine Kopien
+der Bootskripte, %
+\index{Boot!-skripte}%
+stattdessen verweisen Links auf die entsprechenden Original-Skripte in
+\cmd{/etc/init.d}: %
+\index{init.d (Verzeichnis)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /etc/runlevels/boot/}
+insgesamt 8
+drwxr-xr-x 2 root root 4096 20. Apr 2007  .
+drwxr-xr-x 6 root root 4096 20. Apr 2007  ..
+lrwxrwxrwx 1 root root   20 21. Jan 15:56 bootmisc -> /etc/init.d/bootmi
+sc
+lrwxrwxrwx 1 root root   19 21. Jan 15:56 checkfs -> /etc/init.d/checkfs
+lrwxrwxrwx 1 root root   21 21. Jan 15:56 checkroot -> /etc/init.d/check
+root
+lrwxrwxrwx 1 root root   17 21. Jan 15:56 clock -> /etc/init.d/clock
+lrwxrwxrwx 1 root root   23 21. Jan 15:56 consolefont -> /etc/init.d/con
+solefont
+lrwxrwxrwx 1 root root   20 21. Jan 15:56 hostname -> /etc/init.d/hostna
+me
+lrwxrwxrwx 1 root root   19 21. Jan 15:56 keymaps -> /etc/init.d/keymaps
+lrwxrwxrwx 1 root root   22 21. Jan 15:56 localmount -> /etc/init.d/loca
+lmount
+lrwxrwxrwx 1 root root   19 21. Jan 15:56 modules -> /etc/init.d/modules
+lrwxrwxrwx 1 root root   18 21. Jan 15:56 net.lo -> /etc/init.d/net.lo
+lrwxrwxrwx 1 root root   21 21. Jan 15:56 rmnologin -> /etc/init.d/rmnol
+ogin
+lrwxrwxrwx 1 root root   19 21. Jan 15:56 urandom -> /etc/init.d/urandom
+\end{ospcode}
+
+\section{\cmd{rc-update}}
+
+\index{rc-update (Programm)|(}%
+Um den Nutzern die Arbeit zu ersparen, die entsprechenden Links
+manuell zu setzen, bietet Gentoo das Tool \cmd{rc-update}, das wir auf
+Seite \pageref{firstrcupdate} erstmalig verwendet haben. %
+\index{Boot!-skripte}%
+Es kennt drei Arbeitsmodi.
+
+\begin{ospdescription}
+
+  \ospitem{\cmd{add}} %
+  \index{rc-update (Programm)!add (Option)}%
+  fügt den angegebenen Runlevels ein Skript aus \cmd{/etc/init.d} 
+  hinzu: %
+  \index{init.d (Verzeichnis)}%
+
+  \begin{ospcode}
+    rc-update add \cmdvar{skriptname} \cmdvar{runlevel1} \cmdvar{runlevel2} \ldots
+  \end{ospcode}
+
+  \ospitem{\cmd{del}} %
+  entfernt ein Skript aus allen bzw.\ nur den angegebenen Runlevels: %
+  \index{rc-update (Programm)!del (Option)}%
+
+  \begin{ospcode}
+    rc-update del \cmdvar{skriptname}
+    rc-update del \cmdvar{skriptname} \cmdvar{runlevel1} \cmdvar{runlevel2} \ldots
+  \end{ospcode}
+
+  \ospitem{\cmd{show}} %
+  zeigt an, welche Skripte in den angegebenen Runlevels aktiv sind: %
+  \index{rc-update (Programm)!show (Option)}%
+
+  \begin{ospcode}
+    rc-update show \cmdvar{runlevel1} \cmdvar{runlevel2} \ldots
+  \end{ospcode}
+
+\end{ospdescription}
+
+Hier als Beispiel noch einmal die aktiven Skripte im Runlevel
+\cmd{boot}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{rc-update show boot}
+            bootmisc | boot 
+             checkfs | boot 
+           checkroot | boot 
+               clock | boot 
+         consolefont | boot 
+            hostname | boot 
+             keymaps | boot 
+          localmount | boot 
+             modules | boot 
+              net.lo | boot 
+           rmnologin | boot 
+             urandom | boot 
+\end{ospcode}
+
+Gibt man \cmd{show} %
+\index{rc-update (Programm)!show (Option)}%
+die Option \cmd{-{}-verbose} %
+\index{rc-update (Programm)!verbose (Option)}%
+mit auf den Weg, zeigt \cmd{rc-update} nicht nur die Skripte an, die
+sich in den ausgewählten Runlevels befinden, sondern alle vorhandenen
+Skripte. %
+\index{Runlevel|)}%
+\index{rc-update (Programm)|)}%
+
+\label{eselectrc}%
+\index{eselect (Programm)|(}%
+\index{eselect (Programm)!rc (Modul)|(}%
+Übrigens gibt es die Möglichkeit, die gleichen Aktionen über das
+Programm \cmd{eselect} %
+\index{Boot!-skripte}%
+auszuführen. Genaueres zur Installation und dem Werkzeug selbst findet
+sich in Kapitel \ref{eselect} ab Seite \pageref{eselect}. Das
+Runlevel-Modul für \cmd{eselect} heißt \cmd{rc} und ein Init-Skript
+fügen wir mit \cmd{eselect rc add} %
+\index{eselect (Programm)!rc - add (Option)}%
+zu den angegebenen Runleveln hinzu. \cmd{eselect rc delete} %
+\index{eselect (Programm)!rc - delete (Option)}%
+löscht ein Skript aus den angegebenen Runlevels, ist also vergleichbar
+zu \cmd{rc-update del} und schließlich zeigt \cmd{eselect rc show} %
+\index{eselect (Programm)!rc - list (Option)}%
+vergleichbar zu \cmd{rc-update show} die Einträge in den ausgewählten
+Runlevels.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect rc add apache2 default}
+Adding apache2 to following runlevels
+  default                   [done]
+\rprompt{\textasciitilde}\textbf{eselect rc show default}
+Status of init scripts in runlevel default
+Status of init scripts in runlevel default
+  apache2                   [stopped]
+  local                     [started]
+  net.eth0                  [started]
+  netmount                  [started]
+  syslog-ng                 [started]
+  vixie-cron                [started]
+\rprompt{\textasciitilde}\textbf{eselect rc delete apache2 default}
+Deleting apache2 from following runlevels
+  default                   [done]
+\end{ospcode}
+
+Die Ausgabe sieht etwas anders aus, der Effekt ist aber
+derselbe. Langjährige Gentoo-Benutzer bleiben vermutlich eher
+\cmd{rc-update} verhaftet, aber da sich \cmd{eselect} immer mehr
+durchsetzt, ist auch dieses Werkzeug für das Management der Runlevels
+zu empfehlen.
+\index{eselect (Programm)!rc (Modul)|)}%
+\index{eselect (Programm)|)}%
+
+\subsection{\label{initconfig}Die Konfiguration des Init-Systems}
+
+\index{Init-System!Konfiguration|(}%
+Die meisten Init-Skripte akzeptieren einige
+Konfigurationsvariablen. Diese befinden sich grundsätzlich im
+Verzeichnis \cmd{/etc/conf.d} %
+\index{conf.d (Verzeichnis)}%
+\index{etc@/etc!conf.d}%
+und tragen den gleichen Namen wie das entsprechende Init-Skript. Die
+Konfiguration für \cmd{/etc/init.d/apache2} %
+\index{apache2 (Init-Skript)}%
+findet sich also in \cmd{/etc/conf.d/apache2}. %
+\index{apache2 (Konfiguration)}%
+\index{etc@/etc!conf.d!apache2}%
+Die Konfigurationsdateien in \cmd{/etc/conf.d} sind alle recht gut
+kommentiert, und in vielen Fällen ist die vorgegebene
+Standard-Konfiguration ausreichend.
+
+Die entsprechenden Optionen liest das Init-System beim Start eines
+Services ein und stellt sie innerhalb des Init-Skripts zur
+Verfügung. Abgesehen von den Konfigurationswerten in
+\cmd{/etc/conf.d/\cmdvar{SERVICE}} %
+\index{conf.d (Verzeichnis)}%
+gilt das auch für die Parameter der Dateien
+\cmd{/etc/conf.d/rc} und \cmd{/etc/rc.conf}.% %
+\index{rc.conf (Datei)}%
+\index{etc@/etc!rc.conf}
+Eine genauere Übersicht findet sich bei den Servicevariablen
+ im Abschnitt \ref{Servicevariablen} ab Seite
+\pageref{Servicevariablen}.% %
+\index{Init-System!Konfiguration|)}%
+\index{Init-System|)}%
+\index{Init-Skripte|)}%
+
+\section{\label{initscripts}Verwendung von Init-Skripten unter Gentoo}
+
+\index{Init-Skripte|(}%
+Die Init-Skripte lassen sich auch separat ansprechen, um einzelne
+Dienste %
+\index{Service!starten}%
+\index{Service!stoppen}%
+%\index{Services|see{Dienste}}%
+im laufenden System zu starten oder zu beenden.
+So können wir  z.\,B.\ den Apache-Server über den Befehl
+\cmd{/etc/init.d/apache2 start} %
+\index{Apache!starten}%
+hochfahren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 start}
+ * Starting apache2 ...                               [ ok ]
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+\index{etc@/etc!init.d!apache2}%
+
+Folgende Kommandos sind für ein Init-Skript immer möglich:
+
+\begin{ospcode}
+start                zap                  needsme
+stop                 status               useme
+restart              ineed                broken
+pause                iuse
+\end{ospcode}
+
+Beschäftigen wir uns zunächst einmal mit den gebräuchlichsten
+Kommandos, die den Zustand des Service betreffen: %
+\cmd{start}, \cmd{stop}, \cmd{restart}, \cmd{pause}, \cmd{zap},
+\cmd{status}.
+ 
+Wie wir schon gesehen haben, lässt sich ein Service über den
+\cmd{start}-Befehl %
+\index{Init-Skripte!start (Option)}%
+\index{Service!starten}%
+hochfahren, ein gestoppter Service auch über das
+\cmd{restart}-Kommando %
+\index{Init-Skripte!restart (Option)}%
+\index{Service!neu starten}%
+wieder starten. Befand sich der Service schon im gestarteten Zustand,
+so wird \cmd{restart} ihn kurz unterbrechen und wieder in den
+laufenden Status befördern. Wir testen das im Folgenden mit Hilfe der
+Prozessliste %
+\index{Prozess!-liste}%
+anhand des laufenden Apache-Servers:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 restart}
+ * Stopping apache2 ...                               [ ok ]
+ * Starting apache2 ...                               [ ok ]
+\rprompt{\textasciitilde}\textbf{ps ax | grep apache}
+12984 ?        Ss     0:00 /usr/sbin/apache2 \ldots
+12991 ?        S      0:00 /usr/sbin/apache2 \ldots
+12992 ?        S      0:00 /usr/sbin/apache2 \ldots
+12993 ?        S      0:00 /usr/sbin/apache2 \ldots
+12994 ?        S      0:00 /usr/sbin/apache2 \ldots
+12995 ?        S      0:00 /usr/sbin/apache2 \ldots
+13028 pts/0    S+     0:00 grep --colour=auto apache
+\end{ospcode}
+\index{Apache!Prozess}%
+\index{ps (Programm)}%
+\index{Prozess!-liste}%
+\index{apache2 (Init-Skript)}%
+
+Das Init-System führt keine direkte Überprüfung des Service"=Zustands
+in der Form durch, wie wir es hier über \cmd{ps} %
+\index{ps (Programm)}%
+getan haben. Im Normalfall überpüft es beim
+Start-Vorgang über das Init-Skript die Rückgabewerte %
+\index{Rückgabewert}%
+der gestarteten Server-Prozesse. Sollten hier Fehler auftreten, wird
+der Benutzer gewarnt und der Service nicht als gestartet markiert. %
+\index{Service!Fehler}%
+Sollte ein Service jedoch einwandfrei starten und dann im laufenden
+Betrieb zusammenbrechen, wird das dem Init-System nicht auffallen.
+
+Wir wollen das einmal testen, indem wir den Apache-Prozess gezielt
+unterbrechen. Zunächst überprüfen wir den Zustand des Service über
+das \cmd{status}-Kommando: %
+\index{Init-Skripte!status (Option)}%
+\index{Service!neu starten}%
+\index{Service!Status}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 status}
+ * status:  started
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+
+Nun hintergehen wir das Init-System, töten den Apache-Prozess und
+überprüfen nochmals den Status:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{killall apache2}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 status}
+ * status:  started
+\end{ospcode}
+\index{Prozess!töten}%
+\index{apache2 (Init-Skript)}%
+
+Wir sehen, dass unser Init-Skript immer noch der Überzeugung ist, dass
+der Service läuft. Ein Check der Prozessliste belehrt uns aber eines
+Besseren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ps ax | grep apache}
+13077 pts/0    S+     0:00 grep --colour=auto apache
+\end{ospcode}
+\index{ps (Programm)}%
+\index{Prozess!-liste}%
+
+An diesem Punkt haben wir ein kleines Problem, denn wenn wir nun
+versuchen, den Service erneut zu starten, hält uns das Init-System
+davon ab:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 start}
+ * WARNING:  apache2 has already been started.
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+
+Wir erhalten die Warnung, der Service sei schon gestartet, und da Init
+dieser Überzeugung ist, versucht es erst gar keinen Neustart. In
+dieser Situation benötigen wir das \cmd{zap}-Kommando, %
+\index{Init-Skripte!zap (Option)}%
+um Init von dem wirklichen Status des Systems zu überzeugen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 zap}
+ * Manually resetting apache2 to stopped state.
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+
+Wir haben den Status nun manuell zurück gesetzt und können auch den
+\cmd{start}-Befehl
+\index{Init-Skripte!start (Option)}%
+wieder verwenden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 start}
+ * Starting apache2 ...                               [ ok ]
+\rprompt{\textasciitilde}\textbf{ps ax | grep apache}
+13170 ?        Ss     0:00 /usr/sbin/apache2 \ldots
+13173 ?        S      0:00 /usr/sbin/apache2 \ldots
+13174 ?        S      0:00 /usr/sbin/apache2 \ldots
+13175 ?        S      0:00 /usr/sbin/apache2 \ldots
+13176 ?        S      0:00 /usr/sbin/apache2 \ldots
+13177 ?        S      0:00 /usr/sbin/apache2 \ldots
+13179 pts/0    S+     0:00 grep --colour=auto apache
+\end{ospcode}
+\index{ps (Programm)}%
+\index{Prozess!-liste}%
+\index{apache2 (Init-Skript)}%
+
+Bleibt an dieser Stelle noch das \cmd{pause}-Kommando,
+\index{Init-Skripte!pause (Option)}%
+mit dem wir auch gleich zum nächsten Punkt überleiten können:
+Abhängigkeiten zwischen verschiedenen Services.
+Fahren wir dafür einmal bei gestartetem Apache-Server das Netzwerk herunter:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/net.eth0 stop}
+ * Stopping apache2 ...                               [ ok ]
+ * Stopping eth0
+ *   Bringing down eth0
+ *     Shutting down eth0 ...                         [ ok ]
+\end{ospcode}
+\index{net.eth0 (Datei)}%
+\index{etc@/etc!init.d!net.eth0}%
+
+
+\index{Init-Skripte!Abhängigkeiten|(}%
+In dieser Situation beendet das Init-System nicht nur das Netzwerk,
+sondern auch den Apache-Server. Es muss also einen Mechanismus geben,
+der dem Init-System unter Gentoo mitteilt, dass der Apache eine
+funktionierende Netzwerkschnittstelle benötigt, um korrekt zu
+funktionieren.  Auf diese Art der Abhängigkeiten gehen wir im nächsten
+Abschnitt genauer ein.
+
+An dieser Stelle wollen wir uns aber erst einmal ansehen, wie wir
+diese Abhängigkeiten umgehen können. Es gibt Situationen, in denen wir
+einen Service nur kurz unterbrechen wollen, um ihn anschließend wieder
+zu starten, und wir trotzdem nicht gleich die ganze Kette aller
+abhängigen Systeme ebenfalls beenden wollen. Hier hilft der Befehl
+\cmd{pause}.
+\index{Init-Skripte!pause (Option)}%
+Zur Demonstration starten wir den Apache bei abgeschaltetem Netzwerk erst einmal
+wieder:% %
+\index{Init-Skripte!start (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 start}
+ * Starting apache2 ...                               [ ok ]
+ * Starting eth0
+ *   Bringing up eth0
+ *     dhcp
+ *       Running dhcpcd ...
+Error, timed out waiting for a valid DHCP response    [ !! ]
+ *     Trying fallback configuration
+ *     192.168.178.66                                 [ ok ]
+ * Starting apache2 ...                               [ ok ]
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+
+Wir sehen das umgekehrte Verhalten von vorhin: Da der Apache eine
+korrekt konfigurierte Netzwerkschnittstelle benötigt, startet das
+Init-System hier zuerst \cmd{net.eth0}, um dann im zweiten Schritt den
+Apache-Server zu initialisieren.
+
+Verwenden wir jetzt \cmd{pause} %
+\index{Init-Skripte!pause (Option)}%
+anstatt \cmd{stop}, %
+\index{Init-Skripte!stop (Option)}%
+um das Netzwerk herunter zu fahren, achtet das Init-System nicht
+weiter auf die Abhängigkeiten und der Apache-Server läuft weiter.% %
+\index{Init-Skripte!Abhängigkeiten|)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/net.eth0 pause}
+ * Stopping eth0
+ *   Bringing down eth0
+ *     Shutting down eth0 ...                         [ ok ]
+\end{ospcode}
+\index{net.eth0 (Datei)}%
+\index{Netzwerk!pausieren}%
+
+Starten können wir den Service dann wieder wie üblich mit
+\cmd{start}:% %
+\index{Init-Skripte!start (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/net.eth0 start}
+ * Starting eth0
+ *   Bringing up eth0
+ *     dhcp
+ *       Running dhcpcd ...
+Error, timed out waiting for a valid DHCP response    [ !! ]
+ *     Trying fallback configuration
+ *     192.168.178.66                                 [ ok ]
+\end{ospcode}
+\index{net.eth0 (Datei)}%
+
+Bleiben noch zwei Optionen zu erwähnen, die man jedem Init-Skript mit
+auf den Weg geben kann: \cmd{-{}-nocolor} und \cmd{-{}-quiet}.
+\cmd{-{}-nocolor} %
+\index{Init-Skripte!nocolor (Option)}%
+dient dazu, Farbwechsel aus der Kommandozeilenausgabe zu entfernen, so
+dass die Meldungen auch auf Terminals ohne Farbunterstützung lesbar
+sind. \cmd{-{}-quiet} %
+\index{Init-Skripte!quiet (Option)}%
+reduziert die Ausgabe des Befehls auf Warnungen und eventuelle
+Fehler. Im Normalfall sollte also keine Ausgabe zu sehen sein:% %
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 --quiet restart}
+\rprompt{\textasciitilde}
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+
+\index{eselect (Programm)|(}%
+\index{eselect (Programm)!rc (Modul)|(}%
+
+Übrigens kann, wer mag, auch für das Service-Management das Programm
+\cmd{eselect} verwenden:% %
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect rc restart apache2}
+Restarting init script
+ * Stopping apache2 ...        [ ok ]
+ * Starting apache2 ...        [ ok ]
+\end{ospcode}
+
+Die Befehle \cmd{start}, %
+\index{Init-Skripte!start (Option)}%
+\index{eselect (Programm)!rc - start (Option)}%
+\cmd{stop}, %
+\index{eselect (Programm)!rc - stop (Option)}%
+\cmd{restart} %
+\index{eselect (Programm)!rc - restart (Option)}%
+und \cmd{pause} %
+\index{eselect (Programm)!rc - pause (Option)}%
+haben den gleichen Effekt, als würde man das Init-Skript wie oben
+beschrieben direkt aufrufen. Nur der \cmd{status}-Befehl wurde
+umbenannt und heißt im \cmd{rc}-Modul \cmd{show}. %
+\index{eselect (Programm)!rc - show (Option)}%
+Der Befehl \cmd{zap} fehlt für \cmd{eselect rc}.
+
+Einen kleinen Vorteil hat die Verwendung von \cmd{eselect}, denn es
+lassen sich gleich mehrere Service-Namen angeben. \cmd{eselect rc
+  restart apache2 mysql} startet also gleichzeitig den Apache-Server
+und die MySQL"=Datenbank.% %
+\index{eselect (Programm)|)}%
+\index{eselect (Programm)!rc (Modul)|)}%
+
+Wir vertiefen uns nun in die Funktionsweise der Init-Skripte. Wer
+sich statt dessen zunächst auf die Grundkonfiguration des Systems konzentrieren
+möchte, dem sei geraten, an diesem Punkt auf das nächste Kapitel ab
+Seite \pageref{lokalisierung} zu springen.
+
+
+\subsection{\label{initdeps}Abhängigkeiten}
+
+\index{Init-Skripte!Abhängigkeiten|(}%
+Wie funktionieren die oben angesprochenen Abhängigkeiten? Dafür müssen
+wir uns ein Init-Skript einmal etwas genauer ansehen. Hierfür bietet
+sich \cmd{/etc/init.d/apache2} an. Hier die ersten Zeilen des Skripts:
+
+\begin{ospcode}
+#!/sbin/runscript
+# Copyright 1999-2005 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+opts="\$\{opts\} reload configtest"
+
+# this next comment is important, don't remove it - it has to be
+# somewhere in the init script to kill off a warning that doesn't
+# apply to us
+# svc_start svc_stop   
+
+depend() \{
+        need net
+        use mysql dns logger netmount postgresql
+        after sshd
+\}
+
+\ldots
+\end{ospcode}
+
+\label{initddepend}%
+Wichtig ist an dieser Stelle die Definition von \cmd{depend}. %
+\index{Init-Skripte!depend (Funktion)}%
+Hier sehen wir auch schon, was in den vorigen Beispielen dazu geführt
+hat, dass Init die Netzwerkschnittstelle für den Apache-Server als
+notwendig erachtet hat: der Befehl \cmd{need net}. %
+\index{Init-Skripte!need (Option)}%
+\index{Apache!Abhängigkeiten}%
+
+Statt direkt im Skript nach zuschauen, können wir das Init-Skript auch
+mit dem Befehl \cmd{ineed} %
+\index{Init-Skripte!ineed (Option)}%
+nach zwingenden Abhängigkeiten befragen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 ineed}
+net
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+
+Umgekehrt ist es auch möglich, das Netzwerkskript danach zu befragen,
+welche Services von diesem Element abhängen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/net.eth0 needsme}
+apache2 netmount slapd slurpd sshd net
+\end{ospcode}
+\index{Init-Skripte!needsme (Option)}%
+\index{net.eth0 (Datei)}%
+
+Die Sammlung an Services, die das Netzwerk benötigen, ist schon etwas
+größer. Der Apache-Server findet sich direkt an erster Stelle wieder.
+
+Wir sehen innerhalb des oben angegebenen \cmd{depend}-Statements aber
+auch noch den Begriff \cmd{use}, %
+\index{Init-Skripte!use (Option)}%
+eine Zeile unter der \cmd{need}-Deklaration. \cmd{use} (benutzen)
+klingt weniger zwingend als \cmd{need} (benötigen), und das macht auch
+den Unterschied der beiden Deklarationen aus.
+Für den Apache-Server führt das entsprechende Init-Skript mehrere
+Dienste in der \cmd{use}-Liste:
+
+\begin{ospcode}
+use mysql dns logger netmount postgresql
+\end{ospcode}
+
+Hier befindet sich z.\,B.\ der MySQL-Server. %
+\index{MySQL}%
+Nun läuft ein Apache-Server aber völlig problemlos ohne eine
+MySQL-Datenbank. Es ist aber natürlich so, dass viele Webanwendungen,
+vor allem solche, die auf PHP basieren, recht häufig eine
+MySQL-Datenbank verwenden.
+
+Will man solche Anwendungen auf einem Webserver installieren, so liegt
+es nahe, neben dem Apache-Server auch den MySQL-Server zu starten. Um
+den Benutzer nicht zu bevormunden, benutzt das Init-System hier
+folgendes Verfahren:
+Wenn der unter \cmd{use} angegebene Dienst im derzeit aktiven Runlevel
+als aktiv markiert ist -- also über \cmd{rc-update add} %
+\index{rc-update (Programm)!add (Option)}%
+in den entsprechenden Ordner unter \cmd{/etc/runlevels} %
+\index{runlevels (Verzeichnis)}%
+eingetragen wurde --, führt der Start eines Dienstes auch zum Start
+des entsprechenden Subsystems.
+
+Probieren wir das einmal mit MySQL aus. Dafür gehen wir sicher, dass
+sowohl der MySQL-Server als auch der Apache gestoppt sind und der
+\cmd{mysql}-Eintrag im derzeitigen Runlevel (hier \cmd{default}) %
+\index{Runlevel!default}%
+fehlt.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/mysql stop}
+ * WARNING:  mysql has not yet been started.
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 stop}
+ * Stopping apache2 ...                               [ ok ]
+\rprompt{\textasciitilde}\textbf{eselect rc delete mysql default}
+Deleting mysql from following runlevels
+  default                   [skipped]
+\end{ospcode}
+\index{rc-update (Programm)!del (Option)}%
+\index{mysql (Init-Skript)}%
+\index{etc@/etc!init.d!mysql}%
+\index{apache2 (Init-Skript)}%
+
+Wir überprüfen noch einmal mittels \cmd{iuse}, %
+\index{Init-Skripte!iuse (Option)}%
+ob der Apache denn MySQL wirklich verwenden würde, und starten dann
+den Apache:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 iuse}
+localmount net netmount mysql syslog-ng
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 start}
+ * Starting apache2 ...                               [ ok ]
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+
+Wie oben beschrieben, fehlt MySQL im aktuellen Runlevel, also wird der
+Service hier nicht gestartet. Ergänzen wir den Runlevel und starten den Apache
+erneut:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{eselect rc add mysql default}
+Adding mysql to following runlevels
+  default                   [done]
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 restart}
+ * Stopping apache2 ...                               [ ok ]
+ * Starting mysql ...
+ * Starting mysql (/etc/mysql/my.cnf)                 [ ok ]
+ * Starting apache2 ...                               [ ok ]
+\end{ospcode}
+\index{rc-update (Programm)!add (Option)}%
+\index{mysql (Init-Skript)}%
+\index{apache2 (Init-Skript)}%
+\index{Runlevel!default}%
+\index{MySQL!mit Apache starten}%
+
+Da wir dem System mitgeteilt haben, dass wir den MySQL-Server beim
+Boot-Vorgang im \cmd{default}-Runlevel %
+\index{Runlevel!default}%
+gerne gestartet hätten, geht das Init-System nun davon aus, dass es
+den Server auch dann zur Verfügung stellen soll, wenn ein Service
+diesen als \cmd{use} markiert hat.
+Wie es für \cmd{needsme} %
+\index{Init-Skripte!needsme (Option)}%
+den Counterpart \cmd{ineed} %
+\index{Init-Skripte!ineed (Option)}%
+gibt, so gehören \cmd{usesme} %
+\index{Init-Skripte!usesme (Option)}%
+und \cmd{iuse} zusammen. %
+\index{Init-Skripte!iuse (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/mysql usesme}
+apache2
+\end{ospcode}
+\index{mysql (Init-Skript)}%
+
+Der einzige Befehl, den wir an dieser Stelle noch nicht erwähnt haben,
+ist \cmd{broken}. %
+\index{Init-Skripte!broken (Option)}%
+Dieser lässt sich zusammen mit einem Init-Skript verwenden, um zu
+überprüfen, ob irgendwelche Abhängigkeiten, die über \cmd{need} %
+\index{Init-Skripte!need (Option)}%
+spezifiziert wurden, nicht erfüllt sind.
+
+Im Normalfall liefert dieser Test jedoch kein Ergebnis, da schon der
+Ebuild überprüft, ob alle notwendigen Abhängigkeiten erfüllt sind
+(siehe Seite \pageref{dependencies}). Wenn also ein Paket im
+Init-Skript die MySQL-Datenbank mit \cmd{need} spezifiziert, muss der
+Ebuild ebenfalls die Installation der MySQL-Datenbank zwingend
+voraussetzen. Die Situation, die sich über \cmd{broken} %
+\index{Init-Skripte!broken (Option)}%
+überprüfen lässt, können wir also eigentlich nur erzeugen, indem wir
+ein Paket unbedacht über \cmd{emerge -{}-unmerge} %
+\index{emerge (Programm)!unmerge (Option)}%
+entfernen (siehe Kapitel \ref{unmerge}). Entsprechend selten findet
+der Befehl Verwendung und liefert, wie hoffentlich auch in unserem
+System, keine Ausgabe:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/etc/init.d/apache2 broken}
+
+\rprompt{\textasciitilde}\textbf{}
+\end{ospcode}
+\index{apache2 (Init-Skript)}%
+
+\index{Gentoo!Vergleich zu anderen Distributionen|(}%
+\index{Init-Skripte!Reihenfolge|(}%
+%\index{Boot!Reihenfolge|see{Init-Skripte, Reihenfolge}}%
+Wer genau hin geschaut hat, findet in der oben angegebenen
+\cmd{depend}"=Sektion %
+\index{Init-Skripte!depend (Funktion)}%
+noch den Befehl \cmd{after}. %
+\index{Init-Skripte!after (Option)}%
+Zu dieser Deklaration gibt es auch den Gegenspieler \cmd{before}. %
+\index{Init-Skripte!before (Option)}%
+Beide werden eingesetzt, um die Start-Reihenfolge der verschiedenen
+Services festzulegen. Dies geschieht bei den meisten Distributionen
+über spezifische Start-Nummern, die den Skripten vorangestellt werden
+-- meist zwischen \cmd{00} und \cmd{99}.
+
+Unter Gentoo erreicht man das gleiche Ziel über die direkte Definition
+mit \cmd{before} und \cmd{after}. Der Vorteil ist klar: Der Entwickler
+eines Init-Skripts muss nur die Services definieren, die wirklich vor
+oder nach dem Ziel des Init-Skripts gestartet werden müssen, und kann
+diese direkt formulieren, ohne sich um die Sortierung einer globalen
+Liste kümmern zu müssen.
+\index{Gentoo!Vergleich zu anderen Distributionen|)}%
+
+Um die Auflösung der zeitlichen Abhängigkeiten kümmert sich dann das
+spezielle Init-System von Gentoo. Für den Apache-Service finden wir in
+dem Init-Skript nur eine \cmd{after}-Deklaration: %
+\index{Init-Skripte!after (Option)}%
+
+\begin{ospcode}
+after sshd
+\end{ospcode}
+
+Das Init-System fährt also den Apache-Server immer erst nach dem
+SSH-Server hoch.
+\index{Init-Skripte!Reihenfolge|)}%
+
+Eine letzte spezielle Deklaration, die im Init-Skript des
+Apache-Servers fehlt, aber z.\,B.\ in dem Netzwerkskript
+\cmd{/etc/init.d/net.eth0} %
+\index{net.eth0 (Datei)}%
+zu finden wäre, ist die \cmd{provide}-Direktive.
+\index{Init-Skripte!provide (Option)}%
+\index{Init-Skripte!gleicher Funktionalität}%
+Diese ist für die besondere Situation gedacht, dass verschiedene
+Services ein und dieselbe Funktionalität bieten. So haben wir ja
+weiter oben schon gesehen, dass die notwendige Netzwerkschnittstelle
+nicht über \cmd{use net.eth0}, %
+\index{net.eth0 (Datei)}%
+sondern mit Hilfe von \cmd{use net} definiert wurde. Das ist auch
+sinnvoll, da ja eine WLAN-Schnittstelle, die vielleicht über
+\cmd{/etc/init.d/net.wlan0} %
+\index{net.wlan0 (Datei)}%
+gestartet würde, durchaus die gleiche Netzwerkfunktionalität bieten
+würde wie \cmd{net.eth0}. In diesem Fall muss also jedes
+Netzwerkskript über \cmd{provide net} deklarieren, dass es ganz
+allgemein den Zugang zu einem Netzwerk ermöglicht.
+Die gleiche Situation gibt es z.\,B.\ auch beim Syslog- (\cmd{provide
+  logger}) oder dem Cron-System (\cmd{provide cron}).% %
+\index{Init-Skripte!Abhängigkeiten|)}%
+
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 
+
+% LocalWords:  Farbunterstützung

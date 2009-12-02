@@ -1,0 +1,1642 @@
+\chapter{\label{makeconf}Die Datei /etc/make.conf}
+
+\index{make.conf (Datei)|(}%
+Die komplexen Konfigurationsvariablen \cmd{USE} und
+\cmd{ACCEPT\_KEYWORDS}, die sich beide 
+in der Datei \cmd{/etc/make.conf} definieren lassen, haben wir ausführlich behandelt. Schaut man
+sich die gut kommentierte Beispielkonfiguration in
+\cmd{/etc/make.conf.example}
+\index{make.conf.example (Datei)}%
+\index{etc@/etc!make.conf.example}%
+an, so stellen wir fest, dass damit ein Bruchteil der möglichen
+Konfigurationsvariablen abgedeckt ist. Allerdings haben die
+anderen Optionen deutlich geringere Auswirkungen.
+
+Den Kopfteil, die Abschnitte \cmd{Build-time functionality}, \cmd{Host
+  Setting}, \cmd{Host and optimization settings} und \cmd{Advanced
+  Masking} aus der Datei \cmd{/etc/make.conf.example},
+\index{make.conf.example (Datei)}%
+haben wir ebenfalls schon besprochen, und zwar als es im Abschnitt
+\ref{Compiler-Flags} ab Seite \pageref{Compiler-Flags} um die
+Compiler-Flags (\cmd{CHOST}, \cmd{CFLAGS} und \cmd{CXXFLAGS}) im
+Zusammenhang mit der Installation ging.
+
+Der zweite Teil der Datei \cmd{/etc/make.conf} konfiguriert
+Portage"=Eigenschaften mit weniger zentraler Bedeutung für das System.
+Dazu gehören z.\,B.\ die verschiedenen Verzeichnisse, die für die
+Arbeit von Portage notwendig sind, die Konfiguration für die globalen
+Gentoo-Server und das Logging-Verhalten von Portage.  Wer sich mit diesen
+exotischeren Konfigurationen hier erst einmal nicht
+auseinander setzen möchte, springt zu Abschnitt \ref{shortmakeconf} ab
+Seite \pageref{shortmakeconf} und konfiguriert nur kurz die
+wichtigsten Elemente.
+
+Die Standard-Einstellungen %
+\index{Portage!Standardeinstellungen}%
+für die Variablen, die wir im Folgenden beleuchten, werden diesmal
+nicht durch das Profil festgelegt, sondern finden sich in der Datei
+\cmd{/etc/make.globals} %
+\index{make.globals (Datei)}%
+\index{etc@/etc!make.globals}%
+wieder, da diese Variablen nicht von der verwendeten Architektur
+abhängen.
+
+
+\section{Portage-Verzeichnisse}
+
+\index{Portage!Verzeichnisse|(}%
+Im nächsten Abschnitt der Beispielkonfiguration (\cmd{Portage
+  Directories}) finden sich einige Einstellungen zu zentralen
+Verzeichnissen von Portage. 
+
+\index{make.conf.example (Datei)|(}%
+\begin{ospcode}
+# Portage Directories
+# ===================
+#
+# Each of these settings controls an aspect of portage's storage and
+# file system usage. If you change any of these, be sure it is available
+# when you try to use portage. *** DO NOT INCLUDE A TRAILING "/" ***
+#
+# PORTAGE_TMPDIR is the location portage will use for compilations and
+#     temporary storage of data. This can get VERY large depending upon
+#     the application being installed.
+#PORTAGE_TMPDIR=/var/tmp
+#
+# PORTDIR is the location of the portage tree. This is the repository
+#     for all profile information as well as all ebuilds. If you change
+#     this, you must update your /etc/make.profile symlink accordingly.
+#PORTDIR=/usr/portage
+#
+# DISTDIR is where all of the source code tarballs will be placed for
+#     emerges. The source code is maintained here unless you delete
+#     it. The entire repository of tarballs for Gentoo is 9G. This is
+#     considerably more than any user will ever download. 2-3G is
+#     a large DISTDIR.
+#DISTDIR=\$\{PORTDIR\}/distfiles
+#
+# PKGDIR is the location of binary packages that you can have created
+#     with '--buildpkg' or '-b' while emerging a package. This can get
+#     up to several hundred megs, or even a few gigs.
+#PKGDIR=\$\{PORTDIR\}/packages
+#
+# PORT_LOGDIR is the location where portage will store all the logs it
+#     creates from each individual merge. They are stored as
+#     NNNN-\$PF.log in the directory specified. This is disabled until
+#     you enable it by providing a directory. Permissions will be
+#     modified as needed IF the directory exists, otherwise logging will
+#     be disabled. NNNN is the increment at the time the log is created.
+#     Logs are thus sequential.
+#PORT_LOGDIR=/var/log/portage
+#
+# PORTDIR_OVERLAY is a directory where local ebuilds may be stored 
+#     without concern that they will be deleted by rsync updates. Default 
+#     is not defined.
+#PORTDIR_OVERLAY=/usr/local/portage
+\end{ospcode}
+\index{make.conf.example (Datei)|)}%
+
+
+Das %
+\label{PORTDIR}%
+\cmd{PORTDIR} %
+\index{PORTDIR (Variable)}%
+legt den Ort des zentralen Portage-Verzeichnisses fest. Im Normalfall
+ist dies \cmd{/usr/portage}.% %
+\index{portage (Verzeichnis)}%
+\index{usr@/usr!portage}
+
+Innerhalb dieses Verzeichnisses gibt es neben den verschiedenen
+Paket-Kategorien
+\index{Portage!Kategorie}%
+(siehe Kapitel \ref{packagenamebasics}) noch einige Dateien und
+Ordner mit besonderer Bedeutung. So legt Portage die
+Ordner \cmd{distfiles}
+\index{distfiles (Verzeichnis)}%
+\index{usr@/usr!portage!distfiles}%
+und \cmd{packages}
+\index{packages (Verzeichnis)}%
+\index{usr@/usr!portage!packages}%
+im Normalfall unterhalb von \cmd{PORTDIR} an.  Beide können wir aber
+auch gesondert auslagern, da die dort abgelegten Dateien ein
+respektables Volumen auf der Festplatte einnehmen können. Den Zielort
+für heruntergeladene Quellpakete
+\index{Quellarchiv}%
+kann man über die Variable \cmd{DISTDIR}
+\index{DISTDIR (Variable)}%
+\label{distdirvar}%
+beeinflussen, den für binäre Pakete
+\index{Paket!binär}%
+%\index{Binäre Pakete|see{Paket, binär}}%
+mit \cmd{PKGDIR}.
+\label{pkgdir}%
+\index{PKGDIR (Variable)}%
+
+Diese Einstellungen zu  verändern ist
+dann sinnvoll, wenn man die Dateien aus Platzgründen
+auslagern %
+\index{Festplatte!Layout}%
+oder auf einem NFS-System %
+\index{NFS}%
+bereithalten möchte. Letzteres kann besonders für das \cmd{DISTDIR} %
+\index{DISTDIR (Variable)}%
+sinnvoll sein, wenn man in einem internen Netzwerk mehrere Maschinen
+mit Gentoo betreibt und vermeiden möchte, dass jede Maschine ihre
+eigenen Quellpakete herunterlädt. %
+\index{Portage!verteilt}%
+Innerhalb eines internen Netzwerkes mit einem Build-Host %
+\index{Buildhost}%
+sollte man auch das \cmd{PKGDIR} %
+\index{PKGDIR (Variable)}%
+vom zentralen Host aus an die Clients verteilen.
+
+\label{portagetmpdir}%
+Die Standardeinstellung für das temporäre Portage-Verzeichnis legt die Variable
+\cmd{PORTAGE\_TMPDIR} %
+\index{PORTAGE\_TMPDIR (Variable)}%
+auf \cmd{/var/tmp} %
+\index{tmp@/tmp}%
+\index{var@/var!tmp}%
+fest. Innerhalb dieses Verzeichnisses liegt dann normalerweise das
+Verzeichnis \cmd{portage}, in dem \cmd{emerge} alle Pakete zur
+Installation vorbereitet. Dieser Pfad lässt sich mit
+\cmd{BUILD\_PREFIX} modifizieren. Die Standardeinstellung ist
+\cmd{\$\{PORTAGE\_TMPDIR\}/portage}.
+
+\label{logdir}%
+\cmd{PORT\_LOGDIR} %
+\index{PORT\_LOGDIR (Variable)}%
+\index{Portage!Logfiles}%
+\index{Installation!Logfiles}%
+definiert ein Verzeichnis, das den vollständigen Output aller
+Installationen und Updates enthält. Diese Transkripte erstellt
+\cmd{emerge} allerdings erst, sobald wir \cmd{PORT\_LOGDIR} %
+\index{PORT\_LOGDIR (Variable)}%
+einen Wert zugewiesen haben. Das Verzeichnis kann ebenfalls eine nicht
+unerhebliche Größe annehmen, und man sollte es, so man es denn
+verwendet, gelegentlich leeren.
+
+Schließlich legt \cmd{PORTDIR\_OVERLAY}
+\index{PORTDIR\_OVERLAY (Variable)}%
+die Lage potentieller Overlays fest.
+%\index{Portage!Overlays|see{Overlays}}%
+\index{Overlay}%
+Diese Variable schauen wir uns aber erst auf Seite
+\pageref{portdiroverlay} in Abschnitt \ref{overlays} genauer an.
+\index{Portage!Verzeichnisse|)}%
+
+\section{\label{mirrors}Mirrors}
+
+\index{Mirror|(}%
+%\index{Portage!Mirror|see{Mirror}}%
+Um den Download von Daten und Paketen drehen sich die
+Einstellungen in den folgenden zwei Abschnitten der Datei
+\cmd{make.conf.example}: \cmd{Fetching files} und \cmd{Synchronizing
+  Portage}.
+
+\index{make.conf.example (Datei)|(}%
+\begin{ospverbcode}
+# Fetching files 
+# ==============
+#
+# If you need to set a proxy for wget or lukemftp, add the appropriate
+# "export ftp_proxy=<proxy>" and "export http_proxy=<proxy>" lines to
+# /etc/profile if all users on your system should use them.
+#
+# Portage uses wget by default. Here are some settings for some
+# alternate downloaders -- note that you need to merge these programs
+# first before they will be available.
+#
+# Default fetch command (5 tries, passive ftp for firewall compatibility
+)
+#FETCHCOMMAND="/usr/bin/wget -t 5 -T 60 --passive-ftp ${URI} -P ${DIST
+DIR}"
+#RESUMECOMMAND="/usr/bin/wget -c -t 5 -T 60 --passive-ftp ${URI} -P ${
+DISTDIR}"
+#
+# Using wget, ratelimiting downloads
+#FETCHCOMMAND="/usr/bin/wget -t 5 -T 60 --passive-ftp --limit-rate=200k 
+${URI} -P ${DISTDIR}"
+#RESUMECOMMAND="/usr/bin/wget -c -t 5 -T 60 --passive-ftp --limit-rate=2
+00k ${URI} -P ${DISTDIR}"
+#
+# Lukemftp (BSD ftp):
+#FETCHCOMMAND="/usr/bin/lukemftp -s -a -o ${DISTDIR}/${FILE} ${URI}"
+#RESUMECOMMAND="/usr/bin/lukemftp -s -a -R -o ${DISTDIR}/${FILE} ${UR
+I}"
+#
+# Portage uses GENTOO_MIRRORS to specify mirrors to use for source
+# retrieval. The list is a space separated list which is read left to
+# right. If you use another mirror we highly recommend leaving the
+# default mirror at the end of the list so that portage will fall back
+# to it if the files cannot be found on your specified mirror. We
+# _HIGHLY_ recommend that you change this setting to a nearby mirror by
+# merging and using the 'mirrorselect' tool.
+#GENTOO_MIRRORS="<your_mirror_here> http://distfiles.gentoo.org http://w
+ww.ibiblio.org/pub/Linux/distributions/gentoo"
+#
+# Portage uses PORTAGE_BINHOST to specify mirrors for prebuilt-binary
+# packages. The list is a single entry specifying the full address of
+# the directory serving the tbz2's for your system. Running emerge with
+# either '--getbinpkg' or '--getbinpkgonly' will cause portage to
+# retrieve the metadata from all packages in the directory specified,
+# and use that data to determine what will be downloaded and merged.
+# '-g' or '-gK' are the recommend parameters. Please consult the man
+# pages and 'emerge --help' for more information. For FTP, the default
+# connection is passive -- If you require an active connection, affix
+# an asterisk (*) to the end of the host:port string before the path.
+#PORTAGE_BINHOST="http://grp.mirror.site/gentoo/grp/1.4/i686/athlon-xp/"
+# This ftp connection is passive ftp.
+#PORTAGE_BINHOST="ftp://login:pass@grp.mirror.site/pub/grp/i686/athlon-x
+p/"
+# This ftp connection is active ftp.
+#PORTAGE_BINHOST="ftp://login:pass@grp.mirror.site:21*/pub/grp/i686/athl
+on-xp/"
+
+# Synchronizing Portage
+# =====================
+#
+# Each of these settings affects how Gentoo synchronizes your Portage
+# tree. Synchronization is handled by rsync and these settings allow
+# some control over how it is done.
+#
+# SYNC is the server used by rsync to retrieve a localized rsync mirror
+#     rotation. This allows you to select servers that are
+#     geographically close to you, yet still distribute the load over a
+#     number of servers. Please do not single out specific rsync
+#     mirrors. Doing so places undue stress on particular mirrors.
+#     Instead you may use one of the following continent specific
+#     rotations:
+#
+#   Default:       "rsync://rsync.gentoo.org/gentoo-portage"
+#   North America: "rsync://rsync.namerica.gentoo.org/gentoo-portage"
+#   South America: "rsync://rsync.samerica.gentoo.org/gentoo-portage"
+#   Europe:        "rsync://rsync.europe.gentoo.org/gentoo-portage"
+#   Asia:          "rsync://rsync.asia.gentoo.org/gentoo-portage"
+#   Australia:     "rsync://rsync.au.gentoo.org/gentoo-portage"
+#
+#     If you have multiple Gentoo boxes, it is probably a good idea to
+#     have only one of them sync from the rotations above. The other
+#     boxes can then rsync from the local rsync server, reducing the
+#     load on the mirrors. Instructions for setting up a local rsync
+#     server are available here:
+#     http://www.gentoo.org/doc/en/rsync.xml
+#
+#SYNC="rsync://rsync.gentoo.org/gentoo-portage"
+#
+# PORTAGE_RSYNC_RETRIES sets the number of times portage will attempt to
+#     retrieve a current portage tree before it exits with an error.
+#     This allows for a more successful retrieval without user
+#     intervention most times.
+#PORTAGE_RSYNC_RETRIES="3"
+#
+# PORTAGE_RSYNC_EXTRA_OPTS can be used to feed additional options to the
+#     rsync command used by `emerge --sync`. This will not change the
+#     default options which are set by PORTAGE_RSYNC_OPTS (don't change
+#     those unless you know  exactly what you're doing).
+#PORTAGE_RSYNC_EXTRA_OPTS="
+\end{ospverbcode}
+\index{make.conf.example (Datei)|)}%
+
+Portage benötigt für die Installation von Paketen zwei externe
+Datenquellen: Zum einen den \emph{Portage-Baum}, %
+\index{Mirror!Portage-Baum}%
+\index{Portage!Baum}%
+der alle Paketdefinitionen enthält, zum anderen die eigentlichen
+Quellen der zu installierenden Programme. %
+\index{Mirror!Quellpakete}%
+\index{Quellarchiv}%
+Mit der Variablen \cmd{SYNC} %
+\index{SYNC (Variable)}%
+legt man in der \cmd{/etc/make.conf} fest, von welchem Mirrorsystem
+man den %
+\index{Mirror!Portage-Baum}%
+\index{Portage!Mirror}%
+Portage-Baum beziehen möchte, während man über %
+\index{Mirror!Quellpakete}%
+\index{GENTOO\_MIRRORS (Variable)}%
+\cmd{GENTOO\_MIRRORS} die Mirror-Server für die Quellarchive bestimmt.
+
+Der Portage-Baum liegt im Original in einem CVS-System,
+\index{CVS}%
+\index{Portage!Paketdatenbank}%
+für das nur die Entwickler der Distribution Schreibrechte haben. Er
+ist über eine Vielzahl von \cmd{rsync}-Servern
+%\index{rsync!Server|see{Mirror, rsync}}%
+\index{Mirror!rsync}%
+für die User zugänglich. Damit verteilt sich die Last der Zugriffe
+effizient, gibt es doch mehrere zentrale, kontinentspezifische
+\cmd{rsync}-Adressen,
+%\index{rsync!Adressen|see{Mirror, Adressen}}%
+\index{Mirror!Adressen}%
+\index{Mirror!Portage-Baum}%
+die die anfragenden Clients nach dem Zufallsprinzip auf die
+verfügbaren Server in der jeweiligen Region umleiten. Damit das
+funktioniert, muss die Variable \cmd{SYNC} entsprechend den
+Angaben in der Beispieldatei
+\index{SYNC (Variable)}%
+\index{Mirror!für Europa}%
+\cmd{/etc/make.conf.example} %
+\index{make.conf.example (Datei)}%
+auf die korrekte Region gesetzt sein. Für Europa lautet die korrekte Adresse:
+
+\begin{ospcode}
+\cmd{rsync://rsync.europe.gentoo.org/gentoo-portage}
+\end{ospcode}
+
+Alternativ kann man den passenden Server mit dem Tool
+\index{mirrorselect (Programm)}%
+\cmd{mirrorselect} auswählen. Es liegt als Paket
+\cmd{mirrorselect} in Kategorie \cmd{app-portage}:
+\index{mirrorselect (Paket)}%
+%\index{app-portage (Kategorie)!mirrorselect (Paket)|see{mirrorselect (Paket)}}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av app-portage/mirrorselect}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-analyzer/netselect-0.3-r1  0 kB 
+[ebuild  N    ] app-portage/mirrorselect-1.2  0 kB 
+
+Total: 2 packages (2 new), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+
+Das Tool erlaubt es,  den Mirror-Server direkt in die Datei
+\cmd{/etc/make.conf} hineinzuschreiben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mirrorselect -i -r -o >{}> /etc/make.conf}
+\rprompt{\textasciitilde}\textbf{cat /etc/make.conf}
+# These settings were set by the catalyst build script that automatically
+# built this stage.
+# Please consult /etc/make.conf.example for a more detailed example.
+CFLAGS="-march=i686 -O2 -pipe"
+CXXFLAGS="\$\{CFLAGS\}"
+# This should not be changed unless you know exactly what you are doing.
+# You should probably be using a different stage, instead.
+CHOST="i686-pc-linux-gnu"
+USE="apache2 mysql xml ldap -X"
+
+SYNC="rsync://rsync.europe.gentoo.org/gentoo-portage"
+\end{ospcode}
+
+\cmd{-i} (bzw.\ \cmd{-{}-interactive})
+\index{mirrorselect (Programm)!interactive (Option)}%
+startet  den grafischen, interaktiven Modus; \cmd{-r} (bzw.\
+\cmd{-{}-rsync})
+\index{mirrorselect (Programm)!rsync (Option)}%
+\index{Mirror!Portage-Baum}%
+aktiviert die Rsync-Serverauswahl und \cmd{-o} (bzw.\
+\cmd{-{}-output})
+\index{mirrorselect (Programm)!output (Option)}%
+liefert als Ausgabe eine Konfigurationszeile, die wir sofort über
+\cmd{>{}>} an die Datei \cmd{/etc/make.conf} anhängen können.
+
+Bleiben noch die eigentlichen Quellen der Programme:
+\index{Quellarchiv}%
+Portage ist zwar durchaus in der Lage, die Quelltextarchive der zu
+\index{Mirror!Quellpakete}%
+installierenden Software von den Original-Download-Locations (z.\,B.\
+SourceForge)
+\index{SourceForge}%
+herunterzuladen.  Um diese Server aber nicht zu stark zu
+strapazieren, spiegelt das Gentoo-Projekt alle Quellpakete auf eigenen
+Mirror-Servern.  Auch hier vereinfacht \cmd{mirrorselect}
+\index{mirrorselect (Programm)}%
+die Auswahl:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mirrorselect -i -o}
+\end{ospcode}
+
+Hier fehlt das \cmd{-r}, um anzuzeigen, dass wir die Paketserver,
+\index{Mirror!Quellpakete}%
+nicht den Rsync-Server auswählen möchten.
+
+Das Tool bietet auch die Möglichkeit, die Server im nicht-interaktiven
+Modus auf ihre Geschwindigkeit %
+\index{Mirror!Geschwindigkeit}%
+zu prüfen und die schnellsten Verbindungen auszuwählen. Diese Methode
+ist zu empfehlen, erleichtert sie die Auswahl doch wesentlich:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{mirrorselect -o -s5 >{}> /etc/make.conf}
+* Downloading a list of mirrors... Got 199 mirrors.
+* Stripping hosts that only support ipv6... Removed 8 of 199
+* Using netselect to choose the top 5 mirrors...Done.
+\rprompt{\textasciitilde}\textbf{cat /etc/make.conf}
+# These settings were set by the catalyst build script that automatically
+# built this stage.
+# Please consult /etc/make.conf.example for a more detailed example.
+CFLAGS="-march=i686 -O2 -pipe"
+CXXFLAGS="\$\{CFLAGS\}"
+# This should not be changed unless you know exactly what you are doing.
+# You should probably be using a different stage, instead.
+CHOST="i686-pc-linux-gnu"
+USE="apache2 mysql xml ldap -X"
+
+SYNC="rsync://rsync.europe.gentoo.org/gentoo-portage"
+
+GENTOO_MIRRORS="ftp://pandemonium.tiscali.de/pub/gentoo/ http://gentoo.m
+neisen.org/ ftp://sunsite.informatik.rwth-aachen.de/pub/Linux/gentoo ftp
+://ftp.free.fr/mirrors/ftp.gentoo.org/ http://213.186.33.38/gentoo-distf
+iles/"
+\end{ospcode}
+\index{mirrorselect (Programm)}
+
+Hier fällt \cmd{-i} weg, wodurch wir den interaktiven Modus
+abschalten. Außerdem selektiert \cmd{-s5} (bzw.\ \cmd{-servers 5})
+\index{mirrorselect (Programm)!servers (Option)}%
+die fünf schnellsten Server und \cmd{-o} %
+\index{mirrorselect (Programm)!output (Option)}%
+sorgt wieder für eine Ausgabe, die wir sofort an
+\cmd{/etc/make.conf} anhängen können.
+Eine detaillierte Beschreibung des Programms finden Sie im Kapitel
+\ref{mirrorselect} ab Seite \pageref{mirrorselect}.
+
+Es gibt in der Datei \cmd{/etc/make.conf} einige Optionen, die
+den Download"=Prozess beeinflussen. %
+\index{Quellarchiv!Download}%
+So lässt sich zum Beispiel das Kommando für den Download über
+\cmd{FETCHCOMMAND} %
+\index{FETCHCOMMAND (Variable)}%
+(bzw.\ \cmd{RESUMECOMMAND} %
+\index{RESUMECOMMAND (Variable)}%
+für unterbrochene Downloads) modifizieren. Das ist z.\,B.\ dann
+sinnvoll, wenn man die Nutzung der Bandbreite optimieren und den
+Durchsatz limitieren möchte oder die Download-Menge so weit es geht
+reduzieren muss, weil man an einem schmalbandigen Internetzugang hängt.  Die
+Möglichkeiten für solch einen Fall behandeln wir unter den Tipps und
+Tricks in Kapitel \ref{downloadsize}.
+
+Für Rechner, auf denen wir auch binäre Pakete 
+\index{Paket!binär}%
+installieren 
+\index{Installation!binär}%
+möchten und die diese von einem zentralen Build-Host abholen,
+dient \cmd{PORTAGE\_BINHOST}.  
+\index{PORTAGE\_BINHOST (Variable)}%
+\index{Buildhost}%
+
+Für die Synchronisation des Portage-Baumes
+\index{Portage!Synchronisieren}%
+\index{Aktualisierung}%
+können wir über die Option \cmd{PORTAGE\_RSYNC\_EXTRA\_OPTS}
+\index{PORTAGE\_RSYNC\_EXTRA\_OPTS (Variable)}%
+\index{rsync!Optionen}%
+zusätzliche Parameter angeben, möglicherweise um z.\,B.\ 
+Verzeichnisse mit \cmd{-{}-exclude} auszuklammern,
+\index{rsync (Programm)!exclude (Option)}%
+die man im Portage-Baum nicht überschrieben haben möchte. Angenommen
+man hätte Veränderungen im Verzeichnis \cmd{/usr/portage/www-apps}
+\index{www-apps (Verzeichnis)}%
+\index{usr@/usr!portage!www-apps}%
+vorgenommen, die man bei der nächsten Synchronisation nicht
+überschreiben will, dann fügt man hier die Option
+\cmd{-{}-exclude="{}/www-apps"{}} hinzu.
+
+Im Normalfall sollte dieses Vorgehen allerdings absolut nicht
+notwendig sein. Veränderungen an den Ebuilds sollte man nie im
+eigentlichen Portage-Baum
+\index{Portage!Baum}%
+vornehmen, sondern in externen \emph{Overlays} 
+\index{Overlay}%
+(Kapitel \ref{overlays} ab Seite
+\pageref{overlays}).
+\index{Mirror|)}%
+
+\section{Fortgeschrittene Konfiguration}
+
+Kommen wir zu den Portage-Konfigurationsvariablen, die unter
+"`Advanced features"' in \cmd{/etc/make.conf.example}
+\index{make.conf.example (Datei)}%
+gelistet werden. Nur wenige davon sind von zentraler Bedeutung, und wir
+beleuchten hier nicht alle.
+
+\index{make.conf.example (Datei)|(}%
+\begin{ospcode}
+# Advanced Features
+# =================
+#
+# EMERGE_DEFAULT_OPTS allows emerge to act as if certain options are
+#     specified on every run. Useful options include --ask, --verbose,
+#     --usepkg and many others. Options that are not useful, such as
+#     --help, are not filtered.
+#EMERGE_DEFAULT_OPTS="
+#
+# INSTALL_MASK allows certain files to not be installed into your file
+#     system. This is useful when you wish to filter out a certain set
+#     of files from ever being installed, such as INSTALL.gz or TODO.gz
+#INSTALL_MASK="
+#
+# MAKEOPTS provides extra options that may be passed to 'make' when a
+#     program is compiled. Presently the only use is for specifying
+#     the number of parallel makes (-j) to perform. The suggested
+#     number for parallel makes is CPUs+1.
+#MAKEOPTS="-j2"
+#
+# PORTAGE_NICENESS provides a default increment to emerge's niceness
+#     level. Note: This is an increment. Running emerge in a niced
+#     environment will reduce it further. Default is unset.
+#PORTAGE_NICENESS=3
+#
+# AUTOCLEAN enables portage to automatically clean out older or
+#     overlapping packages from the system after every successful merge.
+#     This is the same as running 'emerge -c' after every merge. Set
+#     with: "yes" or "no". This does not affect the unpacked source. See
+#     'noclean' below.
+#
+#     Warning: AUTOCLEAN="no" can cause serious problems due to
+#              overlapping packages.  Do not use it unless absolutely
+#              necessary!
+#AUTOCLEAN="yes"
+#
+# PORTAGE_TMPFS is a location where portage may create temporary files.
+#     If specified, portage will use this directory whenever possible
+#     for all rapid operations such as lockfiles and transient data.
+#     It is _highly_ recommended that this be a tmpfs or ramdisk. Do not
+#     set this to anything that does not give a significant performance
+#     enhancement and proper FS compliance for locks and read/write.
+#     /dev/shm is a glibc mandated tmpfs, and should be a reasonable
+#     setting for all linux kernel+glibc based systems.
+#PORTAGE_TMPFS="/dev/shm"
+\end{ospcode}
+\index{make.conf.example (Datei)|)}%
+
+\subsection{\label{makeopts}Make-Optionen}
+
+Die Variable \cmd{MAKEOPTS}
+\index{MAKEOPTS (Variable)}%
+beeinflusst ebenso wie die \cmd{CFLAGS}-Einstellungen nahezu jeden
+\index{Kompilieren!beeinflussen}%
+Installationsvorgang unter Gentoo. Dadurch können wir jedem
+\cmd{make}-Aufruf
+\index{make (Programm)}%
+zusätzliche Kommandozeilen-Parameter übergeben. Entsprechend
+vorsichtig sollte man mit dieser Einstellung sein. Im Normalfall legt
+man hier nur mit der Option \cmd{-{}-jobs} (bzw.\ \cmd{-j})
+\index{make (Programm)!jobs (Option)}%
+fest, wie viele Operation \cmd{make} gleichzeitig starten soll. Als
+Faustregel gilt die Anzahl der CPUs im Rechner
+\index{CPU}%
+plus eins.
+
+\subsection{Portage-Rechenzeit}
+
+Die Einstellung \cmd{PORTAGE\_NICENESS}
+\index{nice (Programm)}%
+\index{PORTAGE\_NICENESS (Variable)}%
+erlaubt die Priorität
+\index{Prozess!Priorität}%
+\index{Rechenzeit}%
+des \cmd{emerge}"=Prozesses
+\index{emerge (Programm)}%
+automatisch zu reduzieren und damit anderen Prozessen im Vordergrund
+mehr Rechenzeit zuzugestehen. Dies ist vor allem bei Desktop-Systemen
+\index{Desktop}%
+sinnvoll, wenn ein im Hintergrund laufender \cmd{emerge}-Prozess
+\index{emerge (Programm)!im Hintergrund}%
+das System in seinen Reaktionen merklich aus bremst.
+
+\subsection{\label{features}Features}
+
+Kommen wir zu einem längeren Abschnitt der fortgeschrittenen
+Konfiguration, der Variable \cmd{FEATURES}:
+
+\index{make.conf.example (Datei)|(}%
+\begin{ospcode}
+# FEATURES are settings that affect the functionality of portage. Most
+#     of these settings are for developer use, but some are available
+#     to non- developers as well. 
+#
+#  'assume-digests'
+#                when committing work to cvs with repoman(1), assume
+#                that all existing SRC_URI digests are correct.  This
+#                feature also affects digest generation via ebuild(1)
+#                and emerge(1) (emerge generates digests only when the
+#                'digest' feature is enabled).
+#  'buildpkg'    causes binary packages to be created of all packages
+#                that  are being merged.
+#  'ccache'      enable support for the dev-util/ccache package, which
+#                can noticably decrease the time needed to remerge
+#                previously built packages.
+#  'confcache'   enable confcache support; speeds up autotool based
+#                configure calls
+#  'collision-protect'
+#                prevents packages from overwriting files that are owned
+#                by another package or by no package at all.
+#  'cvs'         causes portage to enable all cvs features (commits,
+#                adds), and to apply all USE flags in SRC_URI for
+#                digests -- for developers only.
+#  'digest'      autogenerate digests for packages when running the
+#                emerge(1) command.  If the 'assume-digests' feature is
+#                also enabled then existing SRC_URI digests will be
+#                reused whenever they are available.
+#  'distcc'      enables distcc support via CC.
+#  'distlocks'   enables distfiles locking using fcntl or hardlinks.
+#                This is enabled by default. Tools exist to help clean
+#                the locks after crashes: /usr/lib/portage/bin/clean_loc
+ks.
+#  'fixpackages' allows portage to fix binary packages that are stored
+#                in PKGDIR. This can consume a lot of time.
+#                'fixpackages' is also a script that can be run at any
+#                given time to force the same actions.
+#  'gpg'         enables basic verification of Manifest files using gpg.
+#                This features is UNDER DEVELOPMENT and reacts to
+#                features of strict and severe. Heavy use of gpg sigs is
+#                coming.
+#  'keeptemp'    prevents the clean phase from deleting the temp files
+#                (\$T) from a merge.
+#  'keepwork'    prevents the clean phase from deleting the WORKDIR.
+#  'test'        causes ebuilds to perform testing phases if they are
+#                capable of it. Some packages support this automatically
+#                 via makefiles.
+#  'metadata-transfer'
+#                automatically perform a metadata transfer when `emerge
+#                --sync` is run.
+#  'noauto'      causes ebuild to perform only the action requested and 
+#                not any other required actions like clean or unpack --
+#                for debugging purposes only.
+#  'noclean'     prevents portage from removing the source and temporary
+#                files  after a merge -- for debugging purposes only. 
+#  'nostrip'     prevents the stripping of binaries.
+#  'notitles'    disables xterm titlebar updates (which contain status
+#                info). 
+#  'parallel-fetch'
+#                do fetching in parallel to compilation
+#  'sandbox'     enables sandboxing when running emerge and ebuild.
+#  'strict'      causes portage to react strongly to conditions that are
+#                potentially dangerous, like missing/incorrect Manifest
+#                files.
+#  'stricter'    causes portage to react strongly to conditions that may
+#                conflict with system security provisions (for example
+#                textrels, executable stacks).
+#  'userfetch'   when portage is run as root, drop privileges to
+#                portage:portage during the fetching of package sources.
+#  'userpriv'    allows portage to drop root privileges while it is
+#                compiling, as a security measure.  As a side effect
+#                this can remove  sandbox access violations for users. 
+#  'usersandbox' enables sandboxing while portage is running under
+#                userpriv.
+#FEATURES="sandbox buildpkg ccache distcc userpriv usersandbox notitles
+ noclean noauto cvs keeptemp keepwork"
+#FEATURES="sandbox ccache distcc distlocks"
+\end{ospcode}
+\index{make.conf.example (Datei)|)}%
+
+
+\index{FEATURES (Variable)|(}%
+\index{Portage-Eigenschaften|(}%
+Über die \cmd{FEATURES}-Einstellung kann man eine Vielzahl
+verschiedener Eigenschaften von Portage zusätzlich aktivieren.  Einige
+davon sind nur für Entwickler interessant, manche aber auch für
+die Nutzer. Die Aktivierung erfolgt, %
+\index{Portage-Eigenschaften!aktivieren}%
+indem wir die entsprechenden Schlagworte zur \cmd{FEATURES}-Variable
+hinzufügen. Wollen wir bestimmte Eigenschaften deaktivieren, dann
+müssen wir den entsprechenden Flags, wie bei den USE-Flags auch, ein
+Minus voranstellen. %
+\index{Portage-Eigenschaften!deaktivieren}%
+Hier ein Beispiel, welches das Erstellen binärer Pakete
+aktiviert und das Sicherheitsfeature \cmd{sandbox} deaktiviert:
+
+\begin{ospcode}
+FEATURES="buildpkg -sandbox"
+\end{ospcode}
+\index{buildpkg (Feature)}%
+\index{sandbox}
+
+Es folgt eine Übersicht über die wichtigsten Eigenschaften:
+
+\begin{ospdescription}
+\ospitem{\cmd{assume-digests}}
+  Ein spezielles Feature für Gentoo"=Entwickler. Wenn es aktiviert ist,
+  \index{assume-digests (Feature)}%
+%  \index{FEATURES (Variable)!assume-digest|see{assume-digest (Feature}}%
+%  \index{Portage!Eigenschaften!Digests|see{assume-digests (Feature)}}%
+  beschwert sich \cmd{repoman}, ein Werkzeug zur Qualitätskontrolle,  nicht mehr über nicht verifizierbare
+  Prüfsummen, wenn einzelne Quellpakete fehlen, um die Prüfsummen zu
+  generieren.
+  \index{repoman (Programm)}%
+  Diese Eigenschaft ist nur für Entwickler interessant
+  und sollte nicht aktiviert sein.
+  
+  \ospitem{\cmd{buildpkg}} %
+  Veranlasst Portage dazu, bei jedem %
+  \index{buildpkg (Feature)}%
+%  \index{FEATURES (Variable)!buildpkg|see{buildpkg (Feature}}%
+  \index{Portage-Eigenschaften!Binäre Pakete}%
+  Installationsvorgang ein binäres Paket %
+  \index{Paket!binär}%
+  zu erstellen und unter \cmd{/usr/portage/packages} %
+  \index{packages (Verzeichnis)}%
+  (bzw.\ \cmd{PKGDIR}, %
+  \index{PKGDIR (Variable)}%
+  s.\,o.)  abzulegen. Die Option sollte man nur aktivieren, wenn man
+  wirklich beabsichtigt, einen Buildhost bereitzustellen.
+
+\ospitem{\cmd{buildsyspkg}}
+  Hat den gleichen Effekt wie \cmd{buildpkg}, wirkt sich allerdings nur auf
+  \index{buildsyspkg (Feature)}%
+%  \index{FEATURES (Variable)!buildsyspkg|see{buildsyspkg (Feature}}%
+  System-Pakete aus (siehe Seite \pageref{labelsystem}).
+
+\ospitem{\cmd{ccache}}
+  \label{makeconfccache}%
+  Diese Option aktiviert einen Compiler-Cache und kann das Kompilieren
+  \index{ccache (Feature)}%
+%  \index{FEATURES (Variable)!ccache|see{ccache (Feature}}%
+%  \index{Portage!Eigenschaften!Compiler-Cache|see{ccache (Feature)}}%
+  unter bestimmten Bedingungen beschleunigen.
+  \index{Kompilieren!beschleunigen}%
+  Dieses Feature erfordert einige zusätzliche Optionen, die wir genauer
+  ab Seite \pageref{ccache} beschreiben. Ohne diese zusätzlichen
+  Konfigurationen ist das Aktivieren dieser Option sinnlos.
+
+\ospitem{\cmd{confcache}}
+  Sollte ähnlich wie \cmd{ccache} die Ergebnisse des
+  \index{confcache (Feature)}%
+%  \index{FEATURES (Variable)!confcache|see{confcache (Feature}}%
+%  \index{Portage!Eigenschaften!Configure-Cache|see{confcache (Feature)}}%
+  \cmd{configure}-Laufes in einem Cache zu speichern und so bei
+  wiederkehrenden \cmd{configure}-Aufgaben Zeit zu sparen.
+  \index{Kompilieren!beschleunigen}%
+  In neueren Portage-Versionen wurde diese Option aufgrund von Problemen 
+  enfernt und sie sollte nicht verwendet werden.
+
+\ospitem{\cmd{collision-protect}}
+  Es gibt seltene Fälle, in denen zwei Pakete eine Datei an die gleiche
+  \index{collision-protect (Feature)}%
+%  \index{FEATURES (Variable)!collision-protect|see{collision-protect (Feature}}%
+  \index{Portage-Eigenschaften!Dateien überschreiben}%
+  \label{featurecolprotect}%
+  Stelle des Dateibaumes schreiben. Gelegentlich legt man auch als
+  Benutzer manuell Dateien an, die im Konflikt mit den Dateien eines
+  zu installierenden Pakets stehen. Standardmäßig überschreibt
+  Portage schon existierende Dateien im Dateisystem einfach. Die
+  Ausnahme sind geschützte Konfigurationsdateien, aber diesen
+  Mechanismus erläutern wir erst im Kapitel \ref{howtoupdate} genauer.
+
+  Im Normalfall sollte man als Benutzer auch keine Dateien innerhalb
+  der System-Verzeichnisse anlegen und das Standardverhalten von
+  Portage, im Zweifelsfall vorhandene Dateien zu überschreiben,
+  entspricht dieser Voraussetzung.
+
+  Wer allerdings gerne auch außerhalb des Paketmanagement-Systems
+  Veränderungen an Systemdateien vornimmt, der fährt sicherer, indem
+  er \cmd{collision-protect} in die \cmd{FEATURES}-Variable mit
+  aufnimmt. Portage weigert sich dann, die schon vorhandene Datei zu
+  überschreiben, und bricht die Installation im Notfall mit folgender
+  Meldung ab:
+  \index{System!-dateien schützen}%
+
+  \begin{ospcode}
+* checking X files for package collisions
+* This package is blocked because it wants to overwrite
+* files belonging to other packages (see list below).
+* If you have no clue what this is all about report it 
+* as a bug for this package on http://bugs.gentoo.org
+
+package app-collide/test-1.0 NOT merged
+
+Detected file collision(s):
+
+     '/usr/share/man/man1/test.1.bz2'
+
+Searching all installed packages for file collisions...
+Press Ctrl-C to Stop
+
+None of the installed packages claim the above file(s).
+  \end{ospcode}
+
+  \ospitem{\cmd{cvs}} %
+  Aktiviert den Entwicklermodus für Portage. Wir sollten diese
+  Option %
+  \index{cvs (Feature)}%
+%  \index{FEATURES (Variable)!cvs|see{cvs (Feature}}%
+%  \index{Portage!Eigenschaften!Entwicklermodus|see{cvs (Feature)}}%
+  nicht aktivieren.
+
+\ospitem{\cmd{digest}}
+  Automatisches Erstellen von Prüfsummen,
+  \index{digest (Feature)}%
+%  \index{FEATURES (Variable)!digest|see{digest (Feature}}%
+%  \index{Portage!Eigenschaften!Prüfsummen|see{digest (Feature)}}%
+  \index{Prüfsummen!erstellen}%
+  wenn man \cmd{emerge} aufruft, um eine Software zu
+  installieren. Auch dies ist ein reines Feature für Entwickler, das
+  man definitiv \emph{nicht} aktivieren sollte. Es schaltet die
+  Überprüfung der Prüfsummen aus und reduziert damit die Sicherheit
+  des Systems.
+  \index{Sicherheit}
+
+\ospitem{\cmd{distcc}}
+  \label{makeconfdistcc}%
+  Diese Option aktiviert die Unterstützung für verteiltes
+  \index{distcc (Feature)}%
+%  \index{FEATURES (Variable)!distcc|see{distcc (Feature}}%
+%  \index{Portage!Eigenschaften!verteiltes Kompilieren|see{distcc (Feature)}}%
+  Kompilieren.
+  \index{Kompilieren!verteilt}%
+  Der Aufbau eines solchen Netzwerks kann den Kompiliervorgang vor
+  allem bei großen Paketen oder für langsame Rechner deutlich
+  beschleunigen, aber erfordert auch einen gewissen
+  Konfigurationsaufwand, den wir ab Seite \pageref{distcc} genauer
+  beleuchten.
+
+\ospitem{\cmd{distlocks}}
+  Dieses Feature ist standardmäßig aktiviert und erlaubt Portage, den
+  \index{distlocks (Feature)}%
+%  \index{FEATURES (Variable)!distlocks|see{distlocks (Feature}}%
+%  \index{Portage!Eigenschaften!Locking|see{distlocks (Feature)}}%
+  Zugriff auf die Quellpakete während des Installationsvorgangs zu
+  sperren.
+  \index{Portage!gesperrt}%
+  Diese Option sollte aktiviert bleiben.
+
+  \ospitem{\cmd{fixpackages}} %
+  Das Aktivieren führt dazu, %
+  \index{fixpackages (Feature)}%
+%  \index{FEATURES (Variable)!fixpackages|see{fixpackages (Feature}}%
+  dass Portage die binären Pakete nach der Portage-Synchronisation
+  abgleicht. Da im Normalfall nur Buildhosts binäre Pakete erstellen
+  und die Aktion viel Zeit in Anspruch nehmen kann, ist diese
+  Eigenschaft standardmäßig deaktiviert und sollte es im Normalfall
+  auch bleiben.
+
+  \ospitem{\cmd{getbinpkg}} %
+  Portage wird versuchen, ausschließlich binäre %
+  \index{getbinpgk (Feature)}%
+%  \index{FEATURES (Variable)!getbinpkg|see{getbinpkg (Feature}}%
+  \index{Portage-Eigenschaften!Binäre Pakete}%
+  Pakete von einem Buildhost zu installieren.
+
+\osppagebreak{}
+
+\ospitem{\cmd{gpg}}
+  Aktiviert die Unterstützung für signierte Ebuilds.
+  \index{gpg (Feature)}%
+%  \index{FEATURES (Variable)!gpg|see{gpg (Feature}}%
+%  \index{Portage!Eigenschaften!Signatur|see{ggp (Feature)}}%
+  \index{Sicherheit!signierte Ebuilds}%
+  \index{Paket!signiert}%
+  Das erhöht zwar die Sicherheit
+  \index{Sicherheit}%
+  des Systems (theoretisch),  wird aber derzeit praktisch noch nicht
+  genutzt und ist von daher nicht zu empfehlen.
+
+  \ospitem{\cmd{keeptemp} und \cmd{keepwork}} %
+  Während der Installation eines Pakets und vor allem beim Kompilieren
+  entstehen im \cmd{\$PORTAGE\_TMPDIR} %
+  \index{PORTAGE\_TMPDIR (Variable)}%
+  (siehe Seite \pageref{portagetmpdir}) eine Reihe temporärer Dateien
+  (siehe auch die Eigenschaft \cmd{sandbox} weiter unten), die
+  \cmd{emerge} nur für die Installation braucht. %
+  \index{keeptemp (Feature)}%
+  \index{keepwork (Feature)}%
+%  \index{FEATURES (Variable)!keeptemp|see{keeptemp (Feature}}%
+%  \index{FEATURES (Variable)!keepwork|see{keepwork (Feature}}%
+  \index{Portage-Eigenschaften!temporäre Dateien}%
+  \index{Paket!temporäre Dateien}%
+  Portage löscht diese im Normalfall nach der Installation. Wer zu
+  viel Speicherplatz hat oder wissen will, was
+  Portage während der Installation treibt, kann diese
+  Eigenschaften aktivieren. Dir meisten Dateien entstehen im
+  Arbeitsverzeichnis
+  (\cmd{\$PORTAGE\_TMPDIR/portage/\cmdvar{KATEGORIE}/\cmdvar{PAKET}/work}) %
+  \index{Portage!Arbeitsverzeichnis}%
+  und wir können es mit \cmd{keepwork} vor dem Löschen bewahren.
+
+\ospitem{\cmd{metadata-transfer}}
+  Diese Eigenschaft ist standardmäßig aktiviert und führt dazu, dass
+  jedes \cmd{emerge -{}-sync}
+  \index{metadata-transfer (Feature)}%
+%  \index{FEATURES (Variable)!metadata-transfer|see{metadata-transfer (Feature}}%
+  \index{Portage-Eigenschaften!Metadaten aktualisieren}%
+  \index{emerge (Programm)!sync (Option)}%
+  automatisch \cmd{emerge -{}-metadata}
+  \index{emerge (Programm)!metadata (Option)}%
+  nach sich zieht. Damit aktualisiert \cmd{emerge} nach dem
+  Synchronisieren den Metadaten"=Cache. Dieser Cache ist notwendig, um
+  Portage beim Zugriff auf die Ebuild-Daten zu beschleunigen.
+  \index{Portage!Cache}%
+  Es gibt eigentlich keinen Grund, diese Option zu deaktivieren.
+
+\ospitem{\cmd{noauto}}
+  Verhindert einige Portage-Aktionen, die
+  \index{noauto (Feature)}%
+%  \index{FEATURES (Variable)!noauto|see{noauto (Feature}}%
+  normalerweise automatisch mit einer Installation verknüpft sind (wie
+  z.\,B.\ das automatische Entfernen alter Versionen). Diese Option
+  sollte man nicht aktivieren.
+
+\ospitem{\cmd{nodoc,noman,noinfo}}
+  Diese drei Optionen unterdrücken die Installation der Hilfe-Seiten
+  in \cmd{/usr/share}.
+  \index{nodoc (Feature)}%
+  \index{noinfo (Feature)}%
+  \index{noman (Feature)}%
+%  \index{FEATURES (Variable)!nodoc|see{nodoc (Feature}}%
+%  \index{FEATURES (Variable)!noinfo|see{noinfo (Feature}}%
+%  \index{FEATURES (Variable)!noman|see{noman (Feature}}%
+  \index{Dokumentation!installieren}%
+  \index{share (Verzeichnis)}%
+  \index{usr@/usr!share}%
+  \cmd{nodoc} verhindert die Installation in
+  \cmd{/usr/share/doc},
+  \index{doc (Verzeichnis)}%
+  \index{usr@/usr!share!doc}%
+  \cmd{noinfo} in \cmd{/usr/share/info}
+  \index{info (Verzeichnis)}%
+  \index{usr@/usr!share!info}%
+  und \cmd{noman} in \cmd{/usr/share/man}.
+  \index{man (Verzeichnis)}%
+  \index{usr@/usr!share!man}%
+  Da Dokumentation generell etwas eher Nützliches ist, sollten diese
+  Optionen selten Gebrauch finden.
+
+  \ospitem{\cmd{nostrip}} %
+  Im Normalfall entfernt Portage nach dem Kompilieren der Pakete alle
+  Debugging-Symbole aus den erstellten Binaries und verkleinert die
+  Programm-Dateien damit merklich. %
+  \index{strip (Programm)}%
+  \index{nostrip (Feature)}%
+%  \index{FEATURES (Variable)!nostrip|see{nostrip (Feature}}%
+  \index{Debugging Symbole!entfernen}%
+  \index{Paket!verkleinern}%
+  Möchte man eine Software debuggen, ist dieses Verhalten nicht
+  erwünscht. Innerhalb der Datei \cmd{/etc/make.conf} sollte man diese
+  Eigenschaft normalerweise nicht setzen, da sie den Platzbedarf des
+  Systems merklich vergrößert. Aber es ist sinnvoll, sie bei
+  Bedarf als Umgebungsvariable zu setzten (s.\,u.).
+
+  \ospitem{\cmd{notitles}} %
+  Während \cmd{emerge} läuft, versucht das Programm, die Titelleiste
+  des umgebenden X-Terminals %
+  \index{notitles (Feature)}%
+%  \index{FEATURES (Variable)!notitles|see{notitles (Feature}}%
+  \index{X-Terminal!Titel}%
+  zu modifizieren und anzuzeigen, welches Paket es gerade
+  bearbeitet. Dieses Verhalten kann man über diese Option
+  deaktivieren.
+
+\ospitem{\cmd{parallel-fetch}}
+  Im Normalfall arbeitet Portage bei der Installation mehrerer Pakete
+  einen Schritt nach dem anderen ab. Prinzipiell spricht aber nichts
+  dagegen, während des Kompiliervorgangs des einen Pakets schon den
+  Source-Code für das nächste Paket herunterzuladen, da die
+  Benutzung des langsamen Netzwerks die CPU verhältnismäßig wenig
+  beansprucht. \cmd{parallel-fetch} erlaubt \cmd{emerge},
+  \index{parallel-fetch (Feature)}%
+%  \index{FEATURES (Variable)!parallel-fetch|see{parallel-fetch (Feature}}%
+  \index{Quellarchiv!herunterladen}%
+  \index{emerge (Programm)}%
+  den Download-Vorgang für ein zweites Paket in die Kompilierphase des
+  vorangehenden Paketes zu ziehen.
+
+\ospitem{\cmd{sandbox}}
+  \label{sandbox}Während des Kompilierens und der Installation eines
+  Pakets durchläuft \cmd{emerge}
+  \index{sandbox (Feature)}%
+%  \index{FEATURES (Variable)!sandbox|see{sandbox (Feature}}%
+%  \index{Portage!Eigenschaften!Sandkasten|see{sandbox (Feature)}}%
+  \index{emerge (Programm)}%
+  verschiedene Phasen,
+%  \index{Paket!Phase|see{Installation, Phase)}}%
+  \index{Installation!Phase}%
+  von denen die meisten innerhalb von \cmd{/var/tmp/portage} (bzw.\
+  \cmd{PORTAGE\_TMPDIR})
+  \index{PORTAGE\_TMPDIR (Variable)}%
+  stattfinden. Erst \osplinebreak{}wenn \cmd{emerge} die Software fertig
+  erstellt hat und die \emph{Merge}-Phase
+  \index{Installation!Merge}%
+  erreicht ist, beginnt Portage, die Arbeit aus dem temporären
+  Verzeichnis in das eigentliche System zu übertragen. In allen
+  vorangehenden Phasen sollten keinerlei Aktionen irgendeine
+  Auswirkung auf Dateien des Systems außerhalb des entsprechenden
+  temporären Verzeichnisses haben. Als zusätzliche Sicherheit dient
+  Portage die Funktionalität der \emph{Sandbox} (Sandkasten). 
+
+  Das entsprechende Tool erlaubt ausschließlich Zugriffe am temporären
+  Arbeitsort und führt zum sofortigen Abbruch des
+  \cmd{emerge}"=Prozesses, wenn es einen Zugriff auf das umliegende,
+  geschützte Dateisystem \index{System!-dateien schützen}%
+  feststellt. Es sollte keinen Grund geben, diese Portage"=Eigenschaft
+  zu deaktivieren. Die Sandbox funktioniert nicht, wenn wir die Option
+  \cmd{userpriv} \index{userpriv (Feature)}%
+  in den Features setzen. In diesem Fall müssen wir alternativ
+  die Option \cmd{usersandbox} \index{usersandbox (Feature)}%
+  zu den \cmd{FEATURES} hinzufügen.
+
+\ospitem{\cmd{sfperms}}
+  Hier müssen wir kurz ausholen, um die genaue Funktionsweise dieser
+  Option zu veranschaulichen:
+  \index{sfperms (Feature)}%
+%  \index{FEATURES (Variable)!sfperms|see{sfperms (Feature}}%
+  \index{Portage-Eigenschaften!SUID Programme}%
+  Unix stattet ein Programm im Normalfall mit den Rechten des
+  aufrufenden Benutzers aus. Es gibt nur wenige Programme, die
+  speziell als \emph{Set User ID}
+  \index{Set User ID}%
+%  \index{SUID|see{Set User ID}}%
+  bzw.\ \emph{SUID} markiert sind. Diese laufen beim Aufruf nicht mit
+  den Rechten des Aufrufenden, sondern mit den Rechten des Besitzers
+  der Datei.
+  \index{Programm!Rechte}%
+  Vielfach gehört die Programmdatei dem \cmd{root}-Benutzer.
+  \index{root (Benutzer)}%
+  Ein Programm, das automatisch mit \cmd{root}-Rechten läuft, stellt
+  auch immer ein Sicherheitsrisiko dar.
+  \index{Sicherheit}%
+  Somit muss die Funktionsweise der Programme extrem streng
+  kontrolliert sein, damit kein Benutzer sich über die Verwendung
+  solcher Programme erhöhte Rechte verschaffen kann. Ganz verzichten
+  kann man auf diesen besonderen Dateityp allerdings nicht.
+
+  Im Normalfall reicht es, wenn ein Benutzer ein \cmd{SUID}-Programm
+  ausführen kann.
+  \index{Set User ID!Dateirechte}%
+  Die Datei selbst muss dabei für den Benutzer nicht zwingend lesbar
+  sein. Trotzdem installieren viele Pakete ein \cmd{SUID}-Programm
+  auch lesbar für alle Benutzer des Systems. Die Option \cmd{sfperms}
+  korrigiert diese Situation automatisch. Es schadet nicht, die Option
+  mit in \cmd{FEATURES} aufzunehmen. Der Sicherheitsgewinn ist
+  andererseits auch nicht allzu groß.
+
+\ospitem{\cmd{strict}}
+  Diese Eigenschaft bringt Portage dazu, auch bei kleineren
+  Ebuild-Fehlern sofort abzubrechen. Portage bricht so z.\,B.\ die
+  Installation ab, falls die Checksummen der Dateien des Ebuilds oder
+  des Source-Code nicht mit den im Ebuild angegebenen Werten
+  übereinstimmen.
+  \index{strict (Feature)}%
+%  \index{FEATURES (Variable)!strict|see{strict (Feature}}%
+  \index{Portage-Eigenschaften!Strikt}%
+  \index{Prüfsummen!überprüfen}%
+  Die hier auftretenden Fehler werden durch Unachtsamkeiten der
+  Gentoo"=Entwickler verursacht. Wenn Portage die Installation aufgrund
+  solcher Fehler abbricht,
+  \index{Portage!Abbruch}%
+  wird der Benutzer aufgefordert, den Fehler in der
+  Gentoo-Bug-Datenbank zu melden.
+%  \index{Fehler!melden|see{Bug-Tracker)}}%
+  Diese Eigenschaft sollte ebenfalls aktiviert sein, da sie die
+  Sicherheit
+  \index{Sicherheit}%
+  des Systems erhöht.
+
+\ospitem{\cmd{stricter}}
+  Macht Portage nochmals strikter als mit \cmd{strict}. Diese
+  Eigenschaft sollten wir nicht aktivieren, da \cmd{emerge} andernfalls
+  einige Pakete nicht installieren kann. Die Fehler, aufgrund derer
+  Portage hier abbrechen würde, sind zwar auch Fehler der Pakete, aber
+  manche dieser Probleme sind durch die Entwickler des Quellcodes
+  verursacht.
+  \index{stricter (Feature)}%
+%  \index{FEATURES (Variable)!stricter|see{stricter (Feature}}%
+  \index{Portage-Eigenschaften!Strikter}%
+  \index{Paket!Qualität}%
+  Oft wäre der Aufwand zu hoch, diese Fehler innerhalb der
+  Paketdefinition zu korrigieren. Deshalb sind nicht alle Pakete im
+  Portage-Baum absolut fehlerfrei, wenn man das
+  \cmd{stricter}-Kriterium heranzieht.
+
+  \ospitem{\cmd{suidctl}} %
+  Auf den meisten Systemen sollten möglichst wenige 
+  Programme beim Ausführen die Rechte des
+  Programmbesitzers übernehmen. Setzt man \cmd{suidctl} in der
+  \cmd{FEATURES}-Variable, dann ist es möglich, in der Datei
+  \cmd{/etc/portage/suidctl.conf} %
+  \index{suidctl (Feature)}%
+%  \index{FEATURES (Variable)!suidctl|see{suidctl (Feature}}%
+  \index{Portage-Eigenschaften!SUID Programme}%
+  \index{suidctl.conf (Datei}%
+  \index{etc@/etc!portage!suidctl}%
+  explizit festzulegen, welche Dateien die SUID-Eigenschaft besitzen
+  dürfen. %
+  \index{Set User ID}%
+  Versucht ein Paket, eine Datei, die \emph{nicht} in
+  \cmd{/etc/portage/suidctl.conf} gelistet ist, mit SUID-Bit zu
+  installieren, entfernt \cmd{emerge} dieses automatisch und
+  installiert die Datei ohne SUID-Eigenschaft.
+
+\ospitem{\cmd{test}\label{featuretest}}
+  Über dieses Schlagwort kann man eventuelle Test-Suites der Ebuilds
+  aktivieren. Viele Software-Pakete bringen heutzutage automatisierte
+  Test-Systeme mit.
+  \index{test (Feature)}%
+%  \index{FEATURES (Variable)!test|see{test (Feature}}%
+%  \index{Portage!Eigenschaften!Tests|see{test (Feature)}}%
+  \index{Unit-Tests}%
+  Das Durchlaufen der Tests verzögert auf der anderen Seite den
+  Vorgang des Kompilierens.
+
+\osppagebreak{}
+
+  \ospitem{\cmd{userfetch}} %
+  Veranlasst \cmd{emerge}, die Root-Rechte abzugeben, bevor es Dateien
+  herunterlädt. %
+  \index{userfetch (Feature)}%
+%  \index{FEATURES (Variable)!userfetch|see{userfetch (Feature}}%
+  \index{Portage-Eigenschaften!Rechte}%
+  \index{Quellarchiv!Rechte}%
+  \cmd{emerge} agiert dann als \cmd{portage}-Benutzer. Sinnvolle
+  Option, da die Sicherheit %
+  \index{Sicherheit}%
+  erhöht wird.
+
+\ospitem{\cmd{userpriv}}
+  Veranlasst Portage, die Root-Rechte abzugeben, bevor \cmd{emerge} ein
+  Paket kompiliert. \cmd{emerge} agiert dann als
+  \cmd{portage}-Benutzer. Sinnvolle Option, da die Sicherheit
+  \index{userpriv (Feature)}%
+%  \index{FEATURES (Variable)!userpriv|see{userpriv (Feature}}%
+  \index{Portage-Eigenschaften!Rechte}%
+  \index{Sicherheit}%
+  erhöht wird.
+
+  \ospitem{\cmd{usersandbox}} \cmd{userpriv} ist inkompatibel zu der
+  \cmd{sandbox}-Eigenschaft. Will man die Sandbox auch für
+  Portage unter \cmd{userpriv}
+  \index{usersandbox (Feature)}%
+%  \index{FEATURES (Variable)!usersandbox|see{usersandbox (Feature}}%
+  \index{Portage-Eigenschaften!Rechte}%
+  \index{userpriv (Feature)}%
+  aktivieren, so muss man die Eigenschaft \cmd{usersandbox} angeben.
+\end{ospdescription}
+
+Eine sinnvolle Kombination für die Variable \cmd{FEATURES} wäre
+z.\,B.:
+
+\begin{ospcode}
+FEATURES="sandbox parallel-fetch strict distlocks"
+\end{ospcode}
+
+
+Übrigens können wir Features genau wie USE-Flags kurzfristig für einen
+\cmd{emerge}-Aufruf aktivieren, indem wir dem \cmd{emerge}-Befehl die
+\cmd{FEATURES}-Variable %
+\index{FEATURES (Variable)!temporär}%
+als Umgebungsvariable  voran stellen. Dies
+macht z.\,B.\ für das Aktivieren der Paket-eigenen Tests Sinn, %
+\index{test (Feature)}%
+da man nicht bei jedem Paket die teilweise sehr zeitaufwendigen
+Test-Verfahren durchlaufen möchte. Folgender Befehl würde einmalig für
+die Installation von \cmd{app-admin/webapp-config} %
+\index{webapp-config (Paket)}%
+%\index{app-admin (Kategorie)!webapp-config (Paket)|see{webapp-config    (Paket)}}%
+das Durchlaufen der Test-Suite aktivieren:% %
+\index{Unit-Tests!aktivieren}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{FEATURES="test" emerge -av app-admin/webapp-config}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] app-admin/webapp-config-1.50.15  95 kB 
+
+Total: 1 package (1 new), Size of downloads: 95 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{No}
+\end{ospcode}
+
+Wenn Sie möchten, können sie das Paket hier installieren. Wir fügen es
+unserem System spätestens in Kapitel \ref{webappconfiginstall} hinzu.% %
+\index{FEATURES (Variable)|)}%
+\index{Portage-Eigenschaften|)}%
+
+\subsection{\label{logging}Logging}
+
+\index{Portage!Logs|(}%
+\index{elog|(}%
+Am Ende der Paketinstallation zeigt \cmd{emerge} häufig abschließende
+Informationen, die oft zusätzliche Konfigurations- oder
+Updatehinweise %
+\index{Portage!Hinweise}%
+enthalten.
+Wie Portage mit diesen umgeht, lässt sich im letzten Abschnitt der
+\cmd{make.conf}-Datei beeinflussen:
+
+\index{make.conf.example (Datei)|(}%
+\begin{ospcode}
+# logging related variables:
+# PORTAGE_ELOG_CLASSES: selects messages to be logged, possible values
+#                       are:
+#                          info, warn, error, log, qa
+#                       Warning: commenting this will disable elog
+PORTAGE_ELOG_CLASSES="warn error log"
+
+# PORTAGE_ELOG_SYSTEM: selects the module(s) to process the log
+#                      messages. Modules included in portage are (empty
+#                      means logging is disabled):
+#                          save (saves one log per package in
+#                                \$PORT_LOGDIR/elog,
+#                                /var/log/portage/elog if \$PORT_LOGDIR
+#                                is unset)
+#                          custom (passes all messages to
+#                                  \$PORTAGE_ELOG_COMMAND)
+#                          syslog (sends all messages to syslog)
+#                          mail (send all messages to the mailserver
+#                                defined in \$PORTAGE_ELOG_MAILURI)
+#                          save_summary (like "save" but merges all
+#                                        messages in 
+#                                        \$PORT_LOGDIR/elog/summary.log,
+#                                        /var/log/portage/elog/summary.l
+og
+#                                        if \$PORT_LOGDIR is unset)
+#                          mail_summary (like "mail" but sends all
+#                                        messages in a single mail when
+#                                        emerge exits)
+#                      To use elog you should enable at least one module
+#PORTAGE_ELOG_SYSTEM="save mail"
+
+# PORTAGE_ELOG_COMMAND: only used with the "custom" logging module.
+#                       Specifies a command to process log messages. Two
+#                       variables are expanded:
+#                          \$\{PACKAGE\} - expands to the cpv entry of the
+#                                        processed package (see \$PVR in
+                                         ebuild(5))
+#                          \$\{LOGFILE\} - absolute path to the logfile
+#Both variables have to be quoted with single quotes
+#PORTAGE_ELOG_COMMAND="/path/to/logprocessor -p '{\textbackslash}\$\{PACKAGE\}' -f '
+{\textbackslash}\$\{LOGFILE\}'"
+
+# PORTAGE_ELOG_MAILURI: this variable holds all important settings for
+#                       the mail module. In most cases listing the
+#                       recipient address and the receiving mailserver
+#                       should be sufficient, but you can also use
+#                       advanced settings like authentication or TLS.
+#                       The full syntax is:
+#                           address [[user:passwd@]mailserver[:port]]
+#                       where
+#                           address:    recipient address
+#                           user:       username for smtp auth (defaults
+#                                       to none)
+#                           passwd:     password for smtp auth (defaults
+#                                       to none)
+#                           mailserver: smtp server that should be used
+#                                       to deliver the mail (defaults to
+#                                       localhost)
+#                                       alternatively this can also be a
+#                                       the path to a sendmail binary if
+#                                       you don't want to use smtp
+#                           port:       port to use on the given smtp
+#                                       server (defaults to 25, values >
+#                                       100000 indicate that starttls
+#                                       should be used on (port-100000))
+#                       Examples:
+#PORTAGE_ELOG_MAILURI="root@localhost localhost" (this is also the defau
+lt setting)
+#PORTAGE_ELOG_MAILURI="user@some.domain mail.some.domain" (sends mails t
+o user@some.domain using the mailserver mail.some.domain)
+#PORTAGE_ELOG_MAILURI="user@some.domain user:secret@mail.some.domain:100
+465" (this is left uncommented as a reader exercise ;)
+
+# PORTAGE_ELOG_MAILFROM: you can set the from-address of logmails with
+#                        this variable, if unset mails are sent by
+#                        "portage" (this default may fail in some
+#                        environments).
+#PORTAGE_ELOG_MAILFROM="portage@some.domain"
+
+# PORTAGE_ELOG_MAILSUBJECT: template string to be used as subject for
+#                           logmails. The following variables are
+#                           expanded:
+#                               \$\{PACKAGE\} - see description of
+#                                             PORTAGE_ELOG_COMMAND
+#                               \$\{HOST\} - FQDN of the host portage is
+#                                          running on
+#PORTAGE_ELOG_MAILSUBJECT="package {\textbackslash}\$\{PACKAGE\} merged on {\textbackslash}\$\{HOST
+\} with notice"
+\end{ospcode}
+\index{make.conf.example (Datei)|)}%
+
+Ein Problem, mit dem sich \cmd{emerge} lange herumgeschlagen hat, war die
+Tatsache, dass es diese Konfigurations- bzw.\ Update-Hinweise bei der
+Installation mehrerer Pakete in Reihe nur jeweils nach Abschluss eines
+Paketes angezeigt hat. Wenn die endlosen Zeilen des Kompilierens am
+Auge vorbeirauschen, dann gehen diese kurzen Zeilen wichtigen
+Outputs leicht unter.
+Es besteht zwar die Möglichkeit, die auf Seite \pageref{logdir}
+erwähnte Variable \cmd{PORT\_LOGDIR} %
+\index{PORT\_LOGDIR (Variable)}%
+zu aktivieren und damit eine Ausgabe aller \cmd{emerge}-Prozesse %
+\index{emerge (Programm)!Ausgabe}%
+in dem angegebenen Verzeichnis zu erhalten. Allerdings ist auch diese
+Ausgabe recht unübersichtlich, da \cmd{emerge} hier alle Meldungen von
+\cmd{configure}, \cmd{make}, etc. sammelt.% %
+\index{Kompilieren!Ausgabe}
+
+Neueren Portage"=Versionen gelingt es aber, die Hinweise gesammelt am
+Ende der Installation auszugeben. Außerdem bieten sie ein spezielles
+\emph{Logging-Framework}, das als \cmd{elog} %
+%\index{Portage!Logging-Framework|see{elog}}%
+bezeichnet wird und das es dem Nutzer erlaubt, mit den wichtigen
+Ausgabezeilen des \cmd{emerge}-Prozesses beliebig flexibel umzugehen.
+
+Um die Log-Messages abzufangen, müssen wir in einem ersten Schritt
+festlegen, welche Informationen wir erhalten möchten. Dazu können wir
+verschiedene Log-Stufen in die Variable \cmd{PORTAGE\_ELOG\_CLASSES} %
+\index{PORTAGE\_ELOG\_CLASSES (Variable)}%
+eintragen. Es ist zu empfehlen, hier, wie auch standardmäßig
+vorgegeben, die Stufen \cmd{log}, %
+\index{emerge (Programm)!Ausgabe}%
+\index{PORTAGE\_ELOG\_CLASSES (Variable)!log}%
+\cmd{warn} %
+\index{emerge (Programm)!Warnungen}%
+\index{PORTAGE\_ELOG\_CLASSES (Variable)!warn}%
+und \cmd{error} %
+\index{emerge (Programm)!Fehler}%
+\index{PORTAGE\_ELOG\_CLASSES (Variable)!error}%
+anzugeben:
+
+\begin{ospcode}
+PORTAGE_ELOG_CLASSES="warn error log"
+\end{ospcode}
+
+Wer mag, kann auch \cmd{info} %
+\index{emerge (Programm)!Informationen}%
+\index{PORTAGE\_ELOG\_CLASSES (Variable)!info}%
+hinzufügen, da viele Ebuilds auch hier relevante Informationen
+ausgeben. Allerdings ist der Anteil unnützer Mitteilungen schon
+deutlich höher als bei den anderen drei Klassen und stört das
+"`Lesevergnügen"'.
+
+Erst im zweiten Schritt veranlassen wir das System dazu, wirklich
+Informationen zu sammeln, indem wir über \cmd{PORTAGE\_ELOG\_SYSTEM} %
+\index{PORTAGE\_ELOG\_SYSTEM (Variable)}%
+die verarbeitenden Module wählen. Als Minimum sollte man hier %
+\index{PORTAGE\_ELOG\_SYSTEM (Variable)!save\_summary}%
+\cmd{save\_summary} eintragen, damit \cmd{emerge} die Nachrichten in
+der Datei \cmd{\$PORT\_LOGDIR/elog\osplinebreak{}/summary.log} %
+\index{summary.log (Datei)}%
+speichert. Bei neueren Portage-Versionen ist dies die
+Standardeinstellung.
+
+\begin{ospcode}
+PORTAGE_ELOG_SYSTEM="save_summary"
+\end{ospcode}
+
+Damit sollte das \cmd{elog}-System seine Arbeit aufnehmen. Unter der
+Annahme, dass \cmd{\$PORT\_LOGDIR} auf \cmd{/var/log/portage} %
+\index{portage (Verzeichnis)}%
+\index{var@/var!log!portage}%
+verweist, sollten sich dort nach einer erneuten Installation von
+Portage entsprechende Log-Dateien befinden:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av sys-apps/portage}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] sys-apps/portage-2.1.2.2  USE="-build -doc -epydoc (-sel
+inux)" LINGUAS="-pl" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\ldots
+\rprompt{\textasciitilde}\textbf{ls /var/log/portage/elog/}
+summary.log
+\rprompt{\textasciitilde}\textbf{cat /var/log/portage/elog/summary.log}
+>{}>{}> Messages generated by process 8161 on 2007-09-13 12:53:59 for
+package sys-apps/portage-2.1.2.2:
+
+LOG: postinst
+See NEWS and RELEASE-NOTES for further changes.
+
+For help with using portage please consult the Gentoo Handbook
+at http://www.gentoo.org/doc/en/handbook/handbook-x86.xml?part=3
+
+
+WARN: postinst
+In portage-2.1.2, installation actions do not necessarily pull in build 
+time
+dependencies that are not strictly required.  This behavior is adjustabl
+e
+via the new --with-bdeps option that is documented in the emerge(1) man 
+page.
+For more information regarding this change, please refer to bug #148870.
+\end{ospcode}
+\index{summary.log (Datei)}%
+\index{var@/var!log!portage!elog!summary.log}
+
+\cmd{/var/log/portage/elog/summary.log} sammelt jetzt den Output jeder
+einzelnen \cmd{emerge} Operation, die entsprechend dem Paketnamen
+benannt und mit einem Zeitstempel versehen ist.
+Innerhalb der Log-Datei sortiert \cmd{emerge} die Meldungen nach
+Abfolge und Typ der Nachricht. Im angegebenen Beispielfall informiert
+vor allem die letztere Nachricht über ein geändertes Verhalten bei
+neueren Portage"=Versionen.% %
+\index{Portage!Hinweise}%
+
+Auch wenn Log-Dateien nützlich sind, lesen wir sie doch meist erst in
+Situationen, in denen irgendetwas nicht funktioniert. Bei vielen der von
+Portage ausgegebenen Instruktionen handelt es sich jedoch um aktive
+Handlungsanweisungen, um eine Konfiguration abzuschließen oder die
+Daten eines Paketes zu aktualisieren. Daher ist es sinnvoll, diese
+Nachrichten als E-Mail %
+\index{Log!als Mail|(}%
+%\index{Portage!Log als Mail|see{Log als Mail}}%
+an den Nutzer zu übermitteln. So erfahren die Informationen die ihnen
+gebührende Aufmerksamkeit und wir können die Mail nach der Bearbeitung
+löschen.
+
+Dieses Verhalten unterstützt \cmd{emerge} ebenfalls. Um die
+E"=Mail"=Benachrichtigung zu aktivieren, muss  das \cmd{mail}-Modul %
+\index{PORTAGE\_ELOG\_SYSTEM (Variable)!mail}%
+zu \cmd{PORTAGE\_ELOG\_SYSTEM} hinzugefügt werden:
+
+\begin{ospcode}
+PORTAGE_ELOG_SYSTEM="save_summary mail"
+\end{ospcode}
+
+Wer mag, kann an dieser Stelle auch \cmd{mail\_summary} %
+\index{PORTAGE\_ELOG\_SYSTEM (Variable)!mail\_summary}%
+angeben und erhält dann eine kombinierte Mail für jeden
+\cmd{emerge}-Lauf anstatt eine Mail pro installiertem Paket.
+
+Zusätzlich müssen wir die Zieladresse und den Mailserver angeben.
+Dies geschieht in der Variable \cmd{PORTAGE\_ELOG\_MAILURI}. %
+\index{PORTAGE\_ELOG\_MAILURI (Variable)}%
+
+\begin{ospcode}
+PORTAGE_ELOG_MAILURI="ich@example.com mail.example.com"
+\end{ospcode}
+\index{Log!als Mail|)}%
+
+Als weitere Zielorte kann \cmd{emerge} die Informationen auch über
+\cmd{syslog} %
+\index{PORTAGE\_ELOG\_SYSTEM (Variable)!syslog}%
+ausgeben, indem man das Modul \cmd{syslog} in
+\cmd{PORTAGE\_ELOG\_SYSTEM} angibt.
+
+Und als letzte Alternative -- für Bastler -- kann \cmd{emerge} die
+Log-Einträge durch eine eigene Pipeline schicken. Dazu muss das
+\cmd{custom}-Modul %
+\index{PORTAGE\_ELOG\_SYSTEM (Variable)!custom}%
+zu \cmd{PORTAGE\_ELOG\_SYSTEM} hinzugefügt werden. Den
+auszuführenden Befehl legt man in in \cmd{PORTAGE\_ELOG\_COMMAND} %
+\index{PORTAGE\_ELOG\_COMMAND (Variable)}%
+fest.% %
+\index{elog|)}%
+\index{Portage!Logs|)}
+
+\subsection{Exotischere Konfigurationsvariablen}
+
+Kommen wir noch zu einigen eher selten verwendeten und vielleicht
+exotischeren Konfigurationsvariablen, die sich teilweise auch in der
+Beispieldatei nicht wiederfinden.
+
+\begin{ospdescription}
+\ospitem{\cmd{EMERGE\_DEFAULT\_OPTS}}
+  \index{EMERGE\_DEFAULT\_OPTS (Variable)}%
+  \index{Portage!Standardoptionen}%
+  \index{emerge (Programm)!Standardoptionen}%
+  Optionen, die wir bei \emph{jedem} \cmd{emerge}-Aufruf anhängen
+  wollen. Diese Möglichkeit eignet sich nur für Optionen wie
+  \cmd{-{}-verbose} (siehe Seite \pageref{emergeverbose}) oder
+  \cmd{-{}-ask} (siehe Seite \pageref{emergeask}).
+
+\ospitem{\cmd{CLEAN\_DELAY}}
+  \index{CLEAN\_DELAY (Variable)}%
+  \index{Deinstallation}%
+  \index{Verzögerung}%
+  Bevor \cmd{emerge} ein Paket wirklich deinstalliert, pausiert das
+  Programm kurz, um dem Benutzer die Chance zu geben, doch noch
+  abzubrechen. Die Länge der Pause in Sekunden legt \cmd{CLEAN\_DELAY}
+  fest.
+
+\ospitem{\cmd{COLLISION\_IGNORE}}
+  \index{COLLISION\_IGNORE (Variable)}%
+  \index{Dateikollisionen}%
+  Haben wir in der Variable \cmd{FEATURES} die Option
+  \cmd{collision-protect} (siehe Seite \pageref{featurecolprotect})
+  gesetzt, dann können wir in \cmd{COLLISION\_IGNORE} einzelne Dateien
+  festlegen, die \cmd{emerge} beim Kollisions-Check nicht beachtet
+  soll. Diese kann \cmd{emerge} also überschreiben.
+
+  \ospitem{\cmd{EMERGE\_WARNING\_DELAY}} %
+  \index{EMERGE\_WARNING\_DELAY (Variable)}%
+  \index{emerge (Programm)!Verzögerung}%
+  In kritischen Situationen warnt Portage den Benutzer und wartet die
+  hier angegebene Zahl an Sekunden, bevor \cmd{emerge} eine
+  möglicherweise kritische Aktion fortführt.
+
+  \ospitem{\cmd{EBEEP\_IGNORE}} %
+  \index{EBEEP\_IGNORE (Variable)}%
+%  \index{Piepen|see{emerge (Programm), Piepen}}%
+  \index{emerge (Programm)!Piepen}%
+  Ignoriert den \cmd{ebeep}-Befehl, den die Entwickler in manchen
+  Ebuilds verwenden, um den Benutzer auf einen wichtigen Hinweis
+  aufmerksam zu machen. Manche empfinden diesen Ton als sehr störend;
+  mit dieser Option lässt er sich abschalten.
+
+\ospitem{\cmd{EPAUSE\_IGNORE}}
+  \index{EPAUSE\_IGNORE (Variable)}%
+  \index{emerge (Programm)!Pause}%
+  Analog zum \cmd{ebeep}-Befehl enthalten manche Ebuilds den
+  \cmd{epause}-Befehl, der zu einer kurzen Pause führt und damit auf
+  einen wichtigen Hinweis aufmerksam macht. Dieses Verhalten lässt
+  sich mit \cmd{EPAUSE\_IGNORE="{}yes"{}} unterdrücken.
+\ospitem{\cmd{INSTALL\_MASK}}
+  \index{INSTALL\_MASK (Variable)}%
+  \index{emerge (Programm)!Maske}%
+  \index{System!-dateien schützen}%
+  \index{Verzeichnis!schützen}%
+  Hier können wir Verzeichnisse angeben, in denen Portage nichts
+  installieren soll. Möchte ein Paket Dateien in einem gelisteten
+  Ordner installieren, ignoriert \cmd{emerge} diese. Die Option ist
+  mit Vorsicht zu genießen, denn die meisten Dateien eines Paketes
+  installiert Portage schließlich nicht ohne Grund.
+\ospitem{\cmd{PORTAGE\_COMPRESS}
+  \index{PORTAGE\_COMPRESS (Variable)}%
+  und \cmd{PORTAGE\_COMPRESS\_FLAGS}}
+  \index{PORTAGE\_COMPRESS\_FLAGS (Variable)}%
+  \index{Dokumentation!komprimieren}%
+  \cmd{PORTAGE\_COMPRESS} legt das Programm fest, mit dem \cmd{emerge}
+  Dokumentationsdateien bei der Installation komprimiert. Im
+  Normalfall ist dies \cmd{bzip2}. \cmd{PORTAGE\_COMPRESS\_FLAGS} legt
+  eventuelle Optionen fest. Standardmäßig enthält diese Variable den
+  Wert \cmd{-9} für den höchsten Kompressionsgrad.
+\end{ospdescription}
+
+\section{\label{shortmakeconf}Fazit}
+
+\index{Portage!Minimalkonfiguration|(}%
+Die Konfigurations-Datei \cmd{make.conf} bietet zweifelsohne eine
+extreme Menge möglicher Optionen, die vor allem den Anfänger leicht
+überfordern können. Eine sinnvolle Möglichkeit ist es, die Datei
+\cmd{make.conf} bis auf die während der Installation vorgenommenen
+Eintragungen unverändert zu lassen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/make.conf}
+CFLAGS="-O2 -march=i686 -pipe"
+CXXFLAGS="\$\{CFLAGS\}"
+CHOST="i686-pc-linux-gnu"
+USE="apache2 ldap mysql xml -X"
+\end{ospcode}
+
+Dieses Vorgehen hat, abgesehen davon, dass man sich die Zeit spart, sich
+über selten verwendete Eigenschaften von \cmd{emerge} den Kopf zu
+zerbrechen, den Vorteil, dass man bei allen nicht angegebenen Optionen
+auf die Standardeinstellungen zurückgreift. Damit ist man auch nicht
+gezwungen, sich bei einer Aktualisierung von Portage darum zu kümmern,
+ob die eigenen Einstellungen noch Gültigkeit besitzen oder ob sich das
+Konfigurationsformat geändert hat.
+Über diese Grundeinstellungen hinaus sind die folgenden Anpassungen
+für den Anfänger sinnvoll:
+
+\begin{osplist}
+\item Die USE-Flags auf die eigenen Bedürfnisse anpassen (siehe
+  Kapitel \ref{USE-Flags} ab Seite \pageref{USE-Flags}).% %
+  \index{USE (Variable)}%
+\item Die \cmd{SYNC}-Variable anpassen und einmal \cmd{mirrorselect -o
+    -s5 >{}>\\ /etc/make.conf} laufen lassen (siehe Kapitel
+  \ref{mirrors} ab Seite \pageref{mirrors}).% %
+  \index{SYNC (Variable)}%
+  \index{GENTOO\_MIRRORS (Variable)}%
+  \index{mirrorselect (Programm)}%
+\item Die Variable \cmd{FEATURES} auf \cmd{"{}sandbox parallel-fetch
+    strict\\ distlocks"{}} setzen (siehe Kapitel \ref{features} ab Seite
+  \pageref{features}).% %
+  \index{FEATURES (Variable)}%
+\end{osplist}
+
+Am Ende sollte sich eine Datei ergeben, die nicht viel komplizierter ist als
+die oben angegebene:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/make.conf}
+CFLAGS="-march=i686 -O2 -pipe"
+CXXFLAGS="\$\{CFLAGS\}"
+CHOST="i686-pc-linux-gnu"
+USE="apache2 mysql xml ldap -X"
+
+SYNC="rsync://rsync.europe.gentoo.org/gentoo-portage"
+GENTOO_MIRRORS="ftp://pandemonium.tiscali.de/pub/gentoo/ http://gentoo.m
+neisen.org/ ftp://sunsite.informatik.rwth-aachen.de/pub/Linux/gentoo ftp
+://ftp.free.fr/mirrors/ftp.gentoo.org/ http://213.186.33.38/gentoo-distf
+iles/"
+
+FEATURES="sandbox parallel-fetch strict distlocks"
+\end{ospcode}
+\index{Portage!Minimalkonfiguration|)}%
+
+\index{make.conf (Datei)|)}%
+\index{Portage|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 
+
+% LocalWords:  Date

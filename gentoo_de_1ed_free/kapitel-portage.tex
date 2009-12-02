@@ -1,0 +1,1121 @@
+\chapter{Paketmanagement mit emerge}
+
+Nach der Installation und der Konfiguration des
+Netzwerkzugangs sind wir nun endlich soweit, dass wir uns mit den
+Elementen beschäftigen, die Gentoo letztlich zu dem machen, was es
+ist: der Paketverwaltung \emph{Portage}.
+
+\index{Portage|(}%
+\index{Paketmanagement|(}%
+\index{make.conf (Datei)|(}%
+\index{etc@/etc!make.conf}%
+Am Anfang der Entwicklung von Gentoo stand u.\,a.\ der Wunsch nach
+einer Linux-Distribution, deren Softwareverwaltung demselben Prinzip
+folgt wie das Ports-System von FreeBSD. %
+\index{FreeBSD}%
+Entsprechend heißt das Gentoo"=Paketmanagementsystem
+\emph{Portage}. Wie bei FreeBSD steuert eine zentrale
+Konfigurationsdatei namens \cmd{/etc/make.conf} die Arbeitsweise
+dieser Software und damit des Gentoo-Systems.
+
+Wir haben uns in der Einleitung (Seite \pageref{portagepktmgmt}) schon
+kurz mit dem Namen \emph{Portage} auseinander gesetzt, wollen aber hier
+aber noch einmal kurz die Nomenklatur aufgreifen, damit wir sicher
+sind, dass die Begrifflichkeiten der folgenden Kapitel präzise
+definiert sind. Konkret geht es uns dabei um das Verhältnis dreier
+Elemente: \emph{Portage}, \cmd{emerge} und den \emph{Portage-Baum}.
+
+Portage bezeichnet das Paketmanagement-System von Gentoo im Ganzen,
+d.\,h.\ es ist ein Überbegriff, der sowohl die Werkzeuge für das
+Paket\-manage\-ment beinhaltet als auch die zugrunde liegenden
+Programmbibliotheken und die Paketdefinitionen. %
+\index{Portage}%
+Das Tool \cmd{emerge} ist unser primärer Zugang zu Portage. Es ist
+unser wichtigstes Werkzeug zum Paketmanagement. Es repräsentiert somit
+Portage und wir sprechen gelegentlich auch davon, dass Portage eine
+Aktion durchführt, wenn wir als Benutzer \cmd{emerge} aufgerufen
+haben. %
+\index{emerge (Programm)}%
+Der Portage-Baum bezeichnet die eigentlichen Paketdefinitionen unter
+\cmd{/usr/portage}. Ohne sie würde Portage zwar auch existieren, hätte
+allerdings keinerlei Pakete zu managen.% %
+\index{Portage!Baum}%
+
+Wir wollen uns im Folgenden zuerst einmal mit der Funktionsweise von
+Portage auseinander setzen. Dabei werden wir vor allem lernen, wie wir
+neue Software in unserem derzeit noch sehr reduzierten System
+installieren. Erst in Kapitel \ref{makeconf} beschäftigen
+wir uns dann in aller Ausführlichkeit mit \cmd{/etc/make.conf}, der wichtigsten
+Konfigurationsdatei des Portage-Systems.
+\index{make.conf (Datei)|)}%
+
+\section{emerge}
+
+\index{emerge (Programm)|(}%
+\cmd{emerge} ist das zentrale Tool eines Gentoo-Systems. Wir haben uns
+während der Installation nur kurz mit der Basis-Funktionalität
+beschäftigt und vor allem die Grundlagen der Paketbezeichnung erklärt
+(vgl.\ Kapitel \ref{packagenamebasics} ab Seite
+\pageref{packagenamebasics}). Nun tauchen wir tiefer in das
+Paketmanagement ein und lernen die Handhabung des Werkzeugs auf der Kommandozeile
+kennen.
+
+Eine seiner wichtigsten Optionen  für den
+Gentoo-Einsteiger sei vorweg erwähnt: \cmd{emerge -{}-help}.
+\index{emerge (Programm)!help (Option)}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --help}
+Usage:
+   emerge [ options ] [ action ] [ ebuildfile | tbz2file | dependency ] 
+[ ... ]
+   emerge [ options ] [ action ] < system | world >
+   emerge < --sync | --metadata | --info >
+   emerge --resume [ --pretend | --ask | --skipfirst ]
+   emerge --help [ system | world | config | --sync ] 
+Options: -[abBcCdDefgGhikKlnNoOpqPsStuvV] [--oneshot] [--newuse] 
+[--noconfmem][ --color < y | n >  ][ --columns ][--nospinner][ --deep  ] 
+[--with-bdeps < y | n > ]
+Actions: [ --clean | --depclean | --prune | --regen | --search | --unmer
+ge ]
+\ldots
+\end{ospcode}
+
+Die Option liefert, abgesehen von der oben dargestellten Übersicht,
+eine detaillierte Erklärung jeder Option.  Neuere Versionen von
+\cmd{emerge} liefern mit \cmd{-{}-help} %
+\index{emerge (Programm)!help (Option)}%
+nur diesen Überblick und erst mit der zusätzlichen Option
+\cmd{-{}-verbose} %
+\index{emerge (Programm)!verbose (Option)}%
+\label{emergeverbose}%
+die komplette Liste.
+
+\section{Grundfunktionen}
+
+Eine der zentralen Aufgaben eines Paketmanagement-Systems ist es,
+dafür zu sorgen, dass die Abhängigkeiten %
+\index{Paket!-abhängigkeiten}%
+zwischen allen installierten Paketen erfüllt sind. Während wir uns im
+letzten Kapitel nur damit beschäftigt haben, einzelne Pakete zu
+installieren, gehen wir an dieser Stelle einen Schritt weiter und
+sehen uns an, wie \cmd{emerge} reagiert, wenn wir ein Paket
+installieren wollen, das weitere, nicht installierte Pakete
+benötigt. Als Beispiel wollen wir für unseren Webserver den
+Apache-Server %
+\index{Apache}%
+%\index{Webserver|see{Apache}}%
+installieren.% %
+
+\subsection{Die Installation simulieren}
+
+Den Server installieren wir mit dem Paket \cmd{net-www/apache}:
+
+\label{emergepretend}
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-nds/openldap-2.3.30-r2  USE="berkdb crypt gdbm ipv6 
+perl readline ssl tcpd -debug -kerberos -minimal -odbc -overlays -samba 
+-sasl (-selinux) -slp -smbkrb5passwd" 0 kB 
+[ebuild  N    ] dev-libs/apr-0.9.12  USE="ipv6 -urandom" 0 kB 
+[ebuild  N    ] app-misc/mime-types-5  0 kB 
+[ebuild  N    ] dev-libs/apr-util-0.9.12  USE="berkdb gdbm ldap" 0 kB 
+[ebuild  N    ] net-www/apache-2.0.58-r2  USE="apache2 ldap ssl -debug -
+doc -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mpm-
+worker (-selinux) -static-modules -threads" 4,652 kB 
+
+Total: 5 packages (5 new), Size of downloads: 4,652 kB
+\end{ospcode}
+\index{apache (Paket)}%
+%\index{net-www (Kategorie)!apache (Paket)|see{apache (Paket)}}%
+\index{Paket!-abhängigkeiten bestimmen}%
+
+In diesem Fall verwenden wir die Flags \cmd{-p} (bzw.\
+\cmd{-{}-pretend}) %
+\index{emerge (Programm)!pretend (Option)}%
+und \cmd{-v} (bzw.\ \cmd{-{}-verbose}), %
+\index{emerge (Programm)!verbose (Option)}%
+um \cmd{emerge} mitzuteilen, dass wir nur sehen möchten, was
+installiert werden \emph{würde}. Die Option \cmd{-{}-verbose} bewirkt
+hier, dass auch die Größe des herunterzuladenden Pakets angezeigt
+wird.
+
+\begin{netnote}
+  Haben wir das System schon mit \cmd{emerge -{}-sync} über das Netzwerk
+  aktualisiert, so findet sich der Apache-Server nicht mehr in der
+  Kategorie \cmd{net-www} wieder, sondern unter \cmd{www-servers}.
+  \index{Kategorie!Wechsel}%
+\end{netnote}
+
+
+\subsection{\label{dependencies}Paketabhängigkeiten}
+
+Für eine erfolgreiche Installation des Apache sind also vier weitere, derzeit nicht installierte
+Pakete notwendig:
+\cmd{dev-libs/apr}, %
+\index{apr (Paket)}%
+%\index{dev-libs (Kategorie)!apr (Paket)|see{apr (Paket)}}%
+\cmd{dev-libs/apr-util}, %
+\index{apr-util (Paket)}%
+%\index{dev-libs (Kategorie)!apr-util (Paket)|see{apr-util (Paket)}}%
+\cmd{app-misc/mime-types} %
+\index{apr-util (Paket)}%
+%\index{dev-libs (Kategorie)!apr-util (Paket)|see{apr-util (Paket)}}%
+und \cmd{net-nds/openldap}. %
+\index{openldap (Paket)}%
+%\index{net-nds (Kategorie)!openldap (Paket)|see{openldap (Paket)}}%
+Die Pakete sind am Anfang der Zeile mit dem Buchstaben \cmd{N} für
+"`new"' markiert (\cmd{[ebuild  N     ]}). Die Markierung steht für 
+ein derzeit nicht im System installiertes Paket, das \cmd{emerge} neu
+hinzufügen müsste.
+
+\label{deponldap}%
+Dass hier der LDAP-Server \cmd{net-nds/openldap} %
+\index{openldap (Paket)}%
+%\index{net-nds (Kategorie)!openldap (Paket)|see{openldap (Paket)}}%
+installiert werden soll, liegt an dem \cmd{ldap}-USE-Flag, %
+%\index{USE-Flag!ldap|see{ldap (USE-Flag)}}%
+\index{ldap (USE-Flag)}%
+das wir in Kapitel \ref{Basic-USE-Flags} aktiviert haben. Wir werden
+später ab Seite \pageref{USE-Flags} auf diesen Punkt eingehen.
+
+Portage wird diese Pakete entsprechend der angegebenen Reihenfolge %
+\index{Paket!Installationsreihenfolge}%
+installieren, und so können wir sicher sein, dass alle notwendigen
+Abhängigkeiten %
+\index{Paket!-abhängigkeiten}%
+erfüllt sind und der Apache-Server sowohl installiert als auch
+anschließend verwendet werden kann.
+
+\cmd{emerge} listet an dieser Stelle ausschließlich die Pakete auf,
+die \emph{noch nicht} installiert sind und die es entsprechend noch
+installieren müsste, damit der Apache funktioniert.
+
+Einen besseren Überblick über die Hierarchie der Abhängigkeiten
+erhalten wir mit der Option \cmd{-{}-tree}
+\index{emerge (Programm)!tree (Option)}%
+bzw.\ \cmd{-t}, die das obige Listing entsprechend den Abhängigkeiten
+als Baum
+\index{Paket!Hierarchie der Abhängigkeiten}%
+darstellt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pvt net-www/apache}
+
+These are the packages that would be merged, in reverse order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-www/apache-2.0.58-r2  USE="apache2 ldap ssl -debug -
+doc -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mpm-
+worker (-selinux) -static-modules -threads" 4,652 kB 
+[ebuild  N    ]  dev-libs/apr-util-0.9.12  USE="berkdb gdbm ldap" 0 kB 
+[ebuild  N    ]  app-misc/mime-types-5  0 kB 
+[ebuild  N    ]  dev-libs/apr-0.9.12  USE="ipv6 -urandom" 0 kB 
+[ebuild  N    ]  net-nds/openldap-2.3.30-r2  USE="berkdb crypt gdbm ipv6
+ perl readline ssl tcpd -debug -kerberos -minimal -odbc -overlays -samba
+ -sasl (-selinux) -slp -smbkrb5passwd" 0 kB 
+
+Total: 5 packages (5 new), Size of downloads: 4,652 kB
+\end{ospcode}
+\index{apache (Paket)}%
+
+Die Pakete sind entsprechend den Abhängigkeiten eingerückt. So
+benötigt, wie oben bereits gesehen, \cmd{net-www/apache} %
+\index{apache (Paket)}%
+in direkter Abhängigkeit die Bibliothek \cmd{apr-util},
+\index{apr-util (Paket)}%
+also findet sich \cmd{dev-libs/apr-util} einfach
+eingerückt unterhalb von \cmd{net-www/apache}. Würde
+\cmd{dev-libs/apr-util} selbst wiederum Pakete benötigen, die
+\cmd{emerge} noch installieren müsste, befänden sich die
+entsprechenden Einträge zweifach eingerückt unterhalb von
+\cmd{dev-libs/apr-util}.
+
+Bisweilen wird diese Logik durch besondere Typen der Abhängigkeit
+\index{Paket!besondere Abhängigkeiten}%
+unterbrochen. Das gilt z.\,B. für \cmd{app-admin/perl-cleaner},
+\index{perl-cleaner (Paket)}%
+%\index{app-admin (Kategorie)!perl-cleaner (Paket)|see(perl-cleaner  (Paket)}%
+das als Abhängigkeit von \cmd{dev-lang/perl} %
+\index{perl (Paket)}%
+%\index{dev-lang (Kategorie)!perl (Paket)|see(perl (Paket)}%
+installiert wird, seinerseits jedoch ebenfalls von Perl abhängt. Eine
+solche zirkuläre Abhängigkeit %
+\index{Pakete!zirkuläre Abhängigkeit}%
+lässt sich nicht darstellen, und in diesen Fällen bildet \cmd{emerge}
+den Baum stellenweise doppelt ab. Die entstehende Hierarchie ist also
+mehr eine grobe Orientierung als ein exaktes Abbild der komplexen
+Abhängigkeiten.
+
+Will man die gesamten Abhängigkeiten des Apache-Servers anzeigen, 
+kann man den Befehl \cmd{emerge -pv net-www/apache} um 
+\cmd{-{}-emptytree} %
+\index{emerge (Programm)!emptytree (Option)}%
+(oder \cmd{-e}) erweitern. \cmd{emerge} nimmt dann an, das wir noch
+gar keine Pakete installiert haben, und zeigt den gesamten Baum
+notwendiger Pakete.% %
+\index{Paket!alle Abhängigkeiten}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -epv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] sys-devel/gnuconfig-20060702  0 kB 
+[ebuild   R   ] dev-libs/expat-1.95.8  USE="-test" 0 kB 
+[ebuild   R   ] virtual/libintl-0  0 kB 
+[ebuild  N    ] dev-libs/apr-0.9.12  USE="ipv6 -urandom" 0 kB 
+[ebuild   R   ] sys-libs/zlib-1.2.3-r1  USE="-build" 0 kB 
+[ebuild   R   ] virtual/libiconv-0  0 kB 
+[ebuild  N    ] app-misc/mime-types-5  0 kB 
+[ebuild   R   ] sys-devel/autoconf-wrapper-4-r3  0 kB 
+[ebuild   R   ] sys-devel/automake-wrapper-3-r1  0 kB 
+[ebuild   R   ] sys-apps/tcp-wrappers-7.6-r8  USE="ipv6" 0 kB 
+[ebuild   R   ] sys-devel/gettext-0.16.1  USE="nls -doc -emacs -nocxx" 0
+ kB 
+[ebuild   R   ] sys-apps/diffutils-2.8.7-r1  USE="nls -static" 0 kB 
+[ebuild   R   ] sys-apps/findutils-4.3.2-r1  USE="nls (-selinux) -static
+" 0 kB 
+[ebuild   R   ] sys-devel/m4-1.4.7  USE="nls" 0 kB 
+[ebuild   R   ] sys-devel/binutils-config-1.9-r3  0 kB 
+[ebuild   R   ] sys-devel/binutils-2.16.1-r3  USE="nls -multislot -multi
+target -test -vanilla" 0 kB 
+[ebuild   R   ] sys-libs/db-4.3.29-r2  USE="-bootstrap -doc -java -nocxx
+ -tcl -test" 0 kB 
+[ebuild   R   ] sys-libs/gdbm-1.8.3-r3  USE="berkdb" 0 kB 
+[ebuild   R   ] sys-devel/libperl-5.8.8-r1  USE="berkdb gdbm -debug -ith
+reads" 0 kB 
+[ebuild   R   ] dev-lang/perl-5.8.8-r2  USE="berkdb gdbm -build -debug -
+doc -ithreads -perlsuid" 0 kB 
+[ebuild   R   ] dev-libs/openssl-0.9.8d  USE="zlib -bindist -emacs -sse2
+ -test" 0 kB 
+[ebuild   R   ] dev-perl/Locale-gettext-1.05  0 kB 
+[ebuild   R   ] perl-core/Test-Harness-2.64  0 kB 
+[ebuild   R   ] perl-core/PodParser-1.35  0 kB 
+[ebuild   R   ] sys-apps/help2man-1.36.4  USE="nls" 0 kB 
+[ebuild   R   ] app-misc/ca-certificates-20061027.2  0 kB 
+[ebuild   R   ] sys-libs/ncurses-5.5-r3  USE="gpm unicode -bootstrap -bu
+ild -debug -doc -minimal -nocxx -trace" 0 kB 
+[ebuild   R   ] app-shells/bash-3.1_p17  USE="nls -afs -bashlogger -vani
+lla" 0 kB 
+[ebuild   R   ] sys-apps/texinfo-4.8-r5  USE="nls -build -static" 0 kB 
+[ebuild   R   ] sys-libs/gpm-1.20.1-r5  USE="(-selinux)" 0 kB 
+[ebuild   R   ] sys-devel/autoconf-2.61  USE="-emacs" 0 kB 
+[ebuild   R   ] sys-libs/readline-5.1_p4  0 kB 
+[ebuild   R   ] app-admin/perl-cleaner-1.04.3  0 kB 
+[ebuild   R   ] sys-devel/automake-1.10  0 kB 
+[ebuild   R   ] sys-devel/libtool-1.5.22  0 kB 
+[ebuild  N    ] net-nds/openldap-2.3.30-r2  USE="berkdb crypt gdbm ipv6 
+perl readline ssl tcpd -debug -kerberos -minimal -odbc -overlays -samba 
+-sasl (-selinux) -slp -smbkrb5passwd" 0 kB 
+[ebuild  N    ] dev-libs/apr-util-0.9.12  USE="berkdb gdbm ldap" 0 kB 
+[ebuild  N    ] net-www/apache-2.0.58-r2  USE="apache2 ldap ssl -debug -
+doc -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mpm-
+worker (-selinux) -static-modules -threads" 4,652 kB 
+
+Total: 38 packages (5 new, 33 reinstalls), Size of downloads: 4,652 kB
+\end{ospcode}
+\index{apache (Paket)}%
+
+Die meisten der hier angegebenen Pakete sind grundlegende Elemente
+eines Linux-Systems %
+\index{System!-pakete}%
+\index{Paket!System}%
+und darum schon in der anfänglich installierten Stage %
+\index{Stage!Pakete}%
+enthalten.
+
+Es ist selten sinnvoll, die Option \cmd{-{}-emptytree} %
+\index{emerge (Programm)!emptytree (Option)}%
+zu verwenden, ohne gleichzeitig \cmd{-{}-pretend} %
+\index{emerge (Programm)!pretend (Option)}%
+und \cmd{-{}-verbose} %
+\index{emerge (Programm)!verbose (Option)}%
+zu spezifizieren, da man die bereits installierten Pakete nicht
+nochmals zu kompilieren braucht. Damit dient das Flag \cmd{-e} also
+eher Informationszwecken. Im Normalfall würden wir hier nur die fünf
+notwendigen Pakete für den Apache-Server installieren und nicht
+nochmals alle schon installierten Pakete.
+
+\subsection{Die Installation durchführen}
+
+Würden wir also zum ursprünglichen Befehl \cmd{emerge -pv
+  net-www/apache} zurück gehen und das Flag \cmd{-{}-pretend} %
+\index{emerge (Programm)!pretend (Option)}%
+entfernen, würde \cmd{emerge} mit der Installation der Pakete %
+\index{Paket!installieren}%
+beginnen. Da diese Kombination aus einem hypothetischen Lauf mit der
+Option \cmd{-p} und dem tatsächlichen Installationsvorgang ohne diese
+Option häufig vorkommt, lassen sich beide Vorgänge mit dem Flag
+\cmd{-{}-ask} %
+\index{emerge (Programm)!ask (Option)}%
+\label{emergeask}%
+(bzw.\ \cmd{-a}) kombinieren. Die Option \cmd{-a} ersetzt das Flag
+\cmd{-p} folgendermaßen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-nds/openldap-2.3.30-r2  USE="berkdb crypt gdbm ipv6 
+perl readline ssl tcpd -debug -kerberos -minimal -odbc -overlays -samba 
+-sasl (-selinux) -slp -smbkrb5passwd" 0 kB 
+[ebuild  N    ] dev-libs/apr-0.9.12  USE="ipv6 -urandom" 0 kB 
+[ebuild  N    ] app-misc/mime-types-5  0 kB 
+[ebuild  N    ] dev-libs/apr-util-0.9.12  USE="berkdb gdbm ldap" 0 kB 
+[ebuild  N    ] net-www/apache-2.0.58-r2  USE="apache2 ldap ssl -debug -
+doc -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mpm-
+worker (-selinux) -static-modules -threads" 4,652 kB 
+
+Total: 5 packages (5 new), Size of downloads: 4,652 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+\index{apache (Paket)}%
+
+Die Ausgabe ist dieselbe wie oben, aber am Ende bricht
+\cmd{emerge} nicht ab, sondern fragt, ob wir die Installation jetzt
+genau so durchführen möchten.
+
+Wer mag, führt die Installation hier mit \cmd{Yes} %
+\index{Apache!installieren}%
+durch und springt dann zu Kapitel \ref{paketpraefix} ab Seite
+\pageref{paketpraefix}. Wir wollen uns aber an dieser Stelle noch ein paar
+ausgefallenere \cmd{emerge}-Optionen ansehen, auf die man aber auch
+gut zu einem späteren Zeitpunkt zurück kommen kann.
+
+\begin{netnote}
+  Der Quellcode für den Apache-Server ist auf der LiveDVD nicht
+  vorhanden. Sie brauchen also eine funktionierende
+  Netzwerkverbindung, um das Paket hier zu installieren.
+\end{netnote}
+
+Sollte es, aus welchem Grund auch immer, zu einem Abbruch %
+\index{Installation!Abbruch}%
+der Installation kommen, bevor \cmd{emerge} \cmd{net-www/apache}
+erfolgreich war, kann man den abgebrochenen
+Vorgang übrigens wieder mit \cmd{-{}-resume} %
+\index{emerge (Programm)!resume (Option)}%
+aufnehmen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --resume}
+Calculating dependencies... done!
+*** Resuming merge...
+\ldots
+\end{ospcode}
+
+
+\section{Fortgeschrittene Installationsmöglichkeiten}
+
+\cmd{emerge} bietet einige Funktionen für "`besondere Situationen"'.
+Angenommen, wir hätten uns an dieser Stelle dafür entschieden, Apache
+zu installieren, aber es fehlte die Zeit, die Pakete wirklich zu
+kompilieren, dann könnten wir zumindest schon einmal den Quellcode
+herunterladen und die eigentliche Installation auf später
+verschieben. %
+\index{Paket!Quellcode herunterladen}%
+Dieser Fall mag beispielsweise bei einem Laptop %
+\index{Laptop}%
+eintreffen, mit dem man zu einem späteren Zeitpunkt keine schnelle
+Netzanbindung, dafür aber Zeit für den eigentlichen
+Installationsprozess hat.
+
+\subsection{Quellcode herunterladen}
+
+Um die Aktion von \cmd{emerge} auf das Herunterladen der Quellen zu
+beschränken, fügen wir dem Aufruf die Option \cmd{-{}-fetchonly} 
+\index{emerge (Programm)!fetchonly (Option)}%
+(bzw.\ \cmd{-f}) hinzu. Der folgende Aufruf würde also nur das
+Quellarchiv herunterladen und im Verzeichnis \cmd{/usr/portage/distfiles} 
+\index{distfiles (Verzeichnis)}%
+platzieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -fav net-www/apache}
+
+These are the packages that would be fetched, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-nds/openldap-2.3.30-r2  USE="berkdb crypt gdbm ipv6 
+perl readline ssl tcpd -debug -kerberos -minimal -odbc -overlays -samba 
+-sasl (-selinux) -slp -smbkrb5passwd" 0 kB 
+[ebuild  N    ] dev-libs/apr-0.9.12  USE="ipv6 -urandom" 0 kB 
+[ebuild  N    ] app-misc/mime-types-5  0 kB 
+[ebuild  N    ] dev-libs/apr-util-0.9.12  USE="berkdb gdbm ldap" 0 kB 
+[ebuild  N    ] net-www/apache-2.0.58-r2  USE="apache2 ldap ssl -debug -
+doc -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mpm-
+worker (-selinux) -static-modules -threads" 4,652 kB 
+
+Total: 5 packages (5 new), Size of downloads: 4,652 kB
+
+Would you like to fetch the source files for these packages? [Yes/No] \cmdvar{No}
+\end{ospcode}
+\index{apache (Paket)}%
+
+Die Option \cmd{-{}-fetchonly} %
+\index{emerge (Programm)!fetchonly (Option)}%
+lässt sich also auch problemlos mit dem \cmd{-{}-ask}-Flag %
+\index{emerge (Programm)!fetchonly (Option)}%
+verbinden.
+
+\subsection{Sonderbehandlung der Abhängigkeiten}
+
+Manchmal ist es sinnvoll, schon einmal alle Abhängigkeiten %
+\index{Paket!-abhängigkeiten installieren}%
+aufzulösen, ohne jedoch das eigentliche Paket zu
+installieren. Vielleicht möchte man sich erst einmal die Dokumentation
+der Software genauer ansehen, bevor man sie in den aktiven Betrieb
+nimmt, und alle notwendigen Vorbereitungen treffen. Das ist über die
+Option \cmd{-{}-onlydeps} %
+\index{emerge (Programm)!onlydeps (Option)}%
+oder \cmd{-o} möglich. Im Apache-Beispiel würden also alle angegebenen
+Pakete bis auf den eigentlichen Apache-Server installiert.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pvo net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-nds/openldap-2.3.30-r2  USE="berkdb crypt gdbm ipv6 
+perl readline ssl tcpd -debug -kerberos -minimal -odbc -overlays -samba 
+-sasl (-selinux) -slp -smbkrb5passwd" 0 kB 
+[ebuild  N    ] dev-libs/apr-0.9.12  USE="ipv6 -urandom" 0 kB 
+[ebuild  N    ] app-misc/mime-types-5  0 kB 
+[ebuild  N    ] dev-libs/apr-util-0.9.12  USE="berkdb gdbm ldap" 0 kB 
+
+Total: 4 packages (4 new), Size of downloads: 0 kB
+\end{ospcode}
+
+Genau der umgekehrte Fall, also die Installation einer Software, ohne
+sich um deren Abhängigkeiten zu kümmern, %
+\index{Paket!-abhängigkeiten ignorieren}%
+lässt sich mit dem Flag \cmd{-{}-nodeps} %
+\label{emergenodeps}%
+\index{emerge (Programm)!nodeps (Option)}%
+(bzw.\ \cmd{-O}) bewerkstelligen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pvO net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-www/apache-2.0.58-r2  USE="apache2 ldap ssl -debug -
+doc -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mpm-
+worker (-selinux) -static-modules -threads" 4,652 kB 
+
+Total: 1 package (1 new), Size of downloads: 4,652 kB
+\end{ospcode}
+\index{apache (Paket)}%
+
+Diese Vorgehensweise ist allerdings grob fahrlässig und sollte nie
+notwendig sein, denn sind nicht alle Abhängigkeiten erfüllt, besteht
+schon bei der Installation ein hohes Risiko, dass der Vorgang
+erfolglos abbricht. In seltenen Fällen kann diese Option bei einer
+fehlerhaften Paketdefinition helfen, das Paket trotzdem zu
+installieren. Allerdings umgeht man so den eigentlichen Zweck des
+Paketmanagementsystems. Die korrekte Lösung wäre immer, die
+Paketdefinition so zu korrigieren, das wir nicht zu solch drastischen
+Maßnahmen greifen müssen.
+
+\subsection{Paketkonfiguration}
+
+An dieser Stelle verlassen wir das Apache-Paket %
+\index{apache (Paket)}%
+\index{Apache!installieren}%
+für eine Weile. Ist es noch nicht installiert, sollte man dies nun mit
+\cmd{emerge net-www/apache} nachholen, da wir im Folgenden von dessen
+Verfügbarkeit ausgehen.
+
+Es bleibt eine weitere zentrale Eigenschaft von \cmd{emerge} zu klären,
+die jedoch nur bei wenigen Paketen zum Tragen kommt: die abschließende
+Konfiguration der Pakete. %
+\index{Paket!konfigurieren}%
+Für die meisten Pakete erfolgt die Konfiguration rein manuell, wobei
+\cmd{emerge} die entsprechenden Instruktionen am Ende der Installation
+ausgibt (siehe auch Kapitel \ref{logging}). In einigen Fällen wird
+allerdings eine automatisierte Alternative angeboten, beispielsweise
+beim MySQL-Server, den wir darum jetzt installieren werden. Wir fügen
+diesmal die Option \cmd{-{}-quiet} %
+\index{emerge (Programm)!quiet (Option)}%
+oder auch \cmd{-q} hinzu, um die von Portage ausgegebenen
+Informationen zu reduzieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -aq =dev-db/mysql-5.0.26-r2}
+[ebuild  N    ] perl-core/Sys-Syslog-0.18  
+[ebuild  N    ] sys-apps/ed-0.2-r6  
+[ebuild  N    ] dev-db/mysql-init-scripts-1.2  
+[ebuild  N    ] virtual/perl-Storable-2.15  
+[ebuild  N    ] dev-perl/Net-Daemon-0.39  
+[ebuild  N    ] dev-db/mysql-5.0.26-r2  
+[ebuild  N    ] dev-perl/PlRPC-0.2018  
+[ebuild  N    ] virtual/perl-Sys-Syslog-0.18  
+[ebuild  N    ] virtual/mysql-5.0  
+[ebuild  N    ] dev-perl/DBI-1.53  
+[ebuild  N    ] dev-perl/DBD-mysql-3.0008  
+
+Would you like to merge these packages? [Yes/No] \cmdvar{Yes}
+\end{ospcode}
+\index{mysql (Paket)}%
+%\index{dev-db (Kategorie)!mysql (Paket)|see{mysql (Paket)}}%
+
+Da \cmd{emerge} bei der Installation allerdings die Ausgaben des
+Kompilierens nicht unterdrückt, ist der Effekt von \cmd{-{}-quiet} nur
+begrenzt effektiv.
+
+Wir haben hier auch eine spezifische Version ausgewählt
+(5.0.26-r2). Würden das nicht tun, treffen wir auf einen Fehler bei
+der neueren
+Version\footnote{\cmd{http://bugs.gentoo.org/show\_bug.cgi?id=178460}}
+und das wollen wir Ihnen hier ersparen.
+
+\begin{netnote}
+  Wenn sie ihr System bereits aktualisiert haben, trifft das nicht
+  mehr zu. Das Problem existierte, als die LiveDVD erstellt wurde und
+  ist mittlerweile behoben.
+\end{netnote}
+
+Wir bestätigen diesmal mit \cmd{Yes} und installieren damit MySQL. %
+\index{MySQL!installieren}%
+Die Installation terminiert mit einem Hinweis auf den Befehl zur
+ersten Konfiguration der Datenbank:
+
+\begin{ospcode}
+ * 
+ * You might want to run:
+ * "emerge --config =dev-db/mysql-5.0.26-r2"
+ * if this is a new install.
+ * 
+\end{ospcode}
+
+Da wir MySQL wirklich zum ersten Mal installieren, folgen wir den
+Instruktionen und nutzen die Konfigurationsoption \cmd{-{}-config}, %
+\index{emerge (Programm)!config (Option)}%
+die uns \cmd{emerge} für diesen Fall anbietet:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --config =dev-db/mysql-5.0.26-r2}
+
+Configuring pkg...
+
+ * MySQL DATADIR is /var/lib/mysql
+ * Previous datadir found, it's YOUR job to change
+ * ownership and take care of it
+ * Creating the mysql database and setting proper
+ * permissions on it ...
+ * Insert a password for the mysql 'root' user
+ * Avoid ["'\_%] characters in the password
+    >\cmdvar{meingeheimespasswort}
+ * Retype the password
+    >\cmdvar{meingeheimespasswort}
+. * Loading "zoneinfo", this step may require a few seconds ...
+ * Stopping the server ...
+ * Done
+
+\end{ospcode}
+\index{mysql (Paket)}%
+
+In dem folgenden Dialog werden wir nur dazu aufgefordert, das
+Root"=Password %
+\index{MySQL!Passwort}%
+für die Datenbank festzulegen. Die Konfigurationsroutine übernimmt es
+dann, die initialen Datenbankstrukturen %
+\index{MySQL!konfigurieren}%
+so vorzubereiten, dass die Datenbank vollständig einsetzbar ist.
+
+\subsection{\label{virtuals}Virtuelle Pakete}
+
+\index{Paket!virtuell|(}%
+\index{Virtuelle Kategorie|(}%
+Wenn Sie sich die oben abgebildete, anfängliche Ausgabe bei der
+MySQL-Installation genauer angesehen haben, dann ist Ihnen vielleicht
+aufgefallen, dass wir gleich zwei Pakete mit dem Namen \cmd{mysql} %
+\index{mysql (Paket)}%
+installiert haben. Eines in der Kategorie \cmd{dev-db}, %
+\index{dev-db (Kategorie)}%
+welches wir auch offensichtlich installieren wollten.
+
+Aber \cmd{emerge} hat noch ein zweites \cmd{mysql}-Paket, %
+\index{mysql (Paket)}%
+nämlich aus der Kategorie \cmd{virtual}, installiert.
+Pakete dieser Kategorie sind etwas Besonderes. Wir wollen
+nicht allzu sehr auf den eigentlichen Mechanismus dieser Pakete
+eingehen, sondern nur ihren Zweck erläutern.
+
+Es gibt Situationen, in denen verschiedene Pakete exakt die gleiche
+Funktion ausüben können. %
+\index{Paket!gleicher Funktion}%
+Im Fall von MySQL ist das etwas schwieriger zu erklären, deshalb
+ziehen wir einmal die Sprache Java %
+\index{Java}%
+als Beispiel heran.
+Wir können alle Java-Programme über die Software von Sun
+(\cmd{dev-java/sun-jdk}) %
+\index{sun-jdk (Paket)}%
+%\index{dev-java (Kategorie)!sun-jdk (Paket)|see{sun-jdk (Paket)}}%
+laufen lassen. Es gibt aber genauso die Möglichkeit, eine freie
+Variante (z.\,B.\ \cmd{dev-java/blackdown-jdk}) %
+\index{blackdown-jdk (Paket)}%
+%\index{dev-java (Kategorie)!blackdown-jdk (Paket)|see{blackdown-jdk    (Paket)}}%
+zu verwenden.
+Das ist für sich genommen erst einmal kein Problem. Wenn wir die freie
+Variante bevorzugen, dann installieren wir diese eben.
+
+Wie aber können wir nun für ein Java-Programm festlegen, dass es
+zwingend eine installierte Java-Umgebung braucht? %
+\index{Paket!-abhängigkeiten}%
+Wir könnten sagen, dass es nur von \cmd{dev-java/sun-jdk} %
+\index{sun-jdk (Paket)}%
+abhängt. Das ist aber nicht ganz wahr, schließlich würde das
+Programm auch mit \cmd{dev-java/blackdown-jdk} %
+\index{blackdown-jdk (Paket)}%
+zusammenarbeiten. Zwingend zu verlangen, dass \cmd{dev-java/sun-jdk} %
+\index{sun-jdk (Paket)}%
+installiert ist, ist keine Option, da wir den Benutzer bevormunden
+würden und Gentoo genau das -- wenn irgend möglich -- zu vermeiden
+sucht.
+
+Und genau hier kommen die \emph{virtuellen} Pakete ins Spiel. Sie sind
+sozusagen eine Art Weiche für verschiedene Pakete, die aber die
+gleiche Funktionalität bieten. So gibt es also z.\,B.\
+\cmd{virtual/jdk}, %
+\index{jdk (Paket)}%
+%\index{virtual (Kategorie)!jdk (Paket)|see{jdk (Paket)}}%
+das verschiedene Alternativen für die Java"=Entwicklungsumgebung
+abstrahiert.
+
+Ein Java-Programm deklariert also nur, dass es von \cmd{virtual/jdk} %
+\index{jdk (Paket)}%
+abhängt. So ist es dem Benutzer überlassen, welches Paket er letztlich
+wählt. Hat er \cmd{dev-java/blackdown-jdk} %
+\index{blackdown-jdk (Paket)}%
+bereits vorher installiert, betrachtet Portage die \cmd{virtual/jdk}-Abhängigkeit %
+\index{jdk (Paket)}%
+als erfüllt und wird keine weitere Java"=Entwicklungsumgebung
+installieren.
+
+Haben wir zum Zeitpunkt der Installation %
+\index{Paket!virtuell}%
+\index{Paket!virtuelles installieren}%
+eines virtuellen Paketes noch keine solche Wahl getroffen, entscheidet
+sich Portage automatisch für ein Standardpaket. Im Fall von Java wird
+dies \cmd{dev-java/sun-jdk} %
+\index{sun-jdk (Paket)}%
+sein.% %
+\index{Virtuelle Kategorie|)}%
+\index{Paket!virtuell|)}%
+
+\subsection{\label{unmerge}Pakete aus dem System entfernen}
+
+Zuletzt bleibt noch eine weitere Option von \cmd{emerge} zu nennen,
+die wir an dieser Stelle aber nicht wirklich nutzen:
+\cmd{-{}-unmerge}.  
+\index{emerge (Programm)!unmerge (Option)}%
+\index{Paket!deinstallieren}%
+Diese Aktion dient dem Deinstallieren von Paketen und wird ebenfalls
+häufig mit der Option \cmd{-{}-ask} 
+\index{emerge (Programm)!ask (Option)}%
+verknüpft, damit es eine Warnstufe gibt, bevor Portage sich
+tatsächlich daran macht, die Software zu entfernen.
+
+Um es auszuprobieren, können wir versuchen, Apache wieder zu
+deinstallieren, beantworten die abschließende Frage dann allerdings
+mit \cmd{No}:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --unmerge --ask net-www/apache}
+
+>>> These are the packages that would be unmerged:
+
+ net-www/apache
+    selected: 2.0.58-r2
+   protected: none
+     omitted: none
+
+>>> 'Selected' packages are slated for removal.
+>>> 'Protected' and 'omitted' packages will not be removed.
+
+Would you like to unmerge these packages? [Yes/No] \cmdvar{No}
+
+Quitting.
+\end{ospcode}
+\index{apache (Paket)}%
+
+Bei der Verwendung von \cmd{-{}-unmerge} %
+\index{emerge (Programm)!unmerge (Option)}%
+sollte man natürlich Vorsicht walten lassen und wirklich nur Programme
+entfernen, die man mit Sicherheit nicht mehr braucht. Deinstallieren
+wir zentrale Werkzeuge wie \cmd{gcc} oder \cmd{glibc}
+\index{Paket!essentiell}%
+mit Absicht oder aus Versehen, legen wir damit das eigene System erst
+einmal vollständig lahm. Auch in solchen Extremfällen lässt sich
+Gentoo bzw. ein Linux-System im Allgemeinen reparieren.  Aber es ist
+eine zeitraubende Operation, die man sich ersparen sollte.
+
+Wie weiter oben in Kapitel \ref{dependencies} gezeigt, installiert
+\cmd{emerge} bei der Apache-Installation einige zusätzliche Pakete
+aufgrund von Abhängigkeiten im System. Entfernen wir Apache hier mit
+\cmd{-{}-unmerge}, entfernt Portage wirklich nur
+\cmd{net-www/apache}. %
+\index{apache (Paket)}%
+Wollen wir hingegen alle nicht mehr benötigten Pakete entfernen, die
+aufgrund von Abhängigkeiten zusätzlich installiert wurden, hätten wir 
+nach dem Entfernen von \cmd{net-www/apache} %
+\index{apache (Paket)}%
+die Möglichkeit, die Option \cmd{-{}-depclean} %
+\index{emerge (Programm)!depclean (Option)}%
+\index{Paket!-abhängigkeiten aufräumen}%
+anzuwenden, auch wenn wir von ihrem Einsatz dringend abraten:
+
+\label{firstdepclean}%
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge --depclean --ask}
+
+** WARNING ** Depclean may break link level dependencies.  Thus, it is
+** WARNING ** recommended to use a tool such as `revdep-rebuild` (from
+** WARNING ** app-portage/gentoolkit) in order to detect such breakage.
+** WARNING ** 
+** WARNING ** Also study the list of packages to be cleaned for any obvi
+ous
+** WARNING ** mistakes. Packages that are part of the world set will alw
+ays
+** WARNING ** be kept.  They can be manually added to this set with
+** WARNING ** `emerge --noreplace <atom>`.  Packages that are listed in
+** WARNING ** package.provided (see portage(5)) will be removed by
+** WARNING ** depclean, even if they are part of the world set.
+** WARNING ** 
+** WARNING ** As a safety measure, depclean will not remove any packages
+** WARNING ** unless *all* required dependencies have been resolved.  As
+ a
+** WARNING ** consequence, it is often necessary to run 
+** WARNING ** `emerge --update --newuse --deep world` prior to depclean.
+
+Calculating dependencies... done!
+
+
+>>> These are the packages that would be unmerged:
+
+ app-misc/mime-types
+    selected: 5 
+   protected: none
+     omitted: none
+
+ dev-libs/apr
+    selected: 0.9.12 
+   protected: none
+     omitted: none
+
+ dev-libs/apr-util
+    selected: 0.9.12 
+   protected: none
+     omitted: none
+
+ net-nds/openldap
+    selected: 2.3.30-r2 
+   protected: none
+     omitted: none
+
+>>> 'Selected' packages are slated for removal.
+>>> 'Protected' and 'omitted' packages will not be removed.
+
+Would you like to unmerge these packages? [Yes/No] \cmdvar{No}
+\end{ospcode}
+
+Portage durchläuft mit dieser Option alle installierten Pakete und
+testet, welche nur als abhängige Pakete installiert wurden und von
+keinem anderen installierten Paket mehr benötigt werden. Diese hängt
+\cmd{emerge} der Liste der zu löschenden Elemente an.
+
+Allerdings ist hier %
+\index{emerge (Programm)!depclean (Option)}%
+Vorsicht angesagt: Portage kann nicht garantieren, dass bei dieser
+Suche wirklich alle Abhängigkeiten korrekt identifiziert werden, vor
+allem dann, wenn sich noch andere Systemparameter verändert
+haben. Letztlich kann es passieren, dass man sich mit dieser Option
+das System zerstört und es, wie bereits erwähnt, umständlicher
+Rettungsaktionen bedarf. Die Option \cmd{-{}-ask} %
+\index{emerge (Programm)!ask (Option)}%
+ist hier also Pflicht, und man sollte sich die zu deinstallierenden
+Pakete genau anschauen, bevor man mit \cmd{Yes} antwortet -- was wir
+hier ohnehin nicht tun, da wir den Apache-Server noch benötigen.
+
+\index{emerge (Programm)|)}%
+\index{Paketmanagement|)}%
+
+\section{\label{paketpraefix}Paketpräfix}
+
+Kommen wir zurück von den ausgefalleneren \cmd{emerge}-Optionen zu den
+grundlegenden Konzepten hinter Portage und damit auch \cmd{emerge}.
+Wir bleiben allerdings vorerst noch  auf der Kommandozeile
+und schauen uns den Paketnamen genauer an, bevor wir dann auf die
+Konfigurationseinstellungen im Hintergrund eingehen.
+
+\subsection{Paketversionen}
+
+\index{Paket!-präfix|(}%
+Wir haben es uns bisher einfach gemacht und nur den Paketnamen für die
+Installation verwendet. Während der Installation haben wir unter
+\ref{packagenamebasics} aber auch gesehen, dass es noch etwas
+komplizierter geht und wir die Versionsnummern 
+\index{Paket!-version}%
+%\index{Versionen|see{Paket, -version}}%
+mit in die Bezeichnung aufnehmen können.
+
+Schauen wir uns dazu noch einmal den Inhalt des
+Apache"=Paketverzeichnisses an und überprüfen, welche Version 
+derzeit installiert ist:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{ls -la /usr/portage/net-www/apache/}
+insgesamt 188
+drwxr-xr-x  3 root root  4096 31. Jan 2007  .
+drwxr-xr-x 50 root root  4096 14. Mär 19:21 ..
+-rw-r--r--  1 root root  8891 11. Jan 2007  apache-1.3.34-r14.ebuild
+-rw-r--r--  1 root root  9066 11. Jan 2007  apache-1.3.37.ebuild
+-rw-r--r--  1 root root 13828 28. Jan 2007  apache-2.0.58-r2.ebuild
+-rw-r--r--  1 root root 14075 28. Jan 2007  apache-2.0.59-r2.ebuild
+-rw-r--r--  1 root root 14160 28. Jan 2007  apache-2.2.4.ebuild
+-rw-r--r--  1 root root 88130 31. Jan 2007  ChangeLog
+drwxr-xr-x  2 root root  4096  8. Mär 20:58 files
+-rw-r--r--  1 root root  6983 31. Jan 2007  Manifest
+-rw-r--r--  1 root root   551 16. Jan 2007  metadata.xml
+\rprompt{\textasciitilde}\textbf{emerge -pv net-www/apache}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild   R   ] net-www/apache-2.0.58-r2  USE="apache2 ldap ssl -debug -
+doc -mpm-itk -mpm-leader -mpm-peruser -mpm-prefork -mpm-threadpool -mpm-
+worker (-selinux) -static-modules -threads" 0 kB 
+
+Total: 1 package (1 reinstall), Size of downloads: 0 kB
+\end{ospcode}
+\index{apache (Paket)}%
+\index{Paket!-version}%
+
+Offensichtlich ist derzeit Version \cmd{2.0.58-r2} installiert; nicht
+die neueste Version (\cmd{2.2.4}), aber auch nicht die älteste
+(\cmd{1.3.34-r14}).
+
+\subsection{Bestimmte Paketversionen installieren}
+
+\label{instablereasons}%
+Nehmen wir an, wir möchten eine andere Apache-Version installieren,
+weil z.\,B.\ die neueste Version, obwohl als "`stabil"' %
+\index{Stabilität}%
+markiert (siehe dazu auch Abschnitt \ref{stability}), noch einen
+Fehler hat, der uns betrifft und uns dazu zwingt, doch lieber eine
+ältere Version %
+\index{Paket!alte Version}%
+zu verwenden. 
+Oder wir müssen mit einem Upgrade auf neuere Versionen auch
+umfangreiche Konfigurationen oder Datenbestände anpassen, so dass wir
+aus diesem Grund vielleicht zunächst noch der älteren Variante den
+Vorzug geben, um die Aktualisierung erst zu einem späteren Zeitpunkt
+durchzuführen.% %
+\index{Paket!aktualisieren}%
+
+Beim Apache-Webserver ist das auch der Grund, warum noch die alten
+\cmd{apache-1}-Versionen %
+\index{Apache!1}%
+verfügbar sind. Es gibt noch zahlreiche Webserver, bei denen der
+Aufwand der Migration in keinem Verhältnis zum Nutzen steht; so bleibt
+man lieber bei der alten Version und aktualisiert in kleinen
+Schritten.
+
+Nehmen wir hier also einmal an, wir möchten über unseren Webserver
+einige ältere Web-Applikation anbieten, die nur mit den
+Apache-1-Versionen %
+\index{Apache!1}%
+kompatibel sind.
+Mit dem Gleichheitszeichen (\cmd{=}) als Paket-Präfix %
+\index{Paket!-präfix, =}%
+können wir die gewünschte Version exakt vorgeben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv =net-www/apache-1.3.34-r14}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-www/gentoo-webroot-default-0.2  USE="-no-htdocs" 65 
+kB 
+[ebuild  N    ] dev-libs/mm-1.3.0  221 kB 
+[ebuild  NS   ] net-www/apache-1.3.34-r14  USE="pam ssl -doc -lingerd (-
+selinux) -static-modules" 3,239 kB 
+[ebuild  N    ] net-www/mod_ssl-2.8.25-r10  0 kB 
+
+Total: 4 packages (3 new, 1 in new slot), Size of downloads: 3,524 kB
+\end{ospcode}
+
+\index{apache (Paket)}%
+\label{emergespecific}%
+
+Das Ergebnis mag ein wenig überraschen: Zum einen fordert \cmd{emerge}
+plötzlich weitere Pakete an. Das lässt sich aber damit erklären, dass
+unterschiedliche Versionen einer Software in ihren Eigenschaften und
+damit auch den Abhängigkeiten
+variieren. \cmd{net-www/apache-1.3.34-r14} hat beispielsweise auch ganz
+andere USE-Flags %
+\index{USE-Flag}%
+(siehe auch das nächste Kapitel \ref{USE-Flags}).
+
+\label{firstslot}%
+Zum anderen zeigt aber das \cmd{N} in \cmd{[ebuild NS ]} an, dass wir
+den älteren Apache-Server \emph{neu} installieren werden. Der
+Apache-Server liegt hier in einer speziellen Kategorie von Paketen,
+die mehrfach auf einem System in unterschiedlichen \emph{Slots}
+installiert sein können. Genauer erklären wir das beim Aktualisieren
+von Paketen in Kapitel \ref{slots} ab Seite \pageref{slots}. Hier sei
+nur gesagt, dass es so möglich wird, gleichzeitig sowohl
+\cmd{apache-1} %
+\index{Apache!1}%
+als auch \cmd{apache-2} %
+\index{Apache!2}%
+\index{apache (Paket)}%
+auf einem System zu betreiben. Auch die Migration eines alten
+Webservers wird dadurch erleichtert. Bei den meisten Paketen würde die
+vorangestellte Information jedoch \cmd{[ebuild D ]} enthalten. Das
+\cmd{D} zeigt dann ein \emph{Downgrade}, %
+\index{Paket!Downgrade}%
+also den Wechsel zu einer niedrigeren Version an.
+
+Übrigens wird die Paketbezeichnung, %
+\index{Paket!-bezeichnung}%
+die man \cmd{emerge} %
+\index{emerge (Programm)}%
+mit auf den Weg gibt, von Portage \emph{Atom} %
+\index{Atom}%
+genannt. Sollte man gelegentlich auf die Meldung \cmd{xyz is not a
+  valid atom} %
+%\index{Invalid atom|see{Atom, ungültig}}%
+\index{Atom!ungültig}%
+von \cmd{emerge} stoßen, soll einem das sagen, dass in der
+Paketbezeichnung ein Fehler steckt, dass wir z.\,B. -- was sehr häufig
+passiert -- das voranzustellende Gleichheitszeichen vor einem
+Paketnamen vergessen haben:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv net-www/apache-1.3.34-r14}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies /
+
+!!! 'net-www/apache-1.3.34-r14' is not a valid package atom.
+!!! Please check ebuild(5) for full details.
+!!! (Did you specify a version but forget to prefix with '='?)
+\end{ospcode}
+\index{Paket!-präfix, =}%
+
+Hier gibt Portage allerdings auch einen deutlichen Hinweis.
+
+\subsection{Ausgefallenere Versionsauswahl}
+
+Wenn es ein Präfix \cmd{=} gibt, liegt es nahe, dass auch \cmd{<} und
+\cmd{>} sowie \cmd{<=} %
+\index{Paket!-präfix, <=}%
+und \cmd{>=} zulässige Angaben sind.
+In der im letzten Abschnitt beschriebenen Situation können wir z.\,B.\
+auch angeben, dass wir "`irgendeine"' Version kleiner als
+\cmd{apache-2} installieren wollen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv "<net-www/apache-2"}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] net-www/gentoo-webroot-default-0.2  USE="-no-htdocs" 65 
+kB 
+[ebuild  N    ] dev-libs/mm-1.3.0  221 kB 
+[ebuild  NS   ] net-www/apache-1.3.34-r14  USE="pam ssl -doc -lingerd (-
+selinux) -static-modules" 3,239 kB 
+[ebuild  N    ] net-www/mod_ssl-2.8.25-r10  0 kB 
+
+Total: 4 packages (3 new, 1 in new slot), Size of downloads: 3,524 kB
+\end{ospcode}
+\index{apache (Paket)}%
+\index{Paket!-präfix, <}%
+
+Hier sind die Anführungszeichen um den Paketnamen Pflicht, denn
+andernfalls interpretiert die Bash-Kommandozeile das \cmd{<}-Zeichen
+als Character mit besonderer Funktion.
+Wir erzielen also das gleiche Ergebnis wie zuvor, müssen aber zuvor
+nicht umständlich die exakte Version ermitteln.
+
+Statt des \cmd{<}  hätten wir auch ein
+Suffix verwenden können -- das von der Kommandozeile bekannte Sternchen
+(\cmd{*}) und würden damit irgendein Paket, dessen Version mit \cmd{1} beginnt,
+installieren. Im Ergebnis also das gleiche wie
+\cmd{<net-www/apache-2}:
+\index{Paket!-suffix, *}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv "=net-www/apache-1*"}
+\end{ospcode}
+\index{apache (Paket)}%
+
+
+Es ist eher selten, dass wir wirklich auf einer älteren Version
+verharren möchten. Die umgekehrte Situation, dass z.\,B.\ ein Fehler
+die aktuell stabile wie auch ältere Versionen betrifft, so dass wir
+auf die noch instabile, aber in dieser Hinsicht korrigierte Version
+setzen, ist wahrscheinlicher. Oder die jüngere Variante %
+\index{Paket!neue Version}%
+bietet neue Eigenschaften, die wir gerne nutzen würden. Auch in diesem
+Fall würden wir die neuere Version bevorzugen. %
+\index{Paket!mit Fehlern}%
+
+Wollen wir eine höhere Version des Apache-Servers installieren,
+bedienen wir uns des \cmd{>} %
+\index{Paket!-präfix, >}%
+oder des \cmd{>=}, also: %
+\index{Paket!-präfix, >=}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -pv ">=net-www/apache-2.2.0"}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies |
+!!! All ebuilds that could satisfy ">=net-www/apache-2.2.0" have been ma
+sked.
+!!! One of the following masked packages is required to complete your re
+quest:
+- net-www/apache-2.2.4 (masked by: package.mask, ~x86 keyword)
+# Michael Stewart <vericgar@gentoo.org> (03 Feb 2006)
+# Mask for testing of new Apache 2.2 version
+
+
+For more information, see MASKED PACKAGES section in the emerge man page 
+or refer to the Gentoo Handbook.
+\end{ospcode}
+\index{apache (Paket)}%
+
+Die Aktion schlägt in diesem Falle fehl, da Portage uns davor bewahren
+möchte, eine potentiell instabile Version %
+\index{Paket!instabil}%
+zu installieren. Wie wir solche Restriktionen umgehen, sehen wir im
+nächsten Kapitel in Abschnitt \ref{MaskiertePakete}. %
+\index{Paket!-präfix|)}%
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% coding: latin-1-unix
+%%% End: 
+
+% LocalWords:  Nach Character

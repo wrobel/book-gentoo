@@ -1,0 +1,95 @@
+\documentclass{book}
+\usepackage{makeidx}
+
+\usepackage{opensourcepress}
+\usepackage{opensourcepress-gentoo}
+
+\makeindex
+
+\include{osp-hyphenation}
+
+\begin{document}
+\include{gentoo_titelei}
+
+% \index{...|see{...}} Einträge
+\include{gentoo_index_see}
+
+\tableofcontents
+\ospvacat
+
+%% Struktur
+
+% Einleitung
+\include{kapitel-einleitung}
+
+% 1) Installation
+\include{kapitel-installation}
+
+% 2) Der Kernel
+\include{kapitel-kernel}
+
+% 3) Netzwerkkonfiguration
+\include{kapitel-netzwerk}
+
+% 4) Das Portage-System
+\include{kapitel-portage}
+
+% 5) Keywords und USE-Flags
+\include{kapitel-concepts}
+
+% 6) Portage Konfiguration
+\include{kapitel-makeconf}
+
+% 7) Systemstart
+\include{kapitel-boot}
+
+% 8) Lokalisierung
+\include{kapitel-locale}
+
+% 9) Konfigurationsvariablen
+\include{kapitel-konfiguration}
+
+% 10) Das System aktualisieren
+\include{kapitel-update}
+
+% 11) Gentoo spezifische Werkzeuge
+\include{kapitel-tools}
+
+% 12) Einen Webserver einrichten
+\include{kapitel-webserver}
+
+% 13) Paketsuche
+\include{kapitel-search}
+
+% 14) Das System erweitern
+\include{kapitel-overlays}
+
+% 15) Ebuilds schreiben
+\include{kapitel-ebuilds}
+
+% 16) Tipps und Tricks
+\include{kapitel-tips}
+
+
+% ANHANG
+\addtocontents{toc}{\protect\osppagebreak}
+\addcontentsline{toc}{chapter}{{\fontsize{12}{12}\selectfont Anhang}}
+\part*{Anhang}
+\appendix
+
+
+% Anhang - A) Grafische Installation
+\include{anhang-xinstall}
+
+% Anhang - B) Dual Boot mit Windows
+\include{anhang-dualboot}
+
+\draftindex
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% coding: latin-1-unix
+%%% End: 

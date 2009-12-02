@@ -1,0 +1,814 @@
+\chapter{\label{lokalisierung}Lokalisierung}
+
+\index{Lokalisierung|(}%
+Wenn man sich eingehender mit der \emph{Lokalisierung}, also der
+Anpassung des Rechners an lokale Gegebenheiten (Uhrzeit, Sprache etc.)
+beschäftigt, überrascht der Stand der Entwicklung bisweilen sehr. Vor
+dem Hintergrund des weltumspannenden Internets sollte man erwarten,
+dass sich Rechner, Betriebssysteme und Programme stärker an
+einheitliche Standards halten.
+
+\index{Zeichensatz}%
+In vielen Bereichen hapert es jedoch mit der Kompatibilität, und so
+erblicken Benutzer weltweit wohl noch einige Zeit gelegentlich seltsame
+Hieroglyphen auf ihren Bildschirmen und fragen sich, was da bei der
+Konvertierung der Zeichensätze schief gelaufen ist.
+
+Allerdings fördert eben vor allem das Internet und der Boom
+der Kommunikationsbranche, dass neue Standards geschaffen und 
+auch mehr und mehr eingehalten werden.
+
+Wir wollen an dieser Stelle versuchen, unser Gentoo-System möglichst
+standardkonform einzurichten, und an einigen Stellen auch auf mögliche
+Probleme hinweisen.
+
+Wer sich nach der Erstinstallation zunächst einmal nicht um das korrekte
+Tastaturlayout kümmern oder Fehlermeldungen dringend in Deutsch
+erhalten möchte, der kann natürlich auch mit Kapitel
+\ref{diversconfig} fortfahren und hierher zurückkehren, wenn er mit
+dem System doch in der eigenen Muttersprache reden möchte.
+
+\section{Uhrzeit}
+
+\index{Uhr!-zeit|(}%
+%\index{Konfiguration!Zeit|see{Uhrzeit}}%
+Die Einstellungen zur Uhrzeit erfolgen unter
+\cmd{/etc/conf.d/clock}.
+\label{confdclock}%
+\index{clock (Datei)}%
+\index{etc@/etc!conf.d!clock}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/conf.d/clock}
+# /etc/conf.d/clock
+
+# Set CLOCK to "UTC" if your system clock is set to UTC (also known as
+# Greenwich Mean Time).  If your clock is set to the local time, then 
+# set CLOCK to "local".  Note that if you dual boot with Windows, then 
+# you should set it to "local".
+
+CLOCK="UTC"
+
+# Select the proper timezone.  For valid values, peek inside of the
+# /usr/share/zoneinfo/ directory.  For example, some common values are
+# "America/New_York" or "EST5EDT" or "Europe/Berlin".
+
+#TIMEZONE="Factory"
+
+# If you wish to pass any other arguments to hwclock during bootup, 
+# you may do so here.
+
+CLOCK_OPTS=""
+
+# If you want to set the Hardware Clock to the current System Time 
+# during shutdown, then say "yes" here.
+
+CLOCK_SYSTOHC="no"
+\end{ospcode}
+
+\subsection{Hardware-Uhr}
+
+\index{Uhr!Hardware|(}%
+%\index{Zeit|see{Uhr}}%
+Jeder Rechner besitzt eine batteriebetriebene Hardware-Uhr, die auch
+über das Ausschalten des Rechners hinaus ihren Dienst tut. Diese Uhr
+lässt sich mit dem Programm \cmd{hwclock}
+\index{hwclock (Programm)}%
+einstellen.
+\index{Uhr!-zeit einstellen}
+
+\index{UTC|(}%
+Linux setzt diese Uhr normalerweise auf die aktuelle Zeit, entsprechend
+der koordinierten Weltzeit (UTC).
+\index{Uhr!UTC}%
+UTC ist eine eindeutige und vor allem standardisierte Referenzzeit. In
+Deutschland sowie den meisten westeuropäischen Ländern entspricht die
+Uhrzeit UTC+1, also eine Stunde später als durch UTC angegeben.
+\index{UTC|)}%
+
+Diesen, dem momentanen Standort entsprechenden zeitlichen Versatz legt
+die Datei \cmd{/etc/localtime} %
+\index{localtime (Datei)}%
+\index{etc@/etc!localtime}%
+fest. %
+\index{Standort festlegen}%
+Diese Datei haben wir bei der Installation (siehe Kapitel
+\ref{timezone} ab Seite \pageref{timezone}) angelegt und dem System
+damit mitgeteilt, wie es die Zeit errechnen soll. Wechselt man
+z.\,B.\ mit seinem Laptop den Standort, passt man
+\cmd{/etc/localtime} %
+\index{localtime (Datei)}%
+entsprechend an. Die Uhrzeit der Hardware-Uhr wird also durch den
+Ortswechsel %
+nicht berührt. % %
+
+Das handhabt allerdings nicht jedes Betriebssystem so. Speziell
+Windows %
+\index{Ortswechsel}%
+\index{Windows}%
+setzt die Hardware-Uhr direkt auf die lokale Zeit. %
+\index{Uhr!Lokalzeit}%
+Will man seinen Rechner unter beiden Betriebssystemen betreiben, muss
+man die \cmd{CLOCK}"=Standardeinstellung %
+\index{CLOCK (Variable)}%
+\cmd{UTC} auf \cmd{local} umstellen. Es gibt keine
+Möglichkeit, automatisch zu erkennen, auf welche Zeitzone die
+Hardware-Uhr eingestellt ist. Hier ist man also gezwungen, selbst die
+richtige Einstellung zu wählen. %
+\index{Uhr!einstellen}
+
+In der Standardeinstellung liest Gentoo die Einstellung der
+Hardware-Uhr nur, schreibt sie jedoch nicht. %
+\index{Uhr!schreiben}%
+Damit wird das Risiko minimiert, andere Betriebssysteme auf dem
+Rechner zu stören. Wer Gentoo alleine auf dem Rechner betreibt oder
+sich sicher ist, dass die Konfiguration für mehrere Betriebssysteme
+stimmt, sollte \cmd{CLOCK\_SYSTOHC} %
+\index{CLOCK\_SYSTOHC (Variable)}%
+auf \cmd{yes} setzen, um die Systemzeit beim Herunterfahren des
+Rechners in die Hardware-Uhr zu schreiben %
+\index{Uhr!schreiben}%
+und dabei die Ungenauigkeit der Uhr zu bestimmen. Damit verbessert
+sich dann die Genauigkeit der Zeitmessung.
+
+Lesen und Schreiben der Hardware-Uhr ist in jedem Fall durch Skripte
+gekapselt und im Normalfall gibt es keinen Grund, sich direkt mit
+\cmd{hwclock} %
+\index{hwclock (Programm)}%
+auseinander zu setzen. Deshalb demonstrieren wir an dieser Stelle nur
+den Befehl, über den sich die Einstellung der Hardware-Uhr anzeigen
+lässt:% %
+\index{Uhr!anzeigen}
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{/sbin/hwclock --show}
+Mo 02 Apr 2007 10:18:51 CEST  -0.759538 Sekunden
+\end{ospcode}
+\index{hwclock (Programm)}
+
+Die am Ende angezeigten Sekunden informieren über die Zeit, die
+zwischen dem Programmaufruf und der Anzeige der Zeit vergangen sind.
+
+Ob \cmd{hwclock} %
+\index{hwclock (Programm)}%
+die Hardware-Uhr als \cmd{UTC} oder die lokale Zeit wahrnimmt, findet
+sich dann in der Datei \cmd{/etc/adjtime} %
+\index{adjtime (Datei)}%
+\index{etc@/etc!adjtime}%
+wieder:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/adjtime}
+-1.839798 1175495815 0.000000
+1175447942
+UTC
+\end{ospcode}
+
+Wer sich doch intensiver mit den Funktionen von \cmd{hwclock} %
+\index{hwclock (Programm)}%
+auseinandersetzen und dem Werkzeug besondere Optionen beim
+Boot-Vorgang mit auf den Weg geben möchte, kann dazu die Variable
+\cmd{CLOCK\_OPTS} %
+\index{CLOCK\_SYSTOHC (Variable)}%
+verwenden.% %
+\index{Uhr!Hardware|)}
+
+\subsection{Systemzeit}
+
+\index{System!-zeit|(}%
+\index{Zeitzone|(}%
+%\index{Uhr!Systemzeit|see{Systemzeit}}%
+Die Systemzeit setzen wir, wie bereits erwähnt, über
+\cmd{/etc/localtime}.
+\index{localtime (Datei)}%
+Um die Zeit des Rechners anzupassen, reicht es, wie schon bei
+der Installation beschrieben, die entsprechende Datei aus
+\cmd{/usr/share/zoneinfo/}
+\index{zoneinfo (Verzeichnis)}%
+\index{usr@/usr!share!zoneinfo}%
+nach \cmd{/etc/localtime}
+\index{localtime (Datei)}%
+zu kopieren.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cp /usr/share/zoneinfo/Europe/Berlin /etc/localtime}
+\end{ospcode}
+
+Gleichzeitig sollte man aber auch die Einstellung \cmd{TIMEZONE}
+\index{TIMEZONE (Variable)}%
+in \cmd{/etc/conf.d""/clock}
+\index{clock (Datei)}%
+\index{etc@/etc!conf.d!clock}%
+anpassen. Für Deutschland ist die korrekte Einstellung
+\cmd{Europe/Ber\-lin}
+\index{Europe!Berlin (Zeitzone)}%
+und entspricht damit dem oben angegebenen Dateinamen.
+
+Nur das Paket \cmd{sys-libs/timezone-data} %
+\index{timezone-data (Paket)}%
+%\index{sys-libs (Kategorie)!timezone-data (Paket)|see{timezone-data    (Paket)}}%
+verwendet diese Einstellung. Es installiert die
+Zonen-Informationen unterhalb von \cmd{/usr/share/zoneinfo/} %
+\index{zoneinfo (Verzeichnis)}%
+(aus dem wir ja auch unsere derzeitige \cmd{/etc/localtime}-Datei
+kopiert haben) und verwendet die Information aus \cmd{TIMEZONE}, %
+\index{TIMEZONE (Variable)}%
+um bei einer Aktualisierung des Pakets die Datei
+\cmd{/etc/localtime} %
+\index{localtime (Datei)}%
+korrekt zu aktualisieren.
+
+\cmd{/etc/localtime}
+\index{localtime (Datei)}%
+beeinflusst die Systemzeit und damit den Standardwert, der für jeden
+Benutzer gilt.
+\index{System!-zeit|)}
+
+\subsection{Benutzerzeit}
+
+\index{Benutzerzeit|(}%
+%\index{Uhr!Benutzerzeit|see{Benutzerzeit}}%
+Für einen einzelnen Benutzer lässt sich die angezeigte Zeit über die
+Variable \cmd{TZ}
+\index{TZ (Variable)}%
+beeinflussen.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{export TZ="Indian/Cocos"}
+\rprompt{\textasciitilde}\textbf{date}
+Mo Apr  2 21:37:42 CCT 2007
+\rprompt{\textasciitilde}\textbf{export TZ="Europe/Berlin"}
+\rprompt{\textasciitilde}\textbf{date}
+Mo Apr  2 17:07:47 CEST 2007
+\end{ospcode}
+
+Das obige Beispiel informiert uns über die aktuelle Uhrzeit in
+Indien und wechselt dann wieder auf unsere Standardeinstellungen
+zurück.
+
+Nutzer, die dauerhaft eine von der Systemzeit abweichende Zeitzone
+festlegen wollen, können den entsprechenden Wert für \cmd{TZ}
+\index{Benutzerzeit!einstellen}%
+in ihrem Benutzerverzeichnis in \cmd{\textasciitilde/.bash\_profile}
+\index{.bash\_profile (Datei)}%
+festlegen.
+\index{Uhr!-zeit|)}%
+\index{Zeitzone|)}
+
+\section{Tastatur}
+
+\index{Tastatur|(}
+\index{Keymap|(}
+Die Einstellungen zum Tastaturlayout sind -- unter Linux -- bei der
+textbasierten Konsole und der grafischen Benutzeroberfläche
+unterschiedlich. Wir beschreiben hier nur die Einstellungen für die
+Konsole.% %
+\index{Konsole}%
+
+\subsection{\label{keymaps}Tastatur für die Konsole}
+
+Das Tastaturlayout für die Konsole lässt sich in
+\cmd{/etc/conf.d/keymaps} %
+\label{confdkeymap2}%
+\index{keymap (Datei)}%
+\index{etc@/etc!conf.d!keymap}%
+festlegen.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/conf.d/keymaps}
+# /etc/conf.d/keymaps
+
+# Use KEYMAP to specify the default console keymap.  There is a complete
+# tree of keymaps in /usr/share/keymaps to choose from.
+
+KEYMAP="de-latin1-nodeadkeys"
+
+# Should we first load the 'windowkeys' console keymap?  Most x86 users
+# will say "yes" here.  Note that non-x86 users should leave it as "no".
+
+SET_WINDOWKEYS="no"
+
+# The maps to load for extended keyboards.  Most users will leave this
+# as is.
+
+EXTENDED_KEYMAPS=""
+#EXTENDED_KEYMAPS="backspace keypad euro"
+
+# Tell dumpkeys(1) to interpret character action codes to be 
+# from the specified character set.
+# This only matters if you set UNICODE="yes" in /etc/rc.conf.
+# For a list of valid sets, run `dumpkeys --help`
+
+DUMPKEYS_CHARSET=""
+\end{ospcode}
+
+Wer eine normale deutsche Tastatur verwendet, weist \cmd{KEYMAP}
+\index{KEYMAP (Variable)}%
+den Wert \cmd{de-latin1} zu
+\index{de-latin1 (Tastaturlayout)}%
+oder, wenn man keine "`toten"' Tasten wie \cmd{\textasciitilde} haben
+möchte, \cmd{de-latin1-nodeadkeys}.
+\index{de-latin1-nodeadkeys (Tastaturlayout)}%
+Tote Tasten liefern beim Anschlag kein Zeichen, sondern
+resultieren erst in der Kombination mit dem nächsten Anschlag in einem
+darstellbaren Zeichen. Ein Beispiel sind die französischen Vokale mit
+Akzent (\cmd{é}, \cmd{è} etc.).
+
+Bei den \cmd{EXTENDED\_KEYMAPS}
+\index{EXTENDED\_KEYMAPS (Variable)}%
+sind im Normalfall keine weiteren Angaben notwendig. Die Keymap
+\cmd{euro}
+\index{euro (Tastaturlayout)}%
+mag verführerisch klingen, aber \cmd{de-latin1}
+\index{de-latin1 (Tastaturlayout)}%
+enthält bereits die Keymap \cmd{euro2},
+\index{euro2 (Tastaturlayout)}%
+die es einem erlaubt, mit der Kombination \taste{AltGr}+\taste{e} das Euro-Symbol
+\index{Euro (Symbol)}%
+auf den Schirm zu zaubern. Die Keymap \cmd{euro}
+\index{euro (Tastaturlayout)}%
+verlegt diese Kombination auf \taste{Alt}+\taste{e} für Tastaturen, denen die
+Taste \cmd{[AltGr]} fehlt.
+
+\label{loadkeys}%
+Sollte man versehentlich eine falsche Keymap geladen haben oder eine
+neue ausprobieren wollen, kann man das Programm
+\cmd{loadkeys} %
+\index{loadkeys (Programm)}%
+verwenden, um das Mapping im laufenden Betrieb zu verändern.
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{loadkeys de-latin1-nodeadkeys}
+\end{ospcode}
+
+Allerdings sollte man mit diesem Tool vorsichtig umgehen, denn mit
+einem völlig falschen Layout kann es schwierig werden, den Befehl zur
+Wiederherstellung des ursprünglichen Zustands zu tippen.
+
+Wer sich genauer mit den verfügbaren Keymaps auseinander setzen
+möchte, dem sei das Studium des Verzeichnisses
+\cmd{/usr/share/keymaps} %
+\index{keymaps (Verzeichnis)}%
+\index{usr@/usr!share!keymaps}%
+ans Herz gelegt. Außerdem sollte man sich die Hilfeseiten zu
+\cmd{loadkeys} %
+\index{loadkeys (Programm)}%
+und \cmd{keymaps} durchlesen. Allerdings ist die Definition dieser
+Keymaps unter Linux eine Wissenschaft für sich.
+
+Für ein deutsches Layout (\cmd{de-latin1}
+\index{de-latin1 (Tastaturlayout)}%
+oder \cmd{de-latin1-nodeadkeys})
+\index{de-latin1-nodeadkeys (Tastaturlayout)}%
+ist keine Angabe unter \cmd{DUMPKEYS\_CHARSET}
+\index{DUMPKEYS\_CHARSET (Variable)}%
+notwendig. Verwendet man eine andere Keymap, so sollte man sich
+informieren, auf welchem Zeichensatz sie basiert und ob sie vom
+Standardwert \cmd{iso-8859-1}
+\index{iso-8859-1 (Tastaturlayout)}%
+abweicht. Für die deutschen Layouts ist dies nicht der Fall.
+\index{Tastatur|)}%
+\index{Keymap|)}
+
+\subsection{Zeichensatz für die Konsole}
+
+\index{Zeichensatz|(}%
+Das Tastaturlayout sorgt dafür, dass unser System die Anschläge auch
+wirklich mit den Zeichen in Verbindung bringe, die sich als
+Beschriftung auf der Tastatur befinden. Für die Darstellung der
+Zeichen auf dem Bildschirm ist dann allerdings noch einmal ein
+Zeichensatz notwendig, der jedem Zeichen ein für den Benutzer lesbares
+Symbol zuordnet.
+Den geeigneten Zeichensatz für die Konsole legen wir in
+\cmd{/etc/conf.d/consolefont}
+\label{confdconsolefont}%
+\index{consolefont (Datei)}%
+\index{etc@/etc!conf.d!consolefont}%
+fest:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/conf.d/consolefont}
+# /etc/conf.d/consolefont
+
+# CONSOLEFONT specifies the default font that you'd like Linux to use on
+# the console.  You can find a good selection of fonts in /usr/share
+# /consolefonts; you shouldn't specify the trailing ".psf.gz", just the 
+# font name below. To use the default console font, comment out the 
+# CONSOLEFONT setting below. This setting is used by the /etc/init.d
+# /consolefont script (NOTE: if you do not want to use it, run 
+# "rc-update del consolefont" as root).
+
+CONSOLEFONT="lat9-16"
+
+# CONSOLETRANSLATION is the charset map file to use.  Leave commented 
+# to use the default one.  Have a look in /usr/share/consoletrans for a 
+# selection of map files you can use.
+
+#CONSOLETRANSLATION="8859-1_to_uni"
+\end{ospcode}
+
+Der Standard-Zeichensatz \cmd{default8x16} %
+\index{default8x16 (Zeichensatz)}%
+ist für den deutschen Sprachraum nur begrenzt geeignet. Die
+Zeichensätze für die Konsole sind in ihrer Auswahl beschränkt und
+können maximal 512 Zeichen abbilden. Für den deutschen Sprachraum
+ist der Zeichensatz \cmd{lat9-16} %
+\index{lat9-16 (Zeichensatz)}%
+recht gut geeignet. Er unterstützt auch unter der Konsole das
+Euro-Symbol. %
+\index{Euro (Symbol)}
+
+Hierbei wird allerdings ein wenig getrickst. Eigentlich legt das
+oben angesprochene Mapping \cmd{euro2} %
+\index{euro2 (Tastaturlayout)}%
+innerhalb des Tastaturlayouts \cmd{de-latin1} %
+\index{de-latin1 (Tastaturlayout)}%
+bzw.\ \cmd{de-latin1-nodeadkeys} fest, %
+\index{de-latin1-nodeadkeys (Tastaturlayout)}%
+dass \cmd{[AltGr]+[e]} in dem Symbol \cmd{currency} %
+\index{currency (Symbol)}%
+resultieren soll. Für den westeuropäischen Raum ist hier also das
+Euro-Symbol %
+\index{Euro (Symbol)}%
+durchaus angebracht, und \cmd{lat9-16} %
+\index{lat9-16 (Zeichensatz)}%
+zeigt hier auch das entsprechende Symbol. Allerdings sieht das
+korrekte Symbol für \cmd{currency} %
+\index{currency (Symbol)}%
+gemäß Unicode so aus: \currency{} (U+00A4).  Unicode repräsentiert das
+Euro-Symbol %
+\index{Euro (Symbol)}%
+dagegen durch den Wert U+20AC.
+
+Leider existiert derzeit kein korrektes Tastaturlayout für die
+Euro-Unicode-Map in \cmd{/usr/share/keymaps}. %
+\index{keymaps (Verzeichnis)}%
+\index{usr@/usr!share!keymaps}%
+Für Unicode-Fanatiker %
+\index{Unicode}%
+lässt sich die Situation korrigieren, indem man folgende zusätzliche
+Keymap mit \cmd{nano} als
+\cmd{/usr/share/keymaps/i386/include/euro-unicode.map} anlegt:% %
+\index{euro-unicode.map (Datei)}%
+\index{usr@/usr!share!keymaps!i386!include!euro-unicode.map}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /usr/share/keymaps/i386/include/euro-unicode.map}
+altgr keycode 18 = U+20AC
+\end{ospcode}
+
+Diese zusätzliche Keymap können wir dann in
+\cmd{/etc/conf.d/keymaps}
+\index{keymaps (Datei)}%
+unter \cmd{EXTENDED\_KEYMAPS}
+\index{EXTENDED\_KEYMAPS (Variable)}%
+eintragen:
+
+\begin{ospcode}
+EXTENDED_KEYMAPS="euro-unicode"
+\end{ospcode}
+
+Damit lassen sich dann auch korrekte Unicode-Zeichensätze
+\index{Zeichensatz!Unicode}%
+verwenden, so z.\,B.\ den Terminus-Schriftsatz, %
+\index{terminus (Zeichensatz)}%
+der einen guten Schnitt an darstellbaren Zeichen für westeuropäische
+Länder liefert. Er lässt sich über das Paket
+\cmd{media-fonts/terminus-font} installieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{emerge -av media-fonts/terminus-font}
+
+These are the packages that would be merged, in order:
+
+Calculating dependencies... done!
+[ebuild  N    ] media-fonts/terminus-font-4.20  USE="-X" 198 kB 
+
+Total: 1 package (1 new), Size of downloads: 198 kB
+
+Would you like to merge these packages? [Yes/No]
+\end{ospcode}
+\index{terminus-font (Paket)}%
+%\index{media-fonts (Kategorie)!terminus-font (Paket)|see{terminus-font (Paket)}}%
+
+Einer der enthaltenen Schriftsätze, \cmd{ter-v16b}, %
+\index{ter-v16b (Zeichensatz)}%
+bietet einen normal großen Zeichensatz. \cmd{ter-v12n} dagegen
+\index{ter-v12n (Zeichensatz)}%
+einen besonders kleinen Schrifttyp.
+
+\begin{netnote}
+  Um diesen speziellen Schriftsatz zu installieren, brauchen sie die
+  Netzwerkverbindung \emph{und} müssen ihr System bereits aktualisiert
+  haben.
+\end{netnote}
+
+\cmd{CONSOLETRANSLATION}, die letzte Variable in \cmd{/etc/conf.d/consolefont},
+ \index{CONSOLETRANSLATION (Variable)}%
+muss man nicht festlegen, da wir mit Unicode arbeiten. Die
+entsprechende Zeile kann auskommentiert bleiben.
+\index{Zeichensatz|)}%
+
+\section{\label{locale}Lokalisierung der zentralen Systembibliothek glibc}
+
+\index{glibc (Paket)|(}%
+Die zentrale Bibliothek eines Linux-Systems, die \cmd{glibc}, liefert
+auch verschiedene Werkzeuge für die Anpassung an die lokale Umgebung.
+Das betrifft nicht nur den Zeichensatz des Systems, sondern auch
+Spracheinstellungen, Messgrößen, sowie Einstellungen zu Währung
+und Papierformaten.
+
+\subsection{Lokalisierung systemweit festlegen}
+
+Die Einstellungen der gewünschten Umgebung fällt vor diesem
+Hintergrund dennoch denkbar einfach aus: Man trägt diese Umgebung in
+\cmd{/etc/\osplinebreak{}env.d/02locale} %
+\index{02locale (Datei)}%
+\index{etc@/etc!env.d!02locale}%
+ein und aktualisiert das System über \cmd{env-update} %
+\index{env-update (Programm)}%
+(siehe Seite \pageref{env-update}):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/env.d/02locale}
+LANG="de_DE.utf8"
+LC_ALL="de_DE.utf8"
+\rprompt{\textasciitilde}\textbf{env-update}
+\end{ospcode}
+
+Diese Angabe wählt die deutsche Umgebung inklusive Unicode-Support. %
+\index{Unicode}%
+Auch wenn sicherlich noch nicht alle Programme eines Linux-Systems
+vollständig Unicode-kompatibel sind, ist dies mittlerweile die
+empfohlene Einstellung.
+
+Die für \cmd{LANG} %
+\index{LANG (Variable)}%
+verfügbaren Werte lassen sich über \cmd{locale -a} %
+\index{locale (Programm)}%
+\index{locale (Programm)!a (Option)}%
+anzeigen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{locale -a}
+C
+de_DE
+de_DE@euro
+de_DE.utf8
+en_US
+en_US.utf8
+POSIX
+\end{ospcode}
+
+Die speziellen Varianten \cmd{C} %
+\index{C (Lokalisierung)}%
+und \cmd{POSIX} %
+\index{POSIX (Lokalisierung)}%
+zeigt \cmd{locale} immer an, da sie die fest in die
+\cmd{glibc}-Bibliothek einkompilierte Grundeinstellung darstellen. %
+\index{Lokalisierung!Standard}%
+Sie bezeichnen beide den durch den internationalen
+POSIX-Standard\footnote{\cmd{http://standards.ieee.org/regauth/posix/}}
+festgelegten Grundsatz an Lokalisierungsinformationen.
+
+Die anderen Werte entsprechen den verfügbaren
+Lokalisierungsdefinitionen %
+\index{Lokalisierung!Verzeichnis}%
+innerhalb des \cmd{locale path}. %
+\index{locale path (Variable)}%
+Dieser ist standardmäßig auf \cmd{/usr/lib/\osplinebreak{}locale} %
+\index{locale (Verzeichnis)}%
+\index{usr@/usr!share!locale}%
+gesetzt, lässt sich aber auch mit dem Tool \cmd{localedef} %
+\index{localedef (Programm)}%
+ermitteln:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{localedef --help | grep "locale path"}
+       locale path    : /usr/lib/locale:/usr/share/i18n
+\end{ospcode}
+\index{localedef (Programm)!help (Option)}
+
+
+\subsection{\label{localegenerate}Lokalisierungen erstellen}
+
+\index{Lokalisierung!erstellen|(}%
+Da jede Lokalisierung Speicherplatz verbraucht, erstellt Portage bei
+der Installation der \cmd{glibc} nicht alle möglichen Varianten
+automatisch. Der Benutzer kann die Liste der gewünschten Varianten
+selbst in der Datei \cmd{/etc/locale.gen} %
+\index{locale.gen (Datei)}%
+\index{etc@/etc!locale.gen}%
+angeben (siehe Kapitel \ref{localegen}):
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/locale.gen}
+de_DE ISO-8859-1
+de_DE@euro ISO-8859-15
+de_DE.UTF-8 UTF-8
+en_US ISO-8859-1
+en_US.UTF-8 UTF-8
+\end{ospcode}
+
+Die Datei verknüpft je eine Umgebungsdefinition aus
+\cmd{/usr/share/i18n/\osplinebreak{}locales} %
+\index{locales (Verzeichnis)}%
+\index{usr@/usr!share!i18n!locales}%
+mit einem Zeichensatz aus \cmd{/usr/share/i18n/charmaps}. %
+\index{charmaps (Verzeichnis)}%
+\index{usr@/usr!share!i18n!charmaps}%
+Der Zusatz \cmd{.UTF-8} %
+\index{UTF-8}%
+findet sich jedoch nicht bei den Dateien unter
+\cmd{/usr/share/\osplinebreak{}i18n/locales} %
+\index{locales (Verzeichnis)}%
+\index{usr@/usr!share!i18n!locales}%
+wieder, sondern zeigt nur an, dass die entsprechende Definition
+UTF-8-kompatibel %
+\index{UTF-8!kompatibel}%
+ist.
+
+Aus diesen Angaben generiert \cmd{locale-gen}, %
+\index{locale-gen (Programm)}%
+wie schon auf Seite \pageref{localegen} gesehen, die entsprechenden
+Lokalisierungsinformationen in \cmd{/usr/lib/locale}.\osplinebreak{} %
+\index{locale (Verzeichnis)}%
+Den Zusatz \cmd{.UTF-8} konvertiert \cmd{locale-gen} dabei in
+\cmd{utf8}, und aus diesem Grunde gibt \cmd{locale -a} %
+\index{locale (Programm)}%
+\index{locale (Programm)!a (Option)}%
+die Variante \cmd{de\_DE.UTF-8} %
+\index{de\_DE (Lokalisierung)}%
+als \cmd{de\_DE.utf8} %
+%\index{de\_DE.utf8 (Lokalisierung)|see{de\_DE.UTF-8 (Lokalisierung)}}%
+aus. Groß- bzw.\ Kleinschreibung ist hier relevant, darum müssen
+wir, wie oben angegeben, \cmd{LANG="{}de\_DE.utf8"{}} %
+\index{LANG (Variable)}%
+in \cmd{/etc/env.d/02locale} %
+\index{02locale (Datei)}%
+setzen.  \index{Lokalisierung!erstellen|)}
+
+\subsection{Benutzerspezifische Lokalisierung}
+
+\index{Lokalisierung!benutzerspezifisch|(}%
+Ein so konfiguriertes System sollte beim Login automatisch die
+deutsche Unicode-Umgebung wählen. Überprüfen lässt sich das wieder mit
+einem Aufruf des Befehls \cmd{locale},
+\index{locale (Programm)}%
+\index{Lokalisierung!anzeigen}%
+diesmal ohne Argumente:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{locale}
+LANG=de_DE.utf-8
+LC_CTYPE="de_DE.utf-8"
+LC_NUMERIC="de_DE.utf-8"
+LC_TIME="de_DE.utf-8"
+LC_COLLATE="de_DE.utf-8"
+LC_MONETARY="de_DE.utf-8"
+LC_MESSAGES="de_DE.utf-8"
+LC_PAPER="de_DE.utf-8"
+LC_NAME="de_DE.utf-8"
+LC_ADDRESS="de_DE.utf-8"
+LC_TELEPHONE="de_DE.utf-8"
+LC_MEASUREMENT="de_DE.utf-8"
+LC_IDENTIFICATION="de_DE.utf-8"
+LC_ALL=de_DE.utf-8
+\end{ospcode}
+
+\cmd{locale} zeigt hier nicht nur den von uns gewählten Wert für
+\cmd{LANG},
+\index{LANG (Variable)}%
+sondern darüber hinaus alle Unterbereiche der
+Lokalisierungsinformationen. Darunter finden sich z.\,B.\ die
+Definitionen für das Zahlenformat
+\index{Zahlenformat}%
+(\cmd{LC\_NUMERIC}),
+\index{LC\_NUMERIC (Variable)}%
+das Datumsformat
+\index{Datum!Format}%
+(\cmd{LC\_TIME})
+\index{LC\_TIME (Variable)}%
+und so weiter. Mit \cmd{LANG}
+\index{LANG (Variable)}%
+legen wir alle diese Sektionen auf den gleichen Wert fest, was auch
+der Normalsituation entspricht. Wer aber z.\,B.\ ein anderes
+Währungsformat
+\index{Währungsformat}%
+bevorzugt, kann \cmd{LC\_MONETARY}
+\index{LC\_MONETARY (Variable)}%
+mit einem anderen Wert belegen.
+
+\cmd{locale}
+\index{locale (Programm)}%
+bietet außer den hier genannten Möglichkeiten, den Befehl ohne
+Argumente aufzurufen, um einen Überblick über die aktuellen
+Einstellungen zu erhalten, und der Option \cmd{-a} zur Ausgabe der verfügbaren
+Locale-Definitionen noch die Option, einzelne Werte aus
+der derzeitigen Locale abzufragen.
+
+Möchte man z.\,B.\ wissen, wie der Dezimaltrenner
+\index{Dezimaltrenner}%
+aktuell gesetzt ist, reicht der Aufruf des
+\cmd{locale}-Befehls
+\index{locale (Programm)}%
+mit dem Zusatz \cmd{decimal\_point}:% %
+\index{locale (Programm)!decimal\_point (Option)}%
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{locale decimal_point}
+,
+\end{ospcode}
+
+In der deutschen Einstellung erhält man hier korrekterweise das
+Komma. Mit der Option \cmd{-k}
+\index{locale (Programm)!k (Option)}%
+liefert \cmd{locale} auch noch einmal den Namen des Schlüsselwortes:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{locale -k decimal_point}
+decimal_point=","
+\end{ospcode}
+
+Die Option \cmd{-c}
+\index{locale (Programm)!c (Option)}%
+liefert die entsprechende Kategorie:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{locale -c -k decimal_point}
+LC_NUMERIC
+decimal_point=","
+\end{ospcode}
+
+Über diese Option lässt sich auch eine ganze Kategorie mit den
+innerhalb dieser Kategorie vorhandenen Schlüsselwörtern abfragen:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{locale -k LC_NUMERIC}
+decimal_point=","
+thousands_sep="."
+grouping=3;3
+numeric-decimal-point-wc=44
+numeric-thousands-sep-wc=46
+numeric-codeset="UTF-8"
+\end{ospcode}
+\index{locale (Programm)!k (Option)}
+
+Benutzer, %
+%\index{Benutzer!Lokalisierung|see{Lokalisierung, Benutzer}}%
+\index{Lokalisierung!Benutzer}%
+die eine von der Systemeinstellung abweichende Umgebung
+wählen möchten, können dies über die Datei
+\cmd{\textasciitilde/.bash\_profile}
+\index{.bash\_profile (Datei)}%
+tun. Hier genügt es, den ursprünglichen Wert von \cmd{LANG}
+\index{LANG (Variable)}%
+neu zu definieren:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{echo 'export LANG="en_US.utf8"' >> \textasciitilde/.bash_profile}
+\end{ospcode}
+\index{Lokalisierung!benutzerspezifisch|)}
+
+\subsection{Lokalisierung für Portage}
+
+\label{portagelocale}%
+\index{Lokalisierung!Portage|(}%
+\index{Portage!Sprache|(}%
+Wer die Lokalisierung in der Datei \cmd{/etc/env.d/02locale}
+\index{locale (Datei)}%
+systemweit auf \cmd{LANG="{}de\_DE.utf8"{}}
+\index{LANG (Variable)}%
+festgelegt hat, tut dies somit auch für das Portage-System
+selbst und erhält manche Information, die \cmd{emerge} %
+\index{emerge (Programm)!Sprache}%
+während des Kompilierens anzeigt, plötzlich auf Deutsch.
+
+Das mag für den Benutzer angenehm sein; schwierig wird es aber, wenn ein Fehler
+auftritt und man einen Bug-Eintrag in der Gentoo-Bug-Datenbank anlegen
+muss: Die englischsprachigen Entwickler haben verständlicherweise
+gewisse Probleme mit deutschen Fehlermeldungen. Um solche Probleme zu
+vermeiden, sollte man Portage grundsätzlich in Englisch %
+\index{Englisch}%
+arbeiten lassen, indem man folgenden Eintrag mit \cmd{nano} in
+\cmd{/etc/portage/bashrc} %
+\index{bashrc (Datei)}%
+\index{etc@/etc!portage!bashrc}%
+vornimmt:
+
+\begin{ospcode}
+\rprompt{\textasciitilde}\textbf{cat /etc/portage/bashrc}
+export LC_ALL="C"
+export LANG="C"
+\end{ospcode}
+\index{Portage!Sprache|)}
+\index{Lokalisierung!Portage|)}
+\index{glibc (Paket)|)}%
+\index{Lokalisierung|)}
+
+\ospvacat
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gentoo"
+%%% End: 
