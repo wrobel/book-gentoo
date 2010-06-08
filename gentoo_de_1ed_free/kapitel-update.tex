@@ -740,7 +740,7 @@ diesmal ohne SSL-Unterstützung %
 installieren möchten.
 
 \begin{ospcode}
-\rprompt{\textasciitilde}\textbf{USE="-ldap" emerge -puv www-servers/apache}
+\rprompt{\textasciitilde}\textbf{USE="-ssl" emerge -puv www-servers/apache}
 
 These are the packages that would be merged, in order:
 
@@ -759,7 +759,7 @@ zu reagieren, fügen wir die Option \cmd{-{}-newuse} %
 hinzu:
 
 \begin{ospcode}
-\rprompt{\textasciitilde}\textbf{USE="-ldap" emerge -puvN www-servers/apache}
+\rprompt{\textasciitilde}\textbf{USE="-ssl" emerge -puvN www-servers/apache}
 
 These are the packages that would be merged, in order:
 
@@ -767,7 +767,7 @@ Calculating dependencies... done!
 [ebuild   R   ] sys-libs/zlib-1.2.3-r1  USE="(-build\%)" 0 kB 
 [ebuild   R   ] dev-libs/apr-util-1.2.10  USE="berkdb gdbm mysql -doc -l
 dap* -postgres -sqlite -sqlite3" 0 kB 
-[ebuild   R   ] www-servers/apache-2.2.6-r7  USE="ssl -debug -doc -ldap*
+[ebuild   R   ] www-servers/apache-2.2.6-r7  USE="-ssl* -debug -doc ldap
  (-selinux) -sni -static -suexec -threads" APACHE2_MODULES="actions alia
 s auth_basic authn_alias authn_anon authn_dbm authn_default authn_file a
 uthz_dbm authz_default authz_groupfile authz_host authz_owner authz_user
